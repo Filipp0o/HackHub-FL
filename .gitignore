@@ -1,0 +1,32 @@
+# FILE COMPILATI E LOG
+*.class
+*.log
+target/
+out/
+bin/
+
+# ARCHIVI SPRING/JAVA
+*.jar
+*.war
+
+# MAVEN
+.mvn/timing.properties
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# VISUAL PARADIGM
+*.vpp.bak*
+*.vpp.lck
+*.bak.vpp
+*.~vpp
+
+# SISTEMA OPERATIVO
+.DS_Store
+Thumbs.db
