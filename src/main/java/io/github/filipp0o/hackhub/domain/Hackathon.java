@@ -211,6 +211,12 @@ public class Hackathon {
                         "La riscossione del premio è obbligatoria"
                 );
 
+        if (stato != StatoHackathon.CONCLUSO) {
+            throw new IllegalStateException(
+                    "La riscossione può essere creata solo per un hackathon concluso"
+            );
+        }
+
         if (this.riscossionePremio != null) {
             throw new IllegalStateException(
                     "L'hackathon possiede già una riscossione del premio"

@@ -5,14 +5,14 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-
+import java.lang.reflect.Field;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RiscossionePremioTest {
 
     @Test
     void creaRiscossioneDaConfigurareECollegaHackathon() {
-        Hackathon hackathon = creaHackathonValido();
+        Hackathon hackathon = creaHackathonConcluso();
 
         assertNull(hackathon.getRiscossionePremio());
 
@@ -47,7 +47,7 @@ class RiscossionePremioTest {
 
     @Test
     void impedisceSecondaRiscossioneDelloStessoHackathon() {
-        Hackathon hackathon = creaHackathonValido();
+        Hackathon hackathon = creaHackathonConcluso();
 
         RiscossionePremio primaRiscossione =
                 RiscossionePremio.crea(hackathon);
@@ -209,12 +209,42 @@ class RiscossionePremioTest {
         );
     }
 
-    private RiscossionePremio creaRiscossione() {
-        return RiscossionePremio.crea(
-                creaHackathonValido()
+    @Test
+    void impedisceCreazionePerHackathonNonConcluso() {
+        Hackathon hackathon = creaHackathonValido();
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> RiscossionePremio.crea(hackathon)
         );
     }
 
+    private RiscossionePremio creaRiscossione() {
+        return RiscossionePremio.crea(
+                creaHackathonConcluso()
+        );
+    }
+
+    private Hackathon creaHackathonConcluso() {
+        Hackathon hackathon = creaHackathonValido();
+
+        portaInValutazione(hackathon);
+
+        Utente responsabile = new Utente(4L);
+        Team team = Team.crea(
+                "Team vincitore",
+                responsabile,
+                responsabile
+        );
+
+        Partecipazione partecipazione =
+                new Partecipazione(hackathon, team);
+
+        hackathon.registraPartecipazioneVincitrice(partecipazione);
+        hackathon.concludi();
+
+        return hackathon;
+    }
     private Hackathon creaHackathonValido() {
         DatiHackathon dati = new DatiHackathon(
                 "HackHub 2026",
@@ -234,5 +264,22 @@ class RiscossionePremioTest {
                 new Utente(2L),
                 List.of(new Utente(3L))
         );
+    }
+    private void portaInValutazione(Hackathon hackathon) {
+        try {
+            Field campoStato =
+                    Hackathon.class.getDeclaredField("stato");
+
+            campoStato.setAccessible(true);
+            campoStato.set(
+                    hackathon,
+                    StatoHackathon.IN_VALUTAZIONE
+            );
+        } catch (ReflectiveOperationException eccezione) {
+            throw new AssertionError(
+                    "Impossibile predisporre l'hackathon in valutazione",
+                    eccezione
+            );
+        }
     }
 }
