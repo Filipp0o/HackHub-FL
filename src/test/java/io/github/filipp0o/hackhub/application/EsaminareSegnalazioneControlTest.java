@@ -497,12 +497,16 @@ class EsaminareSegnalazioneControlTest {
                         5
                 );
 
-        return Hackathon.crea(
+        Hackathon hackathon = Hackathon.crea(
                 dati,
                 organizzatore,
                 new Utente(2L),
                 List.of(new Utente(3L))
         );
+
+        hackathon.aggiornaStato(dati.dataInizio());
+
+        return hackathon;
     }
 
     private Partecipazione creaPartecipazione(

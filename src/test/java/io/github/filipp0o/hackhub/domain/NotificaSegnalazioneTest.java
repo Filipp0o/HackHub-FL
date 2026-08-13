@@ -162,11 +162,15 @@ class NotificaSegnalazioneTest {
                 5
         );
 
-        return Hackathon.crea(
+        Hackathon hackathon = Hackathon.crea(
                 dati,
                 new Utente(3L),
                 new Utente(4L),
                 List.of(mentore)
         );
+
+        hackathon.aggiornaStato(dati.dataInizio());
+
+        return hackathon;
     }
 }

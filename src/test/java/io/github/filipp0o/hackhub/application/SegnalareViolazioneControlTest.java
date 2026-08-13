@@ -366,13 +366,15 @@ class SegnalareViolazioneControlTest {
             Utente organizzatore,
             Utente mentore
     ) {
+        LocalDate oggi = LocalDate.now();
+
         DatiHackathon dati = new DatiHackathon(
                 "HackHub 2026",
                 "Regolamento ufficiale",
                 "Qualità, completezza e innovazione",
-                LocalDate.of(2026, 10, 1),
-                LocalDate.of(2026, 10, 10),
-                LocalDate.of(2026, 10, 12),
+                oggi.minusDays(3),
+                oggi.minusDays(2),
+                oggi.plusDays(2),
                 "Roma",
                 BigDecimal.valueOf(5000),
                 5

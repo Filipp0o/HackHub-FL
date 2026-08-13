@@ -6,6 +6,7 @@ import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Utente;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -107,21 +108,7 @@ public class SegnalareViolazioneControl {
         Hackathon hackathon =
                 partecipazioneValida.getHackathon();
 
-        boolean mentoreAssegnato = hackathon
-                .getMentori()
-                .stream()
-                .anyMatch(mentoreHackathon ->
-                        Objects.equals(
-                                mentoreHackathon.getId(),
-                                mentoreValido.getId()
-                        )
-                );
-
-        if (!mentoreAssegnato) {
-            throw new IllegalArgumentException(
-                    "Il mentore non è assegnato a questo hackathon"
-            );
-        }
+        hackathon.aggiornaStato(LocalDate.now());
 
         Segnalazione segnalazione = Segnalazione.crea(
                 mentoreValido,

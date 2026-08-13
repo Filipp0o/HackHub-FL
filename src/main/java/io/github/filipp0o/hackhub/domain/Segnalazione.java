@@ -13,7 +13,6 @@ public class Segnalazione {
     private EsitoSegnalazione esito;
     private String motivazione;
     private LocalDateTime dataOraEsame;
-
     private final Utente mentoreSegnalante;
     private final Partecipazione partecipazione;
     private Utente esaminatore;
@@ -33,6 +32,32 @@ public class Segnalazione {
                 partecipazione,
                 "La partecipazione è obbligatoria"
         );
+
+        Hackathon hackathon = partecipazione.getHackathon();
+
+        if (hackathon.getStato() != StatoHackathon.IN_CORSO
+                && hackathon.getStato()
+                != StatoHackathon.IN_VALUTAZIONE) {
+            throw new IllegalStateException(
+                    "La segnalazione può essere creata solo per un hackathon in corso o in valutazione"
+            );
+        }
+
+        boolean mentoreAssegnato = hackathon
+                .getMentori()
+                .stream()
+                .anyMatch(mentore ->
+                        Objects.equals(
+                                mentore.getId(),
+                                mentoreSegnalante.getId()
+                        )
+                );
+
+        if (!mentoreAssegnato) {
+            throw new IllegalArgumentException(
+                    "Il mentore segnalante deve essere assegnato all'hackathon"
+            );
+        }
 
         if (descrizione == null || descrizione.isBlank()) {
             throw new IllegalArgumentException(

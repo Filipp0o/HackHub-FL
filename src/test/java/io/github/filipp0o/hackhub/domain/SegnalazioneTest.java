@@ -99,6 +99,63 @@ class SegnalazioneTest {
     }
 
     @Test
+    void rifiutaMentoreNonAssegnatoAllHackathon() {
+        Utente altroMentore = new Utente(99L);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> Segnalazione.crea(
+                        altroMentore,
+                        partecipazione,
+                        "Violazione del regolamento"
+                )
+        );
+    }
+
+    @Test
+    void rifiutaSegnalazionePerHackathonNonSegnalabile() {
+        DatiHackathon dati = new DatiHackathon(
+                "Hackathon futuro",
+                "Regolamento ufficiale",
+                "Criteri di valutazione",
+                LocalDate.of(2999, 1, 1),
+                LocalDate.of(2999, 1, 10),
+                LocalDate.of(2999, 1, 12),
+                "Roma",
+                BigDecimal.valueOf(5000),
+                5
+        );
+
+        Hackathon hackathonNonSegnalabile = Hackathon.crea(
+                dati,
+                new Utente(3L),
+                new Utente(4L),
+                List.of(mentore)
+        );
+
+        Partecipazione partecipazioneNonSegnalabile =
+                new Partecipazione(
+                        hackathonNonSegnalabile,
+                        creaTeamValido()
+                );
+
+        assertAll(
+                () -> assertEquals(
+                        StatoHackathon.IN_ISCRIZIONE,
+                        hackathonNonSegnalabile.getStato()
+                ),
+                () -> assertThrows(
+                        IllegalStateException.class,
+                        () -> Segnalazione.crea(
+                                mentore,
+                                partecipazioneNonSegnalabile,
+                                "Violazione del regolamento"
+                        )
+                )
+        );
+    }
+
+    @Test
     void registraEsameValido() {
         Segnalazione segnalazione = creaSegnalazioneValida();
 
@@ -254,12 +311,16 @@ class SegnalazioneTest {
                 5
         );
 
-        return Hackathon.crea(
+        Hackathon hackathon = Hackathon.crea(
                 dati,
                 new Utente(3L),
                 new Utente(4L),
                 List.of(mentore)
         );
+
+        hackathon.aggiornaStato(dati.dataInizio());
+
+        return hackathon;
     }
 
     private DatiDecisioneSegnalazione datiDecisioneValidi() {
