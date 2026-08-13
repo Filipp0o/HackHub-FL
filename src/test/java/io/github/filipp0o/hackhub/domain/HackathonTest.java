@@ -2,7 +2,6 @@ package io.github.filipp0o.hackhub.domain;
 
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -286,6 +285,78 @@ class HackathonTest {
         );
     }
 
+
+    @Test
+    void mantieneStatoInIscrizionePrimaDellaDataInizio() {
+        Hackathon hackathon = creaHackathonValido();
+
+        hackathon.aggiornaStato(
+                hackathon.getDataInizio().minusDays(1)
+        );
+
+        assertEquals(
+                StatoHackathon.IN_ISCRIZIONE,
+                hackathon.getStato()
+        );
+    }
+
+    @Test
+    void passaInCorsoAllaDataInizio() {
+        Hackathon hackathon = creaHackathonValido();
+
+        hackathon.aggiornaStato(hackathon.getDataInizio());
+
+        assertEquals(
+                StatoHackathon.IN_CORSO,
+                hackathon.getStato()
+        );
+    }
+
+    @Test
+    void passaInValutazioneDopoLaDataFine() {
+        Hackathon hackathon = creaHackathonValido();
+
+        hackathon.aggiornaStato(hackathon.getDataInizio());
+        hackathon.aggiornaStato(
+                hackathon.getDataFine().plusDays(1)
+        );
+
+        assertEquals(
+                StatoHackathon.IN_VALUTAZIONE,
+                hackathon.getStato()
+        );
+    }
+
+    @Test
+    void raggiungeDirettamenteLaValutazioneSeLaDataFineESuperata() {
+        Hackathon hackathon = creaHackathonValido();
+
+        hackathon.aggiornaStato(
+                hackathon.getDataFine().plusDays(1)
+        );
+
+        assertEquals(
+                StatoHackathon.IN_VALUTAZIONE,
+                hackathon.getStato()
+        );
+    }
+
+    @Test
+    void rifiutaDataCorrenteNulla() {
+        Hackathon hackathon = creaHackathonValido();
+
+        assertThrows(
+                NullPointerException.class,
+                () -> hackathon.aggiornaStato(null)
+        );
+
+        assertEquals(
+                StatoHackathon.IN_ISCRIZIONE,
+                hackathon.getStato()
+        );
+    }
+
+
     @Test
     void registraPartecipazioneVincitriceValida() {
         Hackathon hackathon = creaHackathonValido();
@@ -551,20 +622,8 @@ class HackathonTest {
     }
 
     private void portaInValutazione(Hackathon hackathon) {
-        try {
-            Field campoStato =
-                    Hackathon.class.getDeclaredField("stato");
-
-            campoStato.setAccessible(true);
-            campoStato.set(
-                    hackathon,
-                    StatoHackathon.IN_VALUTAZIONE
-            );
-        } catch (ReflectiveOperationException eccezione) {
-            throw new AssertionError(
-                    "Impossibile predisporre l'hackathon in valutazione",
-                    eccezione
-            );
-        }
+        hackathon.aggiornaStato(
+                hackathon.getDataFine().plusDays(1)
+        );
     }
 }

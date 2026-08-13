@@ -149,6 +149,30 @@ public class Hackathon {
         return valore;
     }
 
+
+    public void aggiornaStato(LocalDate dataCorrente) {
+        LocalDate dataValida = Objects.requireNonNull(
+                dataCorrente,
+                "La data corrente è obbligatoria"
+        );
+
+        if (stato == StatoHackathon.CONCLUSO) {
+            return;
+        }
+
+        if (dataValida.isAfter(dataFine)) {
+            stato = StatoHackathon.IN_VALUTAZIONE;
+            return;
+        }
+
+        if (!dataValida.isBefore(dataInizio)
+                && stato == StatoHackathon.IN_ISCRIZIONE) {
+            stato = StatoHackathon.IN_CORSO;
+        }
+    }
+
+
+
     public void registraPartecipazioneVincitrice(
             Partecipazione partecipazione
     ) {
