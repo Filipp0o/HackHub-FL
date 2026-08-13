@@ -26,13 +26,23 @@ class ValutareSottomissioneControlTest {
                         NullPointerException.class,
                         () -> new ValutareSottomissioneControl(
                                 null,
-                                new PartecipazioneRepositoryFinto()
+                                new PartecipazioneRepositoryFinto(),
+                                new ValutazioneRepositoryFinto()
                         )
                 ),
                 () -> assertThrows(
                         NullPointerException.class,
                         () -> new ValutareSottomissioneControl(
                                 new HackathonRepositoryFinto(),
+                                null,
+                                new ValutazioneRepositoryFinto()
+                        )
+                ),
+                () -> assertThrows(
+                        NullPointerException.class,
+                        () -> new ValutareSottomissioneControl(
+                                new HackathonRepositoryFinto(),
+                                new PartecipazioneRepositoryFinto(),
                                 null
                         )
                 )
@@ -54,7 +64,8 @@ class ValutareSottomissioneControlTest {
         ValutareSottomissioneControl control =
                 new ValutareSottomissioneControl(
                         hackathonRepository,
-                        new PartecipazioneRepositoryFinto()
+                        new PartecipazioneRepositoryFinto(),
+                        new ValutazioneRepositoryFinto()
                 );
 
         List<Hackathon> risultato =
@@ -122,7 +133,8 @@ class ValutareSottomissioneControlTest {
         ValutareSottomissioneControl control =
                 new ValutareSottomissioneControl(
                         new HackathonRepositoryFinto(),
-                        partecipazioneRepository
+                        partecipazioneRepository,
+                        new ValutazioneRepositoryFinto()
                 );
 
         List<Sottomissione> risultato =
@@ -160,7 +172,8 @@ class ValutareSottomissioneControlTest {
         ValutareSottomissioneControl control =
                 new ValutareSottomissioneControl(
                         new HackathonRepositoryFinto(),
-                        partecipazioneRepository
+                        partecipazioneRepository,
+                        new ValutazioneRepositoryFinto()
                 );
 
         assertThrows(
@@ -198,7 +211,8 @@ class ValutareSottomissioneControlTest {
         ValutareSottomissioneControl control =
                 new ValutareSottomissioneControl(
                         new HackathonRepositoryFinto(),
-                        new PartecipazioneRepositoryFinto()
+                        new PartecipazioneRepositoryFinto(),
+                        new ValutazioneRepositoryFinto()
                 );
 
         assertThrows(
@@ -214,7 +228,8 @@ class ValutareSottomissioneControlTest {
         ValutareSottomissioneControl control =
                 new ValutareSottomissioneControl(
                         new HackathonRepositoryFinto(),
-                        new PartecipazioneRepositoryFinto()
+                        new PartecipazioneRepositoryFinto(),
+                        new ValutazioneRepositoryFinto()
                 );
 
         assertAll(
@@ -249,7 +264,7 @@ class ValutareSottomissioneControlTest {
     }
 
     @Test
-    void confermaValutazioneESalvaPartecipazione() {
+    void confermaValutazioneESalvaValutazione() {
         Utente giudiceAssegnato = new Utente(2L);
         Hackathon hackathon =
                 creaHackathonInValutazione(giudiceAssegnato);
@@ -266,10 +281,14 @@ class ValutareSottomissioneControlTest {
         PartecipazioneRepositoryFinto partecipazioneRepository =
                 new PartecipazioneRepositoryFinto();
 
+        ValutazioneRepositoryFinto valutazioneRepository =
+                new ValutazioneRepositoryFinto();
+
         ValutareSottomissioneControl control =
                 new ValutareSottomissioneControl(
                         new HackathonRepositoryFinto(),
-                        partecipazioneRepository
+                        partecipazioneRepository,
+                        valutazioneRepository
                 );
 
         DatiValutazione dati =
@@ -277,7 +296,8 @@ class ValutareSottomissioneControlTest {
 
         /*
          * Istanza diversa, ma stesso identificatore:
-         * rappresenta lo stesso giudice recuperato in un altro contesto.
+         * rappresenta lo stesso giudice recuperato
+         * in un altro contesto.
          */
         Utente giudice = new Utente(2L);
 
@@ -309,11 +329,15 @@ class ValutareSottomissioneControlTest {
                         valutazione.getSottomissione()
                 ),
                 () -> assertSame(
-                        partecipazione,
-                        partecipazioneRepository.partecipazioneSalvata
+                        valutazione,
+                        valutazioneRepository.valutazioneSalvata
                 ),
                 () -> assertEquals(
                         1,
+                        valutazioneRepository.numeroSalvataggi
+                ),
+                () -> assertEquals(
+                        0,
                         partecipazioneRepository.numeroSalvataggi
                 )
         );
@@ -337,10 +361,14 @@ class ValutareSottomissioneControlTest {
         PartecipazioneRepositoryFinto partecipazioneRepository =
                 new PartecipazioneRepositoryFinto();
 
+        ValutazioneRepositoryFinto valutazioneRepository =
+                new ValutazioneRepositoryFinto();
+
         ValutareSottomissioneControl control =
                 new ValutareSottomissioneControl(
                         new HackathonRepositoryFinto(),
-                        partecipazioneRepository
+                        partecipazioneRepository,
+                        valutazioneRepository
                 );
 
         Utente altroGiudice = new Utente(99L);
@@ -357,6 +385,10 @@ class ValutareSottomissioneControlTest {
         assertAll(
                 () -> assertNull(
                         sottomissione.getValutazione()
+                ),
+                () -> assertEquals(
+                        0,
+                        valutazioneRepository.numeroSalvataggi
                 ),
                 () -> assertEquals(
                         0,
@@ -474,8 +506,6 @@ class ValutareSottomissioneControlTest {
                 List.of();
 
         private Hackathon hackathonRicevuto;
-        private Partecipazione partecipazioneSalvata;
-
         private int numeroRecuperi;
         private int numeroSalvataggi;
 
@@ -500,7 +530,21 @@ class ValutareSottomissioneControlTest {
         public void salva(
                 Partecipazione partecipazione
         ) {
-            partecipazioneSalvata = partecipazione;
+            numeroSalvataggi++;
+        }
+    }
+
+    private static class ValutazioneRepositoryFinto
+            implements ValutazioneRepository {
+
+        private Valutazione valutazioneSalvata;
+        private int numeroSalvataggi;
+
+        @Override
+        public void salva(
+                Valutazione valutazione
+        ) {
+            valutazioneSalvata = valutazione;
             numeroSalvataggi++;
         }
     }

@@ -17,10 +17,12 @@ public class ValutareSottomissioneControl {
 
     private final HackathonRepository hackathonRepository;
     private final PartecipazioneRepository partecipazioneRepository;
+    private final ValutazioneRepository valutazioneRepository;
 
     public ValutareSottomissioneControl(
             HackathonRepository hackathonRepository,
-            PartecipazioneRepository partecipazioneRepository
+            PartecipazioneRepository partecipazioneRepository,
+            ValutazioneRepository valutazioneRepository
     ) {
         this.hackathonRepository = Objects.requireNonNull(
                 hackathonRepository,
@@ -30,6 +32,11 @@ public class ValutareSottomissioneControl {
         this.partecipazioneRepository = Objects.requireNonNull(
                 partecipazioneRepository,
                 "Il repository delle partecipazioni è obbligatorio"
+        );
+
+        this.valutazioneRepository = Objects.requireNonNull(
+                valutazioneRepository,
+                "Il repository delle valutazioni è obbligatorio"
         );
     }
 
@@ -144,13 +151,13 @@ public class ValutareSottomissioneControl {
             );
         }
 
-        Valutazione.crea(
+        Valutazione valutazione = Valutazione.crea(
                 sottomissioneValida,
                 giudiceValido,
                 dati
         );
 
-        partecipazioneRepository.salva(partecipazione);
+        valutazioneRepository.salva(valutazione);
     }
 
     private void validaCompletezzaEFormato(
