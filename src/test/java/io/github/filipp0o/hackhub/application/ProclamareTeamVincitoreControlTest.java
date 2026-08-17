@@ -3,8 +3,10 @@ package io.github.filipp0o.hackhub.application;
 import io.github.filipp0o.hackhub.domain.DatiHackathon;
 import io.github.filipp0o.hackhub.domain.DatiValutazione;
 import io.github.filipp0o.hackhub.domain.Hackathon;
+import io.github.filipp0o.hackhub.domain.NotificaSegnalazione;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
+import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
 import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.StatoRiscossionePremio;
@@ -28,13 +30,23 @@ class ProclamareTeamVincitoreControlTest {
                         NullPointerException.class,
                         () -> new ProclamareTeamVincitoreControl(
                                 null,
-                                new HackathonRepositoryFinto()
+                                new HackathonRepositoryFinto(),
+                                new SegnalazioneRepositoryFinto()
                         )
                 ),
                 () -> assertThrows(
                         NullPointerException.class,
                         () -> new ProclamareTeamVincitoreControl(
                                 new PartecipazioneRepositoryFinto(),
+                                null,
+                                new SegnalazioneRepositoryFinto()
+                        )
+                ),
+                () -> assertThrows(
+                        NullPointerException.class,
+                        () -> new ProclamareTeamVincitoreControl(
+                                new PartecipazioneRepositoryFinto(),
+                                new HackathonRepositoryFinto(),
                                 null
                         )
                 )
@@ -56,7 +68,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         new PartecipazioneRepositoryFinto(),
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         assertAll(
@@ -137,13 +150,16 @@ class ProclamareTeamVincitoreControlTest {
         PartecipazioneRepositoryFinto partecipazioneRepository =
                 new PartecipazioneRepositoryFinto();
 
+        partecipazioneRepository.partecipazioni =
+                List.of(prima, seconda);
         partecipazioneRepository.partecipazioniNonEscluse =
                 List.of(prima, seconda);
 
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         partecipazioneRepository,
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         /*
@@ -167,6 +183,10 @@ class ProclamareTeamVincitoreControlTest {
                 () -> assertSame(
                         hackathon,
                         partecipazioneRepository.hackathonRicevuto
+                ),
+                () -> assertEquals(
+                        1,
+                        partecipazioneRepository.numeroRecuperi
                 ),
                 () -> assertEquals(
                         1,
@@ -194,7 +214,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         partecipazioneRepository,
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         Utente altroOrganizzatore = new Utente(99L);
@@ -228,7 +249,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         partecipazioneRepository,
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         assertThrows(
@@ -269,13 +291,16 @@ class ProclamareTeamVincitoreControlTest {
         PartecipazioneRepositoryFinto partecipazioneRepository =
                 new PartecipazioneRepositoryFinto();
 
+        partecipazioneRepository.partecipazioni =
+                List.of(partecipazione);
         partecipazioneRepository.partecipazioniNonEscluse =
                 List.of(partecipazione);
 
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         partecipazioneRepository,
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         assertThrows(
@@ -286,9 +311,15 @@ class ProclamareTeamVincitoreControlTest {
                 )
         );
 
-        assertEquals(
-                1,
-                partecipazioneRepository.numeroRecuperiNonEscluse
+        assertAll(
+                () -> assertEquals(
+                        1,
+                        partecipazioneRepository.numeroRecuperi
+                ),
+                () -> assertEquals(
+                        1,
+                        partecipazioneRepository.numeroRecuperiNonEscluse
+                )
         );
     }
 
@@ -321,6 +352,11 @@ class ProclamareTeamVincitoreControlTest {
         PartecipazioneRepositoryFinto partecipazioneRepository =
                 new PartecipazioneRepositoryFinto();
 
+        partecipazioneRepository.partecipazioni =
+                List.of(
+                        valutata,
+                        nonValutata
+                );
         partecipazioneRepository.partecipazioniNonEscluse =
                 List.of(
                         valutata,
@@ -330,7 +366,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         partecipazioneRepository,
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         assertThrows(
@@ -341,9 +378,197 @@ class ProclamareTeamVincitoreControlTest {
                 )
         );
 
-        assertEquals(
-                1,
-                partecipazioneRepository.numeroRecuperiNonEscluse
+        assertAll(
+                () -> assertEquals(
+                        1,
+                        partecipazioneRepository.numeroRecuperi
+                ),
+                () -> assertEquals(
+                        0,
+                        partecipazioneRepository.numeroRecuperiNonEscluse
+                )
+        );
+    }
+
+    @Test
+    void nonAvviaProclamazioneSeSottomissioneEsclusaNonEValutata() {
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon =
+                creaHackathonInValutazione(organizzatore);
+
+        Partecipazione valutata =
+                creaPartecipazioneValutata(hackathon, 10L);
+
+        Partecipazione esclusaNonValutata =
+                creaPartecipazione(hackathon, 11L);
+
+        new Sottomissione(
+                esclusaNonValutata,
+                "Sottomissione esclusa non valutata"
+        );
+        esclusaNonValutata.escludi();
+
+        PartecipazioneRepositoryFinto partecipazioneRepository =
+                new PartecipazioneRepositoryFinto();
+
+        partecipazioneRepository.partecipazioni =
+                List.of(valutata, esclusaNonValutata);
+        partecipazioneRepository.partecipazioniNonEscluse =
+                List.of(valutata);
+
+        ProclamareTeamVincitoreControl control =
+                new ProclamareTeamVincitoreControl(
+                        partecipazioneRepository,
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
+                );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> control.avviaProclamazioneTeamVincitore(
+                        organizzatore,
+                        hackathon
+                )
+        );
+
+        assertAll(
+                () -> assertEquals(
+                        1,
+                        partecipazioneRepository.numeroRecuperi
+                ),
+                () -> assertEquals(
+                        0,
+                        partecipazioneRepository.numeroRecuperiNonEscluse
+                )
+        );
+    }
+
+    @Test
+    void nonAvviaProclamazioneConSegnalazioneDaEsaminare() {
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon =
+                creaHackathonInValutazione(organizzatore);
+
+        Partecipazione partecipazione =
+                creaPartecipazioneValutata(hackathon, 10L);
+
+        Segnalazione segnalazione = Segnalazione.crea(
+                new Utente(3L),
+                partecipazione,
+                "Violazione da esaminare"
+        );
+
+        PartecipazioneRepositoryFinto partecipazioneRepository =
+                new PartecipazioneRepositoryFinto();
+        partecipazioneRepository.partecipazioni =
+                List.of(partecipazione);
+        partecipazioneRepository.partecipazioniNonEscluse =
+                List.of(partecipazione);
+
+        SegnalazioneRepositoryFinto segnalazioneRepository =
+                new SegnalazioneRepositoryFinto();
+        segnalazioneRepository.segnalazioniDaEsaminare =
+                List.of(segnalazione);
+
+        ProclamareTeamVincitoreControl control =
+                new ProclamareTeamVincitoreControl(
+                        partecipazioneRepository,
+                        new HackathonRepositoryFinto(),
+                        segnalazioneRepository
+                );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> control.avviaProclamazioneTeamVincitore(
+                        organizzatore,
+                        hackathon
+                )
+        );
+
+        assertAll(
+                () -> assertSame(
+                        organizzatore,
+                        segnalazioneRepository.organizzatoreRicevuto
+                ),
+                () -> assertEquals(
+                        1,
+                        segnalazioneRepository.numeroRecuperi
+                ),
+                () -> assertEquals(
+                        0,
+                        partecipazioneRepository.numeroRecuperi
+                ),
+                () -> assertEquals(
+                        0,
+                        partecipazioneRepository.numeroRecuperiNonEscluse
+                )
+        );
+    }
+
+    @Test
+    void segnalazioneDiAltroHackathonNonBloccaProclamazione() {
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon =
+                creaHackathonInValutazione(organizzatore);
+        Hackathon altroHackathon =
+                creaHackathonInValutazione(new Utente(1L));
+
+        Partecipazione partecipazione =
+                creaPartecipazioneValutata(hackathon, 10L);
+        Partecipazione partecipazioneAltroHackathon =
+                creaPartecipazioneValutata(altroHackathon, 11L);
+
+        Segnalazione segnalazioneAltroHackathon =
+                Segnalazione.crea(
+                        new Utente(3L),
+                        partecipazioneAltroHackathon,
+                        "Violazione di un altro hackathon"
+                );
+
+        PartecipazioneRepositoryFinto partecipazioneRepository =
+                new PartecipazioneRepositoryFinto();
+        partecipazioneRepository.partecipazioni =
+                List.of(partecipazione);
+        partecipazioneRepository.partecipazioniNonEscluse =
+                List.of(partecipazione);
+
+        SegnalazioneRepositoryFinto segnalazioneRepository =
+                new SegnalazioneRepositoryFinto();
+        segnalazioneRepository.segnalazioniDaEsaminare =
+                List.of(segnalazioneAltroHackathon);
+
+        ProclamareTeamVincitoreControl control =
+                new ProclamareTeamVincitoreControl(
+                        partecipazioneRepository,
+                        new HackathonRepositoryFinto(),
+                        segnalazioneRepository
+                );
+
+        List<Partecipazione> risultato =
+                assertDoesNotThrow(
+                        () -> control.avviaProclamazioneTeamVincitore(
+                                organizzatore,
+                                hackathon
+                        )
+                );
+
+        assertAll(
+                () -> assertEquals(
+                        List.of(partecipazione),
+                        risultato
+                ),
+                () -> assertEquals(
+                        1,
+                        segnalazioneRepository.numeroRecuperi
+                ),
+                () -> assertEquals(
+                        1,
+                        partecipazioneRepository.numeroRecuperi
+                ),
+                () -> assertEquals(
+                        1,
+                        partecipazioneRepository.numeroRecuperiNonEscluse
+                )
         );
     }
 
@@ -368,7 +593,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         new PartecipazioneRepositoryFinto(),
-                        hackathonRepository
+                        hackathonRepository,
+                        new SegnalazioneRepositoryFinto()
                 );
 
         assertDoesNotThrow(
@@ -420,7 +646,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         new PartecipazioneRepositoryFinto(),
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         assertThrows(
@@ -452,7 +679,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         new PartecipazioneRepositoryFinto(),
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         assertThrows(
@@ -493,7 +721,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         new PartecipazioneRepositoryFinto(),
-                        new HackathonRepositoryFinto()
+                        new HackathonRepositoryFinto(),
+                        new SegnalazioneRepositoryFinto()
                 );
 
         assertAll(
@@ -535,7 +764,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         new PartecipazioneRepositoryFinto(),
-                        hackathonRepository
+                        hackathonRepository,
+                        new SegnalazioneRepositoryFinto()
                 );
 
         /*
@@ -611,7 +841,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         new PartecipazioneRepositoryFinto(),
-                        hackathonRepository
+                        hackathonRepository,
+                        new SegnalazioneRepositoryFinto()
                 );
 
         Utente altroOrganizzatore = new Utente(99L);
@@ -664,7 +895,8 @@ class ProclamareTeamVincitoreControlTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         new PartecipazioneRepositoryFinto(),
-                        hackathonRepository
+                        hackathonRepository,
+                        new SegnalazioneRepositoryFinto()
                 );
 
         control.preparaProclamazione(
@@ -807,17 +1039,23 @@ class ProclamareTeamVincitoreControlTest {
     private static class PartecipazioneRepositoryFinto
             implements PartecipazioneRepository {
 
+        private List<Partecipazione> partecipazioni =
+                List.of();
         private List<Partecipazione> partecipazioniNonEscluse =
                 List.of();
 
         private Hackathon hackathonRicevuto;
+        private int numeroRecuperi;
         private int numeroRecuperiNonEscluse;
 
         @Override
         public List<Partecipazione> ottieniPartecipazioni(
                 Hackathon hackathon
         ) {
-            return List.of();
+            hackathonRicevuto = hackathon;
+            numeroRecuperi++;
+
+            return partecipazioni;
         }
 
         @Override
@@ -833,6 +1071,45 @@ class ProclamareTeamVincitoreControlTest {
         @Override
         public void salva(
                 Partecipazione partecipazione
+        ) {
+        }
+    }
+
+    private static class SegnalazioneRepositoryFinto
+            implements SegnalazioneRepository {
+
+        private List<Segnalazione> segnalazioniDaEsaminare =
+                List.of();
+
+        private Utente organizzatoreRicevuto;
+        private int numeroRecuperi;
+
+        @Override
+        public List<Segnalazione> ottieniSegnalazioniDaEsaminare(
+                Utente organizzatore
+        ) {
+            organizzatoreRicevuto = organizzatore;
+            numeroRecuperi++;
+
+            return segnalazioniDaEsaminare;
+        }
+
+        @Override
+        public void salva(
+                Segnalazione segnalazione
+        ) {
+        }
+
+        @Override
+        public void salvaConNotifica(
+                Segnalazione segnalazione,
+                NotificaSegnalazione notifica
+        ) {
+        }
+
+        @Override
+        public void salvaNotifica(
+                NotificaSegnalazione notifica
         ) {
         }
     }

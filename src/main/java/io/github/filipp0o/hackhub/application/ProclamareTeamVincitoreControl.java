@@ -7,6 +7,7 @@ import io.github.filipp0o.hackhub.domain.Sottomissione;
 import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
 import io.github.filipp0o.hackhub.domain.Utente;
+import io.github.filipp0o.hackhub.domain.Segnalazione;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,18 +17,26 @@ public class ProclamareTeamVincitoreControl {
 
     private final PartecipazioneRepository partecipazioneRepository;
     private final HackathonRepository hackathonRepository;
+    private final SegnalazioneRepository segnalazioneRepository;
 
     public ProclamareTeamVincitoreControl(
             PartecipazioneRepository partecipazioneRepository,
-            HackathonRepository hackathonRepository
+            HackathonRepository hackathonRepository,
+            SegnalazioneRepository segnalazioneRepository
     ) {
         this.partecipazioneRepository = Objects.requireNonNull(
                 partecipazioneRepository,
                 "Il repository delle partecipazioni è obbligatorio"
         );
+
         this.hackathonRepository = Objects.requireNonNull(
                 hackathonRepository,
                 "Il repository degli hackathon è obbligatorio"
+        );
+
+        this.segnalazioneRepository = Objects.requireNonNull(
+                segnalazioneRepository,
+                "Il repository delle segnalazioni è obbligatorio"
         );
     }
 
@@ -39,6 +48,7 @@ public class ProclamareTeamVincitoreControl {
                 organizzatore,
                 "L'organizzatore è obbligatorio"
         );
+
         Hackathon hackathonValido = Objects.requireNonNull(
                 hackathon,
                 "L'hackathon è obbligatorio"
@@ -52,13 +62,34 @@ public class ProclamareTeamVincitoreControl {
                 hackathonValido
         );
 
+        List<Segnalazione> segnalazioniDaEsaminare =
+                segnalazioneRepository
+                        .ottieniSegnalazioniDaEsaminare(
+                                organizzatoreValido
+                        );
+
+        verificaAssenzaSegnalazioniDaEsaminare(
+                hackathonValido,
+                segnalazioniDaEsaminare
+        );
+
+        List<Partecipazione> partecipazioni =
+                partecipazioneRepository
+                        .ottieniPartecipazioni(
+                                hackathonValido
+                        );
+
+        verificaSottomissioniValutate(
+                partecipazioni
+        );
+
         List<Partecipazione> partecipazioniNonEscluse =
                 partecipazioneRepository
                         .recuperaPartecipazioniNonEscluse(
                                 hackathonValido
                         );
 
-        verificaSottomissioniValutate(
+        verificaEsistenzaSottomissioneAmmissibile(
                 partecipazioniNonEscluse
         );
 
@@ -158,17 +189,6 @@ public class ProclamareTeamVincitoreControl {
     private void verificaSottomissioniValutate(
             List<Partecipazione> partecipazioni
     ) {
-        boolean esisteSottomissione =
-                partecipazioni.stream()
-                        .map(Partecipazione::getSottomissione)
-                        .anyMatch(Objects::nonNull);
-
-        if (!esisteSottomissione) {
-            throw new IllegalStateException(
-                    "Non esistono sottomissioni da proclamare"
-            );
-        }
-
         boolean esisteSottomissioneNonValutata =
                 partecipazioni.stream()
                         .map(Partecipazione::getSottomissione)
@@ -213,6 +233,43 @@ public class ProclamareTeamVincitoreControl {
         if (sottomissione.getValutazione() == null) {
             throw new IllegalStateException(
                     "La sottomissione del team selezionato non è stata valutata"
+            );
+        }
+    }
+
+    private void verificaAssenzaSegnalazioniDaEsaminare(
+            Hackathon hackathon,
+            List<Segnalazione> segnalazioni
+    ) {
+        boolean esisteSegnalazioneDaEsaminare =
+                segnalazioni.stream()
+                        .map(Segnalazione::getPartecipazione)
+                        .anyMatch(partecipazione ->
+                                partecipazione.getHackathon()
+                                        == hackathon
+                        );
+
+        if (esisteSegnalazioneDaEsaminare) {
+            throw new IllegalStateException(
+                    "Esistono segnalazioni ancora da esaminare per l'hackathon"
+            );
+        }
+    }
+
+    private void verificaEsistenzaSottomissioneAmmissibile(
+            List<Partecipazione> partecipazioni
+    ) {
+        boolean esisteSottomissioneAmmissibile =
+                partecipazioni.stream()
+                        .map(Partecipazione::getSottomissione)
+                        .filter(Objects::nonNull)
+                        .anyMatch(sottomissione ->
+                                sottomissione.getValutazione() != null
+                        );
+
+        if (!esisteSottomissioneAmmissibile) {
+            throw new IllegalStateException(
+                    "Non esistono sottomissioni valutate appartenenti a partecipazioni attive"
             );
         }
     }
