@@ -40,20 +40,45 @@ class ErogarePremioControlTest {
     }
 
     @Test
-    void rifiutaHackathonNullo() {
-        ErogarePremioControl control = new ErogarePremioControl(
-                new SistemaPagamentoGatewayFinto(),
-                new HackathonRepositoryFinto()
-        );
+    void rifiutaParametriNulli() {
+        ErogarePremioControl control =
+                new ErogarePremioControl(
+                        new SistemaPagamentoGatewayFinto(),
+                        new HackathonRepositoryFinto()
+                );
+
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon =
+                creaHackathonConRiscossionePronta();
 
         assertAll(
                 () -> assertThrows(
                         NullPointerException.class,
-                        () -> control.avviaErogazionePremio(null)
+                        () -> control.avviaErogazionePremio(
+                                null,
+                                hackathon
+                        )
                 ),
                 () -> assertThrows(
                         NullPointerException.class,
-                        () -> control.confermaErogazionePremio(null)
+                        () -> control.avviaErogazionePremio(
+                                organizzatore,
+                                null
+                        )
+                ),
+                () -> assertThrows(
+                        NullPointerException.class,
+                        () -> control.confermaErogazionePremio(
+                                null,
+                                hackathon
+                        )
+                ),
+                () -> assertThrows(
+                        NullPointerException.class,
+                        () -> control.confermaErogazionePremio(
+                                organizzatore,
+                                null
+                        )
                 )
         );
     }
@@ -64,14 +89,27 @@ class ErogarePremioControlTest {
                 new SistemaPagamentoGatewayFinto();
         HackathonRepositoryFinto repository =
                 new HackathonRepositoryFinto();
+
         ErogarePremioControl control =
-                new ErogarePremioControl(gateway, repository);
+                new ErogarePremioControl(
+                        gateway,
+                        repository
+                );
 
         Hackathon hackathon =
                 creaHackathonConRiscossionePronta();
 
+        /*
+         * Istanza diversa, ma stesso identificatore:
+         * rappresenta lo stesso organizzatore.
+         */
+        Utente organizzatore = new Utente(1L);
+
         assertDoesNotThrow(
-                () -> control.avviaErogazionePremio(hackathon)
+                () -> control.avviaErogazionePremio(
+                        organizzatore,
+                        hackathon
+                )
         );
 
         assertAll(
@@ -79,7 +117,101 @@ class ErogarePremioControlTest {
                         0,
                         gateway.numeroRichiesteErogazione
                 ),
-                () -> assertNull(repository.hackathonSalvato)
+                () -> assertNull(
+                        repository.hackathonSalvato
+                )
+        );
+    }
+
+    @Test
+    void nonAvviaErogazioneSeOrganizzatoreNonAssegnato() {
+        SistemaPagamentoGatewayFinto gateway =
+                new SistemaPagamentoGatewayFinto();
+        HackathonRepositoryFinto repository =
+                new HackathonRepositoryFinto();
+
+        ErogarePremioControl control =
+                new ErogarePremioControl(
+                        gateway,
+                        repository
+                );
+
+        Hackathon hackathon =
+                creaHackathonConRiscossionePronta();
+        RiscossionePremio riscossione =
+                hackathon.getRiscossionePremio();
+
+        Utente altroOrganizzatore = new Utente(99L);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> control.avviaErogazionePremio(
+                        altroOrganizzatore,
+                        hackathon
+                )
+        );
+
+        assertAll(
+                () -> assertEquals(
+                        0,
+                        gateway.numeroRichiesteErogazione
+                ),
+                () -> assertEquals(
+                        StatoRiscossionePremio.PRONTA,
+                        riscossione.getStato()
+                ),
+                () -> assertNull(
+                        riscossione.getPaymentRef()
+                ),
+                () -> assertNull(
+                        repository.hackathonSalvato
+                )
+        );
+    }
+
+    @Test
+    void nonConfermaErogazioneSeOrganizzatoreNonAssegnato() {
+        SistemaPagamentoGatewayFinto gateway =
+                new SistemaPagamentoGatewayFinto();
+        HackathonRepositoryFinto repository =
+                new HackathonRepositoryFinto();
+
+        ErogarePremioControl control =
+                new ErogarePremioControl(
+                        gateway,
+                        repository
+                );
+
+        Hackathon hackathon =
+                creaHackathonConRiscossionePronta();
+        RiscossionePremio riscossione =
+                hackathon.getRiscossionePremio();
+
+        Utente altroOrganizzatore = new Utente(99L);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> control.confermaErogazionePremio(
+                        altroOrganizzatore,
+                        hackathon
+                )
+        );
+
+        assertAll(
+                () -> assertEquals(
+                        0,
+                        gateway.numeroRichiesteErogazione
+                ),
+                () -> assertEquals(
+                        StatoRiscossionePremio.PRONTA,
+                        riscossione.getStato()
+                ),
+                () -> assertNull(
+                        riscossione.getPaymentRef()
+                ),
+                () -> assertNull(
+                        repository.hackathonSalvato
+                )
         );
     }
 
@@ -89,14 +221,22 @@ class ErogarePremioControlTest {
                 new SistemaPagamentoGatewayFinto();
         HackathonRepositoryFinto repository =
                 new HackathonRepositoryFinto();
-        ErogarePremioControl control =
-                new ErogarePremioControl(gateway, repository);
 
+        ErogarePremioControl control =
+                new ErogarePremioControl(
+                        gateway,
+                        repository
+                );
+
+        Utente organizzatore = new Utente(1L);
         Hackathon hackathon = creaHackathonConcluso();
 
         assertThrows(
                 IllegalStateException.class,
-                () -> control.confermaErogazionePremio(hackathon)
+                () -> control.confermaErogazionePremio(
+                        organizzatore,
+                        hackathon
+                )
         );
 
         assertAll(
@@ -104,7 +244,9 @@ class ErogarePremioControlTest {
                         0,
                         gateway.numeroRichiesteErogazione
                 ),
-                () -> assertNull(repository.hackathonSalvato)
+                () -> assertNull(
+                        repository.hackathonSalvato
+                )
         );
     }
 
@@ -114,16 +256,25 @@ class ErogarePremioControlTest {
                 new SistemaPagamentoGatewayFinto();
         HackathonRepositoryFinto repository =
                 new HackathonRepositoryFinto();
-        ErogarePremioControl control =
-                new ErogarePremioControl(gateway, repository);
 
+        ErogarePremioControl control =
+                new ErogarePremioControl(
+                        gateway,
+                        repository
+                );
+
+        Utente organizzatore = new Utente(1L);
         Hackathon hackathon = creaHackathonConcluso();
+
         RiscossionePremio riscossione =
                 RiscossionePremio.crea(hackathon);
 
         assertThrows(
                 IllegalStateException.class,
-                () -> control.confermaErogazionePremio(hackathon)
+                () -> control.confermaErogazionePremio(
+                        organizzatore,
+                        hackathon
+                )
         );
 
         assertAll(
@@ -135,7 +286,9 @@ class ErogarePremioControlTest {
                         0,
                         gateway.numeroRichiesteErogazione
                 ),
-                () -> assertNull(repository.hackathonSalvato)
+                () -> assertNull(
+                        repository.hackathonSalvato
+                )
         );
     }
 
@@ -145,15 +298,28 @@ class ErogarePremioControlTest {
                 new SistemaPagamentoGatewayFinto();
         HackathonRepositoryFinto repository =
                 new HackathonRepositoryFinto();
+
         ErogarePremioControl control =
-                new ErogarePremioControl(gateway, repository);
+                new ErogarePremioControl(
+                        gateway,
+                        repository
+                );
 
         Hackathon hackathon =
                 creaHackathonConRiscossionePronta();
         RiscossionePremio riscossione =
                 hackathon.getRiscossionePremio();
 
-        control.confermaErogazionePremio(hackathon);
+        /*
+         * Istanza diversa, ma stesso identificatore:
+         * rappresenta lo stesso organizzatore.
+         */
+        Utente organizzatore = new Utente(1L);
+
+        control.confermaErogazionePremio(
+                organizzatore,
+                hackathon
+        );
 
         assertAll(
                 () -> assertEquals(
@@ -191,9 +357,14 @@ class ErogarePremioControlTest {
 
         HackathonRepositoryFinto repository =
                 new HackathonRepositoryFinto();
-        ErogarePremioControl control =
-                new ErogarePremioControl(gateway, repository);
 
+        ErogarePremioControl control =
+                new ErogarePremioControl(
+                        gateway,
+                        repository
+                );
+
+        Utente organizzatore = new Utente(1L);
         Hackathon hackathon =
                 creaHackathonConRiscossionePronta();
         RiscossionePremio riscossione =
@@ -201,7 +372,10 @@ class ErogarePremioControlTest {
 
         assertThrows(
                 IllegalStateException.class,
-                () -> control.confermaErogazionePremio(hackathon)
+                () -> control.confermaErogazionePremio(
+                        organizzatore,
+                        hackathon
+                )
         );
 
         assertAll(
@@ -213,8 +387,12 @@ class ErogarePremioControlTest {
                         StatoRiscossionePremio.PRONTA,
                         riscossione.getStato()
                 ),
-                () -> assertNull(riscossione.getPaymentRef()),
-                () -> assertNull(repository.hackathonSalvato)
+                () -> assertNull(
+                        riscossione.getPaymentRef()
+                ),
+                () -> assertNull(
+                        repository.hackathonSalvato
+                )
         );
     }
 
@@ -223,6 +401,7 @@ class ErogarePremioControlTest {
 
         RiscossionePremio riscossione =
                 RiscossionePremio.crea(hackathon);
+
         riscossione.configura("beneficiary-123");
 
         return hackathon;
@@ -230,6 +409,7 @@ class ErogarePremioControlTest {
 
     private Hackathon creaHackathonConcluso() {
         Hackathon hackathon = creaHackathonValido();
+
         portaInValutazione(hackathon);
 
         Utente responsabile = new Utente(4L);
@@ -241,11 +421,15 @@ class ErogarePremioControlTest {
         );
 
         Partecipazione partecipazione =
-                new Partecipazione(hackathon, team);
+                new Partecipazione(
+                        hackathon,
+                        team
+                );
 
         hackathon.registraPartecipazioneVincitrice(
                 partecipazione
         );
+
         hackathon.concludi();
 
         return hackathon;
@@ -272,7 +456,9 @@ class ErogarePremioControlTest {
         );
     }
 
-    private void portaInValutazione(Hackathon hackathon) {
+    private void portaInValutazione(
+            Hackathon hackathon
+    ) {
         try {
             Field campoStato =
                     Hackathon.class.getDeclaredField("stato");
@@ -344,7 +530,9 @@ class ErogarePremioControlTest {
         }
 
         @Override
-        public void salva(Hackathon hackathon) {
+        public void salva(
+                Hackathon hackathon
+        ) {
             hackathonSalvato = hackathon;
         }
     }

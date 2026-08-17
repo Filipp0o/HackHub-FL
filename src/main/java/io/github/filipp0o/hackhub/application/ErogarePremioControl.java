@@ -3,6 +3,7 @@ package io.github.filipp0o.hackhub.application;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
 import io.github.filipp0o.hackhub.domain.StatoRiscossionePremio;
+import io.github.filipp0o.hackhub.domain.Utente;
 
 import java.util.Objects;
 
@@ -25,14 +26,43 @@ public class ErogarePremioControl {
         );
     }
 
-    public void avviaErogazionePremio(Hackathon hackathon) {
-        ottieniRiscossionePronta(hackathon);
-    }
-
-    public void confermaErogazionePremio(Hackathon hackathon) {
+    public void avviaErogazionePremio(
+            Utente organizzatore,
+            Hackathon hackathon
+    ) {
+        Utente organizzatoreValido = Objects.requireNonNull(
+                organizzatore,
+                "L'organizzatore è obbligatorio"
+        );
         Hackathon hackathonValido = Objects.requireNonNull(
                 hackathon,
                 "L'hackathon è obbligatorio"
+        );
+
+        verificaOrganizzatore(
+                organizzatoreValido,
+                hackathonValido
+        );
+
+        ottieniRiscossionePronta(hackathonValido);
+    }
+
+    public void confermaErogazionePremio(
+            Utente organizzatore,
+            Hackathon hackathon
+    ) {
+        Utente organizzatoreValido = Objects.requireNonNull(
+                organizzatore,
+                "L'organizzatore è obbligatorio"
+        );
+        Hackathon hackathonValido = Objects.requireNonNull(
+                hackathon,
+                "L'hackathon è obbligatorio"
+        );
+
+        verificaOrganizzatore(
+                organizzatoreValido,
+                hackathonValido
         );
 
         RiscossionePremio riscossione =
@@ -48,16 +78,25 @@ public class ErogarePremioControl {
         hackathonRepository.salva(hackathonValido);
     }
 
+    private void verificaOrganizzatore(
+            Utente organizzatore,
+            Hackathon hackathon
+    ) {
+        if (!Objects.equals(
+                hackathon.getOrganizzatore().getId(),
+                organizzatore.getId()
+        )) {
+            throw new IllegalArgumentException(
+                    "L'organizzatore non è assegnato a questo hackathon"
+            );
+        }
+    }
+
     private RiscossionePremio ottieniRiscossionePronta(
             Hackathon hackathon
     ) {
-        Hackathon hackathonValido = Objects.requireNonNull(
-                hackathon,
-                "L'hackathon è obbligatorio"
-        );
-
         RiscossionePremio riscossione =
-                hackathonValido.getRiscossionePremio();
+                hackathon.getRiscossionePremio();
 
         if (riscossione == null) {
             throw new IllegalStateException(
