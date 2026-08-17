@@ -1,7 +1,9 @@
 package io.github.filipp0o.hackhub.infrastructure;
 
 import io.github.filipp0o.hackhub.application.HackathonRepository;
+import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
 import io.github.filipp0o.hackhub.domain.Hackathon;
+import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.Utente;
 
@@ -9,10 +11,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class HackathonRepositoryImpl implements HackathonRepository {
+public class HackathonRepositoryImpl
+        implements HackathonRepository {
 
     private final List<Hackathon> hackathonSalvati =
             new ArrayList<>();
+
+    private final PartecipazioneRepository
+            partecipazioneRepository;
+
+    public HackathonRepositoryImpl(
+            PartecipazioneRepository partecipazioneRepository
+    ) {
+        this.partecipazioneRepository =
+                Objects.requireNonNull(
+                        partecipazioneRepository,
+                        "Il repository delle partecipazioni è obbligatorio"
+                );
+    }
 
     @Override
     public List<Hackathon> ottieniHackathonValutabili(
@@ -34,6 +50,7 @@ public class HackathonRepositoryImpl implements HackathonRepository {
                                 giudiceValido.getId()
                         )
                 )
+                .filter(this::haSottomissioneNonValutata)
                 .toList();
     }
 
@@ -62,6 +79,7 @@ public class HackathonRepositoryImpl implements HackathonRepository {
                                         )
                                 )
                 )
+                .filter(this::haAlmenoUnTeamIscritto)
                 .toList();
     }
 
@@ -73,5 +91,26 @@ public class HackathonRepositoryImpl implements HackathonRepository {
                         "L'hackathon è obbligatorio"
                 )
         );
+    }
+
+    private boolean haSottomissioneNonValutata(
+            Hackathon hackathon
+    ) {
+        return partecipazioneRepository
+                .ottieniPartecipazioni(hackathon)
+                .stream()
+                .map(Partecipazione::getSottomissione)
+                .filter(Objects::nonNull)
+                .anyMatch(sottomissione ->
+                        sottomissione.getValutazione() == null
+                );
+    }
+
+    private boolean haAlmenoUnTeamIscritto(
+            Hackathon hackathon
+    ) {
+        return !partecipazioneRepository
+                .ottieniPartecipazioni(hackathon)
+                .isEmpty();
     }
 }
