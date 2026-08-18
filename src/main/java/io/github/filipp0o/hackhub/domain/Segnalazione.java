@@ -2,10 +2,14 @@ package io.github.filipp0o.hackhub.domain;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Segnalazione {
 
-    private Long id;
+    private static final AtomicLong SEQUENZA_ID =
+            new AtomicLong(1);
+
+    private final Long id;
     private final String descrizione;
     private final LocalDateTime dataOraCreazione;
 
@@ -65,6 +69,7 @@ public class Segnalazione {
             );
         }
 
+        this.id = SEQUENZA_ID.getAndIncrement();
         this.descrizione = descrizione;
         this.dataOraCreazione = LocalDateTime.now();
         this.stato = StatoSegnalazione.DA_ESAMINARE;

@@ -70,6 +70,56 @@ class IdentificativiDominioTest {
         );
     }
 
+    @Test
+    void assegnaIdentificativiDistintiAlleSegnalazioni() {
+        Segnalazione primaSegnalazione =
+                creaSegnalazione("Prima segnalazione");
+
+        Segnalazione secondaSegnalazione =
+                creaSegnalazione("Seconda segnalazione");
+
+        assertAll(
+                () -> assertNotNull(primaSegnalazione.getId()),
+                () -> assertNotNull(secondaSegnalazione.getId()),
+                () -> assertTrue(primaSegnalazione.getId() > 0),
+                () -> assertTrue(secondaSegnalazione.getId() > 0),
+                () -> assertNotEquals(
+                        primaSegnalazione.getId(),
+                        secondaSegnalazione.getId()
+                )
+        );
+    }
+
+    private Segnalazione creaSegnalazione(
+            String descrizione
+    ) {
+        Hackathon hackathon = creaHackathon();
+
+        hackathon.aggiornaStato(
+                LocalDate.of(2026, 10, 11)
+        );
+
+        Utente responsabile = new Utente(4L);
+
+        Team team = Team.crea(
+                "Team Alpha",
+                responsabile,
+                responsabile
+        );
+
+        Partecipazione partecipazione =
+                new Partecipazione(
+                        hackathon,
+                        team
+                );
+
+        return Segnalazione.crea(
+                new Utente(3L),
+                partecipazione,
+                descrizione
+        );
+    }
+
     private Sottomissione creaSottomissione(
             String contenuto
     ) {
