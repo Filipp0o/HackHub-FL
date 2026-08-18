@@ -50,10 +50,36 @@ class IdentificativiDominioTest {
         );
     }
 
+    @Test
+    void assegnaIdentificativiDistintiAllePartecipazioni() {
+        Partecipazione primaPartecipazione =
+                creaPartecipazione();
+
+        Partecipazione secondaPartecipazione =
+                creaPartecipazione();
+
+        assertAll(
+                () -> assertNotNull(primaPartecipazione.getId()),
+                () -> assertNotNull(secondaPartecipazione.getId()),
+                () -> assertTrue(primaPartecipazione.getId() > 0),
+                () -> assertTrue(secondaPartecipazione.getId() > 0),
+                () -> assertNotEquals(
+                        primaPartecipazione.getId(),
+                        secondaPartecipazione.getId()
+                )
+        );
+    }
+
     private Sottomissione creaSottomissione(
             String contenuto
     ) {
-        Hackathon hackathon = creaHackathon();
+        return new Sottomissione(
+                creaPartecipazione(),
+                contenuto
+        );
+    }
+
+    private Partecipazione creaPartecipazione() {
         Utente responsabile = new Utente(4L);
 
         Team team = Team.crea(
@@ -62,12 +88,9 @@ class IdentificativiDominioTest {
                 responsabile
         );
 
-        Partecipazione partecipazione =
-                new Partecipazione(hackathon, team);
-
-        return new Sottomissione(
-                partecipazione,
-                contenuto
+        return new Partecipazione(
+                creaHackathon(),
+                team
         );
     }
 

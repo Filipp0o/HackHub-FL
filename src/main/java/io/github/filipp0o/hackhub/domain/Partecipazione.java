@@ -1,10 +1,14 @@
 package io.github.filipp0o.hackhub.domain;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Partecipazione {
 
-    private Long id;
+    private static final AtomicLong SEQUENZA_ID =
+            new AtomicLong(1);
+
+    private final Long id;
     private StatoPartecipazione stato;
 
     private final Hackathon hackathon;
@@ -26,6 +30,7 @@ public class Partecipazione {
                 "Il team è obbligatorio"
         );
 
+        this.id = SEQUENZA_ID.getAndIncrement();
         this.stato = StatoPartecipazione.ATTIVA;
     }
 
