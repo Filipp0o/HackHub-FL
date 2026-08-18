@@ -1,10 +1,14 @@
 package io.github.filipp0o.hackhub.domain;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Sottomissione {
 
-    private Long id;
+    private static final AtomicLong SEQUENZA_ID =
+            new AtomicLong(1);
+
+    private final Long id;
     private final String contenuto;
 
     private final Partecipazione partecipazione;
@@ -28,13 +32,15 @@ public class Sottomissione {
         this.contenuto = contenuto;
 
         partecipazione.registraSottomissione(this);
+        this.id = SEQUENZA_ID.getAndIncrement();
     }
 
     void registraValutazione(Valutazione valutazione) {
-        Valutazione valutazioneValida = Objects.requireNonNull(
-                valutazione,
-                "La valutazione è obbligatoria"
-        );
+        Valutazione valutazioneValida =
+                Objects.requireNonNull(
+                        valutazione,
+                        "La valutazione è obbligatoria"
+                );
 
         if (this.valutazione != null) {
             throw new IllegalStateException(

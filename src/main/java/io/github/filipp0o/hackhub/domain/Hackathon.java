@@ -4,10 +4,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Hackathon {
 
-    private Long id;
+    private static final AtomicLong SEQUENZA_ID =
+            new AtomicLong(1);
+
+    private final Long id;
 
     private final String nome;
     private final String regolamento;
@@ -121,6 +125,7 @@ public class Hackathon {
         }
 
         this.mentori = List.copyOf(mentori);
+        this.id = SEQUENZA_ID.getAndIncrement();
         this.stato = StatoHackathon.IN_ISCRIZIONE;
     }
 
@@ -149,7 +154,6 @@ public class Hackathon {
         return valore;
     }
 
-
     public void aggiornaStato(LocalDate dataCorrente) {
         LocalDate dataValida = Objects.requireNonNull(
                 dataCorrente,
@@ -170,8 +174,6 @@ public class Hackathon {
             stato = StatoHackathon.IN_CORSO;
         }
     }
-
-
 
     public void registraPartecipazioneVincitrice(
             Partecipazione partecipazione
