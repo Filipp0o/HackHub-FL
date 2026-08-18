@@ -3,6 +3,7 @@ package io.github.filipp0o.hackhub.presentation;
 import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
 import io.github.filipp0o.hackhub.domain.DatiDecisioneSegnalazione;
 import io.github.filipp0o.hackhub.domain.EsitoSegnalazione;
+import io.github.filipp0o.hackhub.domain.NotificaSegnalazione;
 import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Utente;
 import org.springframework.http.HttpStatus;
@@ -71,6 +72,20 @@ public class EsaminareSegnalazioneBoundary {
                 esaminareSegnalazioneControl
                         .selezionaSegnalazione(
                                 segnalazione,
+                                organizzatore
+                        )
+        );
+    }
+
+    public RiepilogoSegnalazione
+    selezionaNotificaSegnalazione(
+            NotificaSegnalazione notificaSegnalazione,
+            Utente organizzatore
+    ) {
+        return creaRiepilogo(
+                esaminareSegnalazioneControl
+                        .apriSegnalazioneDaNotifica(
+                                notificaSegnalazione,
                                 organizzatore
                         )
         );
@@ -147,14 +162,21 @@ public class EsaminareSegnalazioneBoundary {
                 segnalazione
                         .getPartecipazione()
                         .getTeam()
-                        .getNome()
+                        .getNome(),
+                segnalazione
+                        .getPartecipazione()
+                        .getHackathon()
+                        .getRegolamento(),
+                List.of(EsitoSegnalazione.values())
         );
     }
 
     public record RiepilogoSegnalazione(
             Long id,
             String descrizione,
-            String nomeTeam
+            String nomeTeam,
+            String regolamento,
+            List<EsitoSegnalazione> esitiDisponibili
     ) {
     }
 
