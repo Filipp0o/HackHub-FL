@@ -3,11 +3,11 @@ package io.github.filipp0o.hackhub.application;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
+import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
 import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
 import io.github.filipp0o.hackhub.domain.Utente;
-import io.github.filipp0o.hackhub.domain.Segnalazione;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -89,11 +89,25 @@ public class ProclamareTeamVincitoreControl {
                                 hackathonValido
                         );
 
+        List<Partecipazione> partecipazioniAmmissibili =
+                partecipazioniNonEscluse.stream()
+                        .filter(partecipazione ->
+                                partecipazione.getSottomissione()
+                                        != null
+                        )
+                        .filter(partecipazione ->
+                                partecipazione
+                                        .getSottomissione()
+                                        .getValutazione()
+                                        != null
+                        )
+                        .toList();
+
         verificaEsistenzaSottomissioneAmmissibile(
-                partecipazioniNonEscluse
+                partecipazioniAmmissibili
         );
 
-        return partecipazioniNonEscluse;
+        return partecipazioniAmmissibili;
     }
 
     public void preparaProclamazione(
@@ -104,6 +118,7 @@ public class ProclamareTeamVincitoreControl {
                 hackathon,
                 "L'hackathon è obbligatorio"
         );
+
         Partecipazione partecipazioneValida =
                 Objects.requireNonNull(
                         partecipazioneSelezionata,
@@ -128,10 +143,12 @@ public class ProclamareTeamVincitoreControl {
                 organizzatore,
                 "L'organizzatore è obbligatorio"
         );
+
         Hackathon hackathonValido = Objects.requireNonNull(
                 hackathon,
                 "L'hackathon è obbligatorio"
         );
+
         Partecipazione partecipazioneValida =
                 Objects.requireNonNull(
                         partecipazioneSelezionata,
