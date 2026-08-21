@@ -32,10 +32,23 @@ public class Sottomissione {
         this.contenuto = contenuto;
 
         partecipazione.registraSottomissione(this);
+
         this.id = SEQUENZA_ID.getAndIncrement();
     }
 
-    void registraValutazione(Valutazione valutazione) {
+    public static Sottomissione crea(
+            Partecipazione partecipazione,
+            String contenuto
+    ) {
+        return new Sottomissione(
+                partecipazione,
+                contenuto
+        );
+    }
+
+    void registraValutazione(
+            Valutazione valutazione
+    ) {
         Valutazione valutazioneValida =
                 Objects.requireNonNull(
                         valutazione,

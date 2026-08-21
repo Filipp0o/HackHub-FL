@@ -100,6 +100,23 @@ class PartecipazioneTest {
     }
 
     @Test
+    void ottieniHackathonRestituisceHackathonAssociato() {
+        Hackathon hackathon = creaHackathonValido();
+        Team team = creaTeamValido();
+
+        Partecipazione partecipazione =
+                Partecipazione.crea(
+                        hackathon,
+                        team
+                );
+
+        assertSame(
+                hackathon,
+                partecipazione.ottieniHackathon()
+        );
+    }
+
+    @Test
     void escludiImpostaLoStatoEsclusa() {
         Partecipazione partecipazione =
                 new Partecipazione(

@@ -46,14 +46,17 @@ public class Hackathon {
                 dati.nome(),
                 "Il nome è obbligatorio"
         );
+
         this.regolamento = richiediTesto(
                 dati.regolamento(),
                 "Il regolamento è obbligatorio"
         );
+
         this.criteriValutazione = richiediTesto(
                 dati.criteriValutazione(),
                 "I criteri di valutazione sono obbligatori"
         );
+
         this.luogo = richiediTesto(
                 dati.luogo(),
                 "Il luogo è obbligatorio"
@@ -63,18 +66,22 @@ public class Hackathon {
                 dati.scadenzaIscrizioni(),
                 "La scadenza delle iscrizioni è obbligatoria"
         );
+
         this.dataInizio = Objects.requireNonNull(
                 dati.dataInizio(),
                 "La data di inizio è obbligatoria"
         );
+
         this.dataFine = Objects.requireNonNull(
                 dati.dataFine(),
                 "La data di fine è obbligatoria"
         );
+
         this.importoPremio = Objects.requireNonNull(
                 dati.importoPremio(),
                 "L'importo del premio è obbligatorio"
         );
+
         this.dimensioneMassimaTeam = Objects.requireNonNull(
                 dati.dimensioneMassimaTeam(),
                 "La dimensione massima del team è obbligatoria"
@@ -108,6 +115,7 @@ public class Hackathon {
                 organizzatore,
                 "L'organizzatore è obbligatorio"
         );
+
         this.giudice = Objects.requireNonNull(
                 giudice,
                 "Il giudice è obbligatorio"
@@ -169,6 +177,10 @@ public class Hackathon {
                 );
 
         return numeroMembriValido <= dimensioneMassimaTeam;
+    }
+
+    public boolean scadenzaSottomissioneNonTrascorsa() {
+        return !LocalDate.now().isAfter(dataFine);
     }
 
     public void aggiornaStato(LocalDate dataCorrente) {

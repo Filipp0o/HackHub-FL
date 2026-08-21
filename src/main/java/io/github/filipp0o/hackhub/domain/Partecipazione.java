@@ -62,6 +62,10 @@ public class Partecipazione {
         this.sottomissione = sottomissioneValida;
     }
 
+    public Hackathon ottieniHackathon() {
+        return hackathon;
+    }
+
     public Long getId() {
         return id;
     }

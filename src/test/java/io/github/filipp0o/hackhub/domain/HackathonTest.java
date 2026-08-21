@@ -285,7 +285,6 @@ class HackathonTest {
         );
     }
 
-
     @Test
     void mantieneStatoInIscrizionePrimaDellaDataInizio() {
         Hackathon hackathon = creaHackathonValido();
@@ -356,6 +355,71 @@ class HackathonTest {
         );
     }
 
+    @Test
+    void scadenzaSottomissioneFuturaNonRisultaTrascorsa() {
+        LocalDate dataFine = LocalDate.now().plusDays(3);
+
+        DatiHackathon dati = datiConDate(
+                dataFine.minusDays(3),
+                dataFine.minusDays(2),
+                dataFine
+        );
+
+        Hackathon hackathon = Hackathon.crea(
+                dati,
+                organizzatore,
+                giudice,
+                List.of(mentore)
+        );
+
+        assertTrue(
+                hackathon.scadenzaSottomissioneNonTrascorsa()
+        );
+    }
+
+    @Test
+    void consenteSottomissioneNelGiornoDellaScadenza() {
+        LocalDate dataFine = LocalDate.now();
+
+        DatiHackathon dati = datiConDate(
+                dataFine.minusDays(3),
+                dataFine.minusDays(2),
+                dataFine
+        );
+
+        Hackathon hackathon = Hackathon.crea(
+                dati,
+                organizzatore,
+                giudice,
+                List.of(mentore)
+        );
+
+        assertTrue(
+                hackathon.scadenzaSottomissioneNonTrascorsa()
+        );
+    }
+
+    @Test
+    void scadenzaSottomissionePassataRisultaTrascorsa() {
+        LocalDate dataFine = LocalDate.now().minusDays(1);
+
+        DatiHackathon dati = datiConDate(
+                dataFine.minusDays(3),
+                dataFine.minusDays(2),
+                dataFine
+        );
+
+        Hackathon hackathon = Hackathon.crea(
+                dati,
+                organizzatore,
+                giudice,
+                List.of(mentore)
+        );
+
+        assertFalse(
+                hackathon.scadenzaSottomissioneNonTrascorsa()
+        );
+    }
 
     @Test
     void registraPartecipazioneVincitriceValida() {
@@ -464,8 +528,8 @@ class HackathonTest {
 
         Partecipazione partecipazione =
                 creaPartecipazione(hackathon);
-        hackathon.registraPartecipazioneVincitrice(partecipazione);
 
+        hackathon.registraPartecipazioneVincitrice(partecipazione);
         hackathon.concludi();
 
         assertAll(

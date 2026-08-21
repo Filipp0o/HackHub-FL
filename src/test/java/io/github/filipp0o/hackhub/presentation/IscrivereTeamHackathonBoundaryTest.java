@@ -366,5 +366,15 @@ class IscrivereTeamHackathonBoundaryTest {
 
             numeroSalvataggi++;
         }
+
+        @Override
+        public Partecipazione recuperaPartecipazione(
+                Team team,
+                Hackathon hackathon
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 }

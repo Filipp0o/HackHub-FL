@@ -6,12 +6,14 @@ import io.github.filipp0o.hackhub.application.CreareTeamControl;
 import io.github.filipp0o.hackhub.application.ErogarePremioControl;
 import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
 import io.github.filipp0o.hackhub.application.HackathonRepository;
+import io.github.filipp0o.hackhub.application.InviareSottomissioneControl;
 import io.github.filipp0o.hackhub.application.IscrivereTeamHackathonControl;
 import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
 import io.github.filipp0o.hackhub.application.ProclamareTeamVincitoreControl;
 import io.github.filipp0o.hackhub.application.SegnalareViolazioneControl;
 import io.github.filipp0o.hackhub.application.SegnalazioneRepository;
 import io.github.filipp0o.hackhub.application.SistemaPagamentoGateway;
+import io.github.filipp0o.hackhub.application.SottomissioneRepository;
 import io.github.filipp0o.hackhub.application.TeamRepository;
 import io.github.filipp0o.hackhub.application.UtenteRepository;
 import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl;
@@ -34,69 +36,46 @@ class HackHubConfigurationTest {
     void configuraComponentiApplicativi() {
         assertAll(
                 () -> assertNotNull(
-                        context.getBean(
-                                UtenteRepository.class
-                        )
+                        context.getBean(UtenteRepository.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                TeamRepository.class
-                        )
+                        context.getBean(TeamRepository.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                PartecipazioneRepository.class
-                        )
+                        context.getBean(PartecipazioneRepository.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                HackathonRepository.class
-                        )
+                        context.getBean(HackathonRepository.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                SegnalazioneRepository.class
-                        )
+                        context.getBean(SegnalazioneRepository.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                ValutazioneRepository.class
-                        )
+                        context.getBean(ValutazioneRepository.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                SistemaPagamentoGateway.class
-                        )
+                        context.getBean(SottomissioneRepository.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                CreareTeamControl.class
-                        )
+                        context.getBean(SistemaPagamentoGateway.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                CreareHackathonControl.class
-                        )
+                        context.getBean(CreareTeamControl.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                ValutareSottomissioneControl.class
-                        )
+                        context.getBean(CreareHackathonControl.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                SegnalareViolazioneControl.class
-                        )
+                        context.getBean(ValutareSottomissioneControl.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                EsaminareSegnalazioneControl.class
-                        )
+                        context.getBean(SegnalareViolazioneControl.class)
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                ProclamareTeamVincitoreControl.class
-                        )
+                        context.getBean(EsaminareSegnalazioneControl.class)
+                ),
+                () -> assertNotNull(
+                        context.getBean(ProclamareTeamVincitoreControl.class)
                 ),
                 () -> assertNotNull(
                         context.getBean(
@@ -104,13 +83,16 @@ class HackHubConfigurationTest {
                         )
                 ),
                 () -> assertNotNull(
-                        context.getBean(
-                                ErogarePremioControl.class
-                        )
+                        context.getBean(ErogarePremioControl.class)
                 ),
                 () -> assertNotNull(
                         context.getBean(
                                 IscrivereTeamHackathonControl.class
+                        )
+                ),
+                () -> assertNotNull(
+                        context.getBean(
+                                InviareSottomissioneControl.class
                         )
                 )
         );

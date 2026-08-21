@@ -21,5 +21,10 @@ public interface PartecipazioneRepository {
             Hackathon hackathon
     );
 
+    Partecipazione recuperaPartecipazione(
+            Team team,
+            Hackathon hackathon
+    );
+
     void salva(Partecipazione partecipazione);
 }

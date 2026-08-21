@@ -79,7 +79,41 @@ public class PartecipazioneRepositoryImpl
     }
 
     @Override
-    public void salva(Partecipazione partecipazione) {
+    public Partecipazione recuperaPartecipazione(
+            Team team,
+            Hackathon hackathon
+    ) {
+        Team teamValido = Objects.requireNonNull(
+                team,
+                "Il team è obbligatorio"
+        );
+
+        Hackathon hackathonValido = Objects.requireNonNull(
+                hackathon,
+                "L'hackathon è obbligatorio"
+        );
+
+        return partecipazioniSalvate.stream()
+                .filter(partecipazione ->
+                        partecipazione.getTeam()
+                                == teamValido
+                )
+                .filter(partecipazione ->
+                        partecipazione.getHackathon()
+                                == hackathonValido
+                )
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Il team non è iscritto all'hackathon"
+                        )
+                );
+    }
+
+    @Override
+    public void salva(
+            Partecipazione partecipazione
+    ) {
         partecipazioniSalvate.add(
                 Objects.requireNonNull(
                         partecipazione,

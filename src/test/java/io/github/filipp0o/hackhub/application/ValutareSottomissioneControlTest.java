@@ -549,6 +549,16 @@ class ValutareSottomissioneControlTest {
                     "Non utilizzato in questo test"
             );
         }
+
+        @Override
+        public Partecipazione recuperaPartecipazione(
+                Team team,
+                Hackathon hackathon
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 
     private static class ValutazioneRepositoryFinto

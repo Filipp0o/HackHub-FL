@@ -6,12 +6,14 @@ import io.github.filipp0o.hackhub.application.CreareTeamControl;
 import io.github.filipp0o.hackhub.application.ErogarePremioControl;
 import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
 import io.github.filipp0o.hackhub.application.HackathonRepository;
+import io.github.filipp0o.hackhub.application.InviareSottomissioneControl;
 import io.github.filipp0o.hackhub.application.IscrivereTeamHackathonControl;
 import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
 import io.github.filipp0o.hackhub.application.ProclamareTeamVincitoreControl;
 import io.github.filipp0o.hackhub.application.SegnalareViolazioneControl;
 import io.github.filipp0o.hackhub.application.SegnalazioneRepository;
 import io.github.filipp0o.hackhub.application.SistemaPagamentoGateway;
+import io.github.filipp0o.hackhub.application.SottomissioneRepository;
 import io.github.filipp0o.hackhub.application.TeamRepository;
 import io.github.filipp0o.hackhub.application.UtenteRepository;
 import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl;
@@ -20,6 +22,7 @@ import io.github.filipp0o.hackhub.infrastructure.HackathonRepositoryImpl;
 import io.github.filipp0o.hackhub.infrastructure.PartecipazioneRepositoryImpl;
 import io.github.filipp0o.hackhub.infrastructure.SegnalazioneRepositoryImpl;
 import io.github.filipp0o.hackhub.infrastructure.SistemaPagamentoAdapter;
+import io.github.filipp0o.hackhub.infrastructure.SottomissioneRepositoryImpl;
 import io.github.filipp0o.hackhub.infrastructure.TeamRepositoryImpl;
 import io.github.filipp0o.hackhub.infrastructure.UtenteRepositoryImpl;
 import io.github.filipp0o.hackhub.infrastructure.ValutazioneRepositoryImpl;
@@ -63,6 +66,11 @@ public class HackHubConfiguration {
     @Bean
     public ValutazioneRepository valutazioneRepository() {
         return new ValutazioneRepositoryImpl();
+    }
+
+    @Bean
+    public SottomissioneRepository sottomissioneRepository() {
+        return new SottomissioneRepositoryImpl();
     }
 
     @Bean
@@ -178,6 +186,20 @@ public class HackHubConfiguration {
                 hackathonRepository,
                 teamRepository,
                 partecipazioneRepository
+        );
+    }
+
+    @Bean
+    public InviareSottomissioneControl
+    inviareSottomissioneControl(
+            TeamRepository teamRepository,
+            PartecipazioneRepository partecipazioneRepository,
+            SottomissioneRepository sottomissioneRepository
+    ) {
+        return new InviareSottomissioneControl(
+                teamRepository,
+                partecipazioneRepository,
+                sottomissioneRepository
         );
     }
 }

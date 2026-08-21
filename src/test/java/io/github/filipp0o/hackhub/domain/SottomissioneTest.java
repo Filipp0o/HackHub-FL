@@ -15,10 +15,11 @@ class SottomissioneTest {
         Partecipazione partecipazione =
                 creaPartecipazioneValida();
 
-        Sottomissione sottomissione = new Sottomissione(
-                partecipazione,
-                "Repository del progetto"
-        );
+        Sottomissione sottomissione =
+                new Sottomissione(
+                        partecipazione,
+                        "Repository del progetto"
+                );
 
         assertAll(
                 () -> assertEquals(
@@ -35,6 +36,36 @@ class SottomissioneTest {
                 ),
                 () -> assertNull(
                         sottomissione.getValutazione()
+                )
+        );
+    }
+
+    @Test
+    void factoryCreaSottomissioneValidaECollegaLaPartecipazione() {
+        Partecipazione partecipazione =
+                creaPartecipazioneValida();
+
+        Sottomissione sottomissione =
+                Sottomissione.crea(
+                        partecipazione,
+                        "Repository del progetto"
+                );
+
+        assertAll(
+                () -> assertNotNull(
+                        sottomissione.getId()
+                ),
+                () -> assertEquals(
+                        "Repository del progetto",
+                        sottomissione.getContenuto()
+                ),
+                () -> assertSame(
+                        partecipazione,
+                        sottomissione.getPartecipazione()
+                ),
+                () -> assertSame(
+                        sottomissione,
+                        partecipazione.getSottomissione()
                 )
         );
     }
@@ -63,7 +94,9 @@ class SottomissioneTest {
                 )
         );
 
-        assertNull(partecipazione.getSottomissione());
+        assertNull(
+                partecipazione.getSottomissione()
+        );
     }
 
     @Test
@@ -79,7 +112,9 @@ class SottomissioneTest {
                 )
         );
 
-        assertNull(partecipazione.getSottomissione());
+        assertNull(
+                partecipazione.getSottomissione()
+        );
     }
 
     @Test
@@ -108,9 +143,11 @@ class SottomissioneTest {
     }
 
     private Partecipazione creaPartecipazioneValida() {
-        Hackathon hackathon = creaHackathonValido();
+        Hackathon hackathon =
+                creaHackathonValido();
 
-        Utente responsabile = new Utente(4L);
+        Utente responsabile =
+                new Utente(4L);
 
         Team team = Team.crea(
                 "Team Alpha",
@@ -118,7 +155,10 @@ class SottomissioneTest {
                 responsabile
         );
 
-        return new Partecipazione(hackathon, team);
+        return new Partecipazione(
+                hackathon,
+                team
+        );
     }
 
     private Hackathon creaHackathonValido() {
