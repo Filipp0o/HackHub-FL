@@ -183,5 +183,12 @@ class CreareHackathonBoundaryTest {
         public void salva(Hackathon hackathon) {
             hackathonSalvato = hackathon;
         }
+
+        @Override
+        public List<Hackathon> ottieniHackathonApertiAlleIscrizioni() {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 }

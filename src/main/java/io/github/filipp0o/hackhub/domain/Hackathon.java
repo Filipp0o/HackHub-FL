@@ -154,6 +154,23 @@ public class Hackathon {
         return valore;
     }
 
+    public boolean isApertoAlleIscrizioni() {
+        return stato == StatoHackathon.IN_ISCRIZIONE
+                && !LocalDate.now().isAfter(scadenzaIscrizioni);
+    }
+
+    public boolean rispettaDimensioneMassima(
+            Integer numeroMembri
+    ) {
+        Integer numeroMembriValido =
+                Objects.requireNonNull(
+                        numeroMembri,
+                        "Il numero dei membri è obbligatorio"
+                );
+
+        return numeroMembriValido <= dimensioneMassimaTeam;
+    }
+
     public void aggiornaStato(LocalDate dataCorrente) {
         LocalDate dataValida = Objects.requireNonNull(
                 dataCorrente,

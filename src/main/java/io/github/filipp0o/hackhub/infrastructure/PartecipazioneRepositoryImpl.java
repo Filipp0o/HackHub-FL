@@ -4,6 +4,7 @@ import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
+import io.github.filipp0o.hackhub.domain.Team;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,30 @@ public class PartecipazioneRepositoryImpl
                                 != StatoPartecipazione.ESCLUSA
                 )
                 .toList();
+    }
+
+    @Override
+    public boolean esistePartecipazione(
+            Team team,
+            Hackathon hackathon
+    ) {
+        Team teamValido = Objects.requireNonNull(
+                team,
+                "Il team è obbligatorio"
+        );
+
+        Hackathon hackathonValido = Objects.requireNonNull(
+                hackathon,
+                "L'hackathon è obbligatorio"
+        );
+
+        return partecipazioniSalvate.stream()
+                .anyMatch(partecipazione ->
+                        partecipazione.getTeam()
+                                == teamValido
+                                && partecipazione.getHackathon()
+                                == hackathonValido
+                );
     }
 
     @Override

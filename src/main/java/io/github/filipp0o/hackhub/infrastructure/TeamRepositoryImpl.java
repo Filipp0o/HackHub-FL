@@ -14,7 +14,7 @@ public class TeamRepositoryImpl implements TeamRepository {
 
     @Override
     public boolean verificaAppartenenzaTeam(Utente utente) {
-        Objects.requireNonNull(
+        Utente utenteValido = Objects.requireNonNull(
                 utente,
                 "L'utente è obbligatorio"
         );
@@ -22,7 +22,33 @@ public class TeamRepositoryImpl implements TeamRepository {
         return teamSalvati.stream()
                 .flatMap(team -> team.getMembri().stream())
                 .anyMatch(membro ->
-                        membro.getId().equals(utente.getId())
+                        membro.getId().equals(
+                                utenteValido.getId()
+                        )
+                );
+    }
+
+    @Override
+    public Team recuperaTeam(Utente utente) {
+        Utente utenteValido = Objects.requireNonNull(
+                utente,
+                "L'utente è obbligatorio"
+        );
+
+        return teamSalvati.stream()
+                .filter(team ->
+                        team.getMembri().stream()
+                                .anyMatch(membro ->
+                                        membro.getId().equals(
+                                                utenteValido.getId()
+                                        )
+                                )
+                )
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "L'utente non appartiene ad alcun team"
+                        )
                 );
     }
 

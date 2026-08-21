@@ -535,5 +535,12 @@ class ErogarePremioControlTest {
         ) {
             hackathonSalvato = hackathon;
         }
+
+        @Override
+        public List<Hackathon> ottieniHackathonApertiAlleIscrizioni() {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 }

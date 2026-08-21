@@ -84,6 +84,13 @@ public class HackathonRepositoryImpl
     }
 
     @Override
+    public List<Hackathon> ottieniHackathonApertiAlleIscrizioni() {
+        return hackathonSalvati.stream()
+                .filter(Hackathon::isApertoAlleIscrizioni)
+                .toList();
+    }
+
+    @Override
     public void salva(Hackathon hackathon) {
         hackathonSalvati.add(
                 Objects.requireNonNull(

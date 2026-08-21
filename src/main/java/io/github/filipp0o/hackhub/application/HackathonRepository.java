@@ -7,9 +7,15 @@ import java.util.List;
 
 public interface HackathonRepository {
 
-    List<Hackathon> ottieniHackathonValutabili(Utente giudice);
+    List<Hackathon> ottieniHackathonValutabili(
+            Utente giudice
+    );
 
-    List<Hackathon> ottieniHackathonSegnalabili(Utente mentore);
+    List<Hackathon> ottieniHackathonSegnalabili(
+            Utente mentore
+    );
+
+    List<Hackathon> ottieniHackathonApertiAlleIscrizioni();
 
     void salva(Hackathon hackathon);
 }

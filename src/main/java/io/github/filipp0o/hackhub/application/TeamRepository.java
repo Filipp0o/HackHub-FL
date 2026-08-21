@@ -7,5 +7,7 @@ public interface TeamRepository {
 
     boolean verificaAppartenenzaTeam(Utente utente);
 
+    Team recuperaTeam(Utente utente);
+
     void salva(Team team);
 }

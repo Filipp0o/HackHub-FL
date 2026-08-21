@@ -397,5 +397,12 @@ class CreareHackathonControlTest {
             hackathonSalvato = hackathon;
             numeroSalvataggi++;
         }
+
+        @Override
+        public List<Hackathon> ottieniHackathonApertiAlleIscrizioni() {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 }

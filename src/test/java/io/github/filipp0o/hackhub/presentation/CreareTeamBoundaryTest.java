@@ -96,5 +96,12 @@ class CreareTeamBoundaryTest {
         public void salva(Team team) {
             teamSalvato = team;
         }
+
+        @Override
+        public Team recuperaTeam(Utente utente) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 }

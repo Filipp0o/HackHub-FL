@@ -294,6 +294,16 @@ class ProclamareTeamVincitoreBoundaryTest {
                 Partecipazione partecipazione
         ) {
         }
+
+        @Override
+        public boolean esistePartecipazione(
+                Team team,
+                Hackathon hackathon
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 
     private static class HackathonRepositoryFinto
@@ -318,6 +328,13 @@ class ProclamareTeamVincitoreBoundaryTest {
         @Override
         public void salva(Hackathon hackathon) {
             hackathonSalvato = hackathon;
+        }
+
+        @Override
+        public List<Hackathon> ottieniHackathonApertiAlleIscrizioni() {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
         }
     }
 

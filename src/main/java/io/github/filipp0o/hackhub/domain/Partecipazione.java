@@ -34,6 +34,16 @@ public class Partecipazione {
         this.stato = StatoPartecipazione.ATTIVA;
     }
 
+    public static Partecipazione crea(
+            Hackathon hackathon,
+            Team team
+    ) {
+        return new Partecipazione(
+                hackathon,
+                team
+        );
+    }
+
     void registraSottomissione(
             Sottomissione sottomissione
     ) {

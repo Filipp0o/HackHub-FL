@@ -6,6 +6,7 @@ import io.github.filipp0o.hackhub.application.CreareTeamControl;
 import io.github.filipp0o.hackhub.application.ErogarePremioControl;
 import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
 import io.github.filipp0o.hackhub.application.HackathonRepository;
+import io.github.filipp0o.hackhub.application.IscrivereTeamHackathonControl;
 import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
 import io.github.filipp0o.hackhub.application.ProclamareTeamVincitoreControl;
 import io.github.filipp0o.hackhub.application.SegnalareViolazioneControl;
@@ -73,7 +74,9 @@ public class HackHubConfiguration {
     public CreareTeamControl creareTeamControl(
             TeamRepository teamRepository
     ) {
-        return new CreareTeamControl(teamRepository);
+        return new CreareTeamControl(
+                teamRepository
+        );
     }
 
     @Bean
@@ -102,7 +105,8 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public SegnalareViolazioneControl segnalareViolazioneControl(
+    public SegnalareViolazioneControl
+    segnalareViolazioneControl(
             HackathonRepository hackathonRepository,
             PartecipazioneRepository partecipazioneRepository,
             SegnalazioneRepository segnalazioneRepository
@@ -160,6 +164,20 @@ public class HackHubConfiguration {
         return new ErogarePremioControl(
                 sistemaPagamentoGateway,
                 hackathonRepository
+        );
+    }
+
+    @Bean
+    public IscrivereTeamHackathonControl
+    iscrivereTeamHackathonControl(
+            HackathonRepository hackathonRepository,
+            TeamRepository teamRepository,
+            PartecipazioneRepository partecipazioneRepository
+    ) {
+        return new IscrivereTeamHackathonControl(
+                hackathonRepository,
+                teamRepository,
+                partecipazioneRepository
         );
     }
 }

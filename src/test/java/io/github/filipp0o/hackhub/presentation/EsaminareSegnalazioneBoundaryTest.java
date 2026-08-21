@@ -371,5 +371,15 @@ class EsaminareSegnalazioneBoundaryTest {
         ) {
             partecipazioneSalvata = partecipazione;
         }
+
+        @Override
+        public boolean esistePartecipazione(
+                Team team,
+                Hackathon hackathon
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 }

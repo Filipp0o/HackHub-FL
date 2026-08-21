@@ -245,6 +245,13 @@ class ValutareSottomissioneBoundaryTest {
         @Override
         public void salva(Hackathon hackathon) {
         }
+
+        @Override
+        public List<Hackathon> ottieniHackathonApertiAlleIscrizioni() {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 
     private static class PartecipazioneRepositoryFinto
@@ -279,6 +286,16 @@ class ValutareSottomissioneBoundaryTest {
 
         @Override
         public void salva(Partecipazione partecipazione) {
+        }
+
+        @Override
+        public boolean esistePartecipazione(
+                Team team,
+                Hackathon hackathon
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
         }
     }
 

@@ -52,6 +52,10 @@ public class Team {
         return new Team(nome, membroIniziale, responsabile);
     }
 
+    public int numeroMembri() {
+        return membri.size();
+    }
+
     public Long getId() {
         return id;
     }
