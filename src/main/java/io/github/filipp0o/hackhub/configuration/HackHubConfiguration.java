@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import io.github.filipp0o.hackhub.application.AggiornareSottomissioneControl;
-
+import io.github.filipp0o.hackhub.application.ConsultareHackathonControl;
 @Configuration
 public class HackHubConfiguration {
 
@@ -95,6 +95,16 @@ public class HackHubConfiguration {
     ) {
         return new CreareHackathonControl(
                 utenteRepository,
+                hackathonRepository
+        );
+    }
+
+    @Bean
+    public ConsultareHackathonControl
+    consultareHackathonControl(
+            HackathonRepository hackathonRepository
+    ) {
+        return new ConsultareHackathonControl(
                 hackathonRepository
         );
     }
