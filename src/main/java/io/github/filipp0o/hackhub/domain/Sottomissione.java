@@ -9,7 +9,7 @@ public class Sottomissione {
             new AtomicLong(1);
 
     private final Long id;
-    private final String contenuto;
+    private String contenuto;
 
     private final Partecipazione partecipazione;
     private Valutazione valutazione;
@@ -23,13 +23,7 @@ public class Sottomissione {
                 "La partecipazione è obbligatoria"
         );
 
-        if (contenuto == null || contenuto.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Il contenuto della sottomissione è obbligatorio"
-            );
-        }
-
-        this.contenuto = contenuto;
+        this.contenuto = validaContenuto(contenuto);
 
         partecipazione.registraSottomissione(this);
 
@@ -74,6 +68,18 @@ public class Sottomissione {
         return id;
     }
 
+    public String ottieniContenuto() {
+        return contenuto;
+    }
+
+    public void aggiornaContenuto(
+            String nuovoContenuto
+    ) {
+        contenuto = validaContenuto(
+                nuovoContenuto
+        );
+    }
+
     public String getContenuto() {
         return contenuto;
     }
@@ -84,5 +90,17 @@ public class Sottomissione {
 
     public Valutazione getValutazione() {
         return valutazione;
+    }
+
+    private static String validaContenuto(
+            String contenuto
+    ) {
+        if (contenuto == null || contenuto.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Il contenuto della sottomissione è obbligatorio"
+            );
+        }
+
+        return contenuto;
     }
 }

@@ -142,6 +142,70 @@ class SottomissioneTest {
         );
     }
 
+    @Test
+    void restituisceContenutoCorrente() {
+        Sottomissione sottomissione =
+                Sottomissione.crea(
+                        creaPartecipazioneValida(),
+                        "Prima versione"
+                );
+
+        assertEquals(
+                "Prima versione",
+                sottomissione.ottieniContenuto()
+        );
+    }
+
+    @Test
+    void aggiornaContenuto() {
+        Sottomissione sottomissione =
+                Sottomissione.crea(
+                        creaPartecipazioneValida(),
+                        "Prima versione"
+                );
+
+        sottomissione.aggiornaContenuto(
+                "Versione aggiornata"
+        );
+
+        assertAll(
+                () -> assertEquals(
+                        "Versione aggiornata",
+                        sottomissione.ottieniContenuto()
+                ),
+                () -> assertEquals(
+                        "Versione aggiornata",
+                        sottomissione.getContenuto()
+                )
+        );
+    }
+
+    @Test
+    void rifiutaAggiornamentoConContenutoNulloOVuoto() {
+        Sottomissione sottomissione =
+                Sottomissione.crea(
+                        creaPartecipazioneValida(),
+                        "Contenuto originale"
+                );
+
+        assertAll(
+                () -> assertThrows(
+                        IllegalArgumentException.class,
+                        () -> sottomissione
+                                .aggiornaContenuto(null)
+                ),
+                () -> assertThrows(
+                        IllegalArgumentException.class,
+                        () -> sottomissione
+                                .aggiornaContenuto("   ")
+                ),
+                () -> assertEquals(
+                        "Contenuto originale",
+                        sottomissione.ottieniContenuto()
+                )
+        );
+    }
+
     private Partecipazione creaPartecipazioneValida() {
         Hackathon hackathon =
                 creaHackathonValido();
