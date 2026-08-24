@@ -560,5 +560,21 @@ class ConfigurareRiscossionePremioControlTest {
                     "Non utilizzato in questo test"
             );
         }
+
+        @Override
+        public List<Hackathon> ottieniTuttiHackathon() {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
+
+        @Override
+        public Hackathon recuperaHackathon(
+                Long hackathonId
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 }

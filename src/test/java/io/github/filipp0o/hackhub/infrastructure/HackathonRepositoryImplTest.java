@@ -60,6 +60,108 @@ class HackathonRepositoryImplTest {
     }
 
     @Test
+    void rifiutaIdentificativoHackathonNullo() {
+        HackathonRepositoryImpl repository =
+                creaRepository();
+
+        assertThrows(
+                NullPointerException.class,
+                () -> repository.recuperaHackathon(null)
+        );
+    }
+
+    @Test
+    void restituisceTuttiGliHackathonSalvati() {
+        HackathonRepositoryImpl repository =
+                creaRepository();
+
+        Utente giudice = new Utente(2L);
+        List<Utente> mentori =
+                List.of(new Utente(3L));
+
+        Hackathon inIscrizione =
+                creaHackathonInIscrizione(
+                        "In iscrizione",
+                        giudice,
+                        mentori
+                );
+
+        Hackathon inCorso =
+                creaHackathonInCorso(
+                        "In corso",
+                        giudice,
+                        mentori
+                );
+
+        Hackathon inValutazione =
+                creaHackathonInValutazione(
+                        "In valutazione",
+                        giudice,
+                        mentori
+                );
+
+        repository.salva(inIscrizione);
+        repository.salva(inCorso);
+        repository.salva(inValutazione);
+
+        assertEquals(
+                List.of(
+                        inIscrizione,
+                        inCorso,
+                        inValutazione
+                ),
+                repository.ottieniTuttiHackathon()
+        );
+    }
+
+    @Test
+    void recuperaHackathonTramiteIdentificativo() {
+        HackathonRepositoryImpl repository =
+                creaRepository();
+
+        Utente giudice = new Utente(2L);
+        List<Utente> mentori =
+                List.of(new Utente(3L));
+
+        Hackathon primo =
+                creaHackathonInIscrizione(
+                        "Primo",
+                        giudice,
+                        mentori
+                );
+
+        Hackathon secondo =
+                creaHackathonInIscrizione(
+                        "Secondo",
+                        giudice,
+                        mentori
+                );
+
+        repository.salva(primo);
+        repository.salva(secondo);
+
+        assertSame(
+                secondo,
+                repository.recuperaHackathon(
+                        secondo.getId()
+                )
+        );
+    }
+
+    @Test
+    void segnalaHackathonNonTrovato() {
+        HackathonRepositoryImpl repository =
+                creaRepository();
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> repository.recuperaHackathon(
+                        Long.MAX_VALUE
+                )
+        );
+    }
+
+    @Test
     void restituisceSoloHackathonValutabiliConSottomissioniPendenti() {
         PartecipazioneRepositoryImpl partecipazioneRepository =
                 new PartecipazioneRepositoryImpl();
@@ -330,6 +432,9 @@ class HackathonRepositoryImplTest {
                         mentore
                 );
 
+        List<Hackathon> tutti =
+                repository.ottieniTuttiHackathon();
+
         assertAll(
                 () -> assertThrows(
                         UnsupportedOperationException.class,
@@ -338,6 +443,10 @@ class HackathonRepositoryImplTest {
                 () -> assertThrows(
                         UnsupportedOperationException.class,
                         () -> segnalabili.add(hackathon)
+                ),
+                () -> assertThrows(
+                        UnsupportedOperationException.class,
+                        () -> tutti.add(hackathon)
                 )
         );
     }

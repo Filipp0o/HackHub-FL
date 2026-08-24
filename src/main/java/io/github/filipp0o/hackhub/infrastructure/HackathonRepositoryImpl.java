@@ -91,6 +91,38 @@ public class HackathonRepositoryImpl
     }
 
     @Override
+    public List<Hackathon> ottieniTuttiHackathon() {
+        return List.copyOf(
+                hackathonSalvati
+        );
+    }
+
+    @Override
+    public Hackathon recuperaHackathon(
+            Long hackathonId
+    ) {
+        Long hackathonIdValido =
+                Objects.requireNonNull(
+                        hackathonId,
+                        "L'id dell'hackathon è obbligatorio"
+                );
+
+        return hackathonSalvati.stream()
+                .filter(hackathon ->
+                        Objects.equals(
+                                hackathon.getId(),
+                                hackathonIdValido
+                        )
+                )
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Hackathon non trovato"
+                        )
+                );
+    }
+
+    @Override
     public void salva(Hackathon hackathon) {
         hackathonSalvati.add(
                 Objects.requireNonNull(

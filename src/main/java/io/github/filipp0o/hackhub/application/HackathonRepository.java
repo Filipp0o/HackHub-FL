@@ -17,5 +17,13 @@ public interface HackathonRepository {
 
     List<Hackathon> ottieniHackathonApertiAlleIscrizioni();
 
-    void salva(Hackathon hackathon);
+    List<Hackathon> ottieniTuttiHackathon();
+
+    Hackathon recuperaHackathon(
+            Long hackathonId
+    );
+
+    void salva(
+            Hackathon hackathon
+    );
 }
