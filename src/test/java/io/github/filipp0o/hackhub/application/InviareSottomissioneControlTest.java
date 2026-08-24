@@ -601,6 +601,16 @@ class InviareSottomissioneControlTest {
         private Sottomissione sottomissioneSalvata;
         private int numeroSalvataggi;
 
+
+        @Override
+        public Sottomissione recuperaSottomissione(
+                Partecipazione partecipazione
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
+
         @Override
         public void salva(
                 Sottomissione sottomissione

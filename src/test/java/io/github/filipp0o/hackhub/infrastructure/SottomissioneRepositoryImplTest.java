@@ -14,7 +14,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 class SottomissioneRepositoryImplTest {
 
     @Test
@@ -61,6 +63,111 @@ class SottomissioneRepositoryImplTest {
                 () -> repository.salva(
                         sottomissione
                 )
+        );
+    }
+    @Test
+    void recuperaSottomissioneDellaPartecipazione() {
+        SottomissioneRepositoryImpl repository =
+                new SottomissioneRepositoryImpl();
+
+        Partecipazione partecipazione =
+                creaPartecipazione();
+
+        Sottomissione sottomissione =
+                Sottomissione.crea(
+                        partecipazione,
+                        "Repository del progetto"
+                );
+
+        repository.salva(
+                sottomissione
+        );
+
+        assertSame(
+                sottomissione,
+                repository.recuperaSottomissione(
+                        partecipazione
+                )
+        );
+    }
+
+    @Test
+    void rifiutaPartecipazioneNullaONonAssociata() {
+        SottomissioneRepositoryImpl repository =
+                new SottomissioneRepositoryImpl();
+
+        assertAll(
+                () -> assertThrows(
+                        NullPointerException.class,
+                        () -> repository
+                                .recuperaSottomissione(null)
+                ),
+                () -> assertThrows(
+                        IllegalStateException.class,
+                        () -> repository
+                                .recuperaSottomissione(
+                                        creaPartecipazione()
+                                )
+                )
+        );
+    }
+
+    @Test
+    void risalvaSottomissioneAggiornata() {
+        SottomissioneRepositoryImpl repository =
+                new SottomissioneRepositoryImpl();
+
+        Partecipazione partecipazione =
+                creaPartecipazione();
+
+        Sottomissione sottomissione =
+                Sottomissione.crea(
+                        partecipazione,
+                        "Prima versione"
+                );
+
+        repository.salva(
+                sottomissione
+        );
+
+        sottomissione.aggiornaContenuto(
+                "Versione aggiornata"
+        );
+
+        repository.salva(
+                sottomissione
+        );
+
+        Sottomissione recuperata =
+                repository.recuperaSottomissione(
+                        partecipazione
+                );
+
+        assertAll(
+                () -> assertSame(
+                        sottomissione,
+                        recuperata
+                ),
+                () -> assertEquals(
+                        "Versione aggiornata",
+                        recuperata.ottieniContenuto()
+                )
+        );
+    }
+
+    private Partecipazione creaPartecipazione() {
+        Utente responsabile =
+                new Utente(10L);
+
+        Team team = Team.crea(
+                "ByteBuilders",
+                responsabile,
+                responsabile
+        );
+
+        return Partecipazione.crea(
+                creaHackathon(),
+                team
         );
     }
 
