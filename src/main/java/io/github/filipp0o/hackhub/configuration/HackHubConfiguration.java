@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import io.github.filipp0o.hackhub.application.AggiornareSottomissioneControl;
 
 @Configuration
 public class HackHubConfiguration {
@@ -197,6 +198,20 @@ public class HackHubConfiguration {
             SottomissioneRepository sottomissioneRepository
     ) {
         return new InviareSottomissioneControl(
+                teamRepository,
+                partecipazioneRepository,
+                sottomissioneRepository
+        );
+    }
+
+    @Bean
+    public AggiornareSottomissioneControl
+    aggiornareSottomissioneControl(
+            TeamRepository teamRepository,
+            PartecipazioneRepository partecipazioneRepository,
+            SottomissioneRepository sottomissioneRepository
+    ) {
+        return new AggiornareSottomissioneControl(
                 teamRepository,
                 partecipazioneRepository,
                 sottomissioneRepository

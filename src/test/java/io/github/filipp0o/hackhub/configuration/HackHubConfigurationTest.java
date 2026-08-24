@@ -25,7 +25,7 @@ import org.springframework.context.ApplicationContext;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
+import io.github.filipp0o.hackhub.application.AggiornareSottomissioneControl;
 @SpringBootTest
 class HackHubConfigurationTest {
 
@@ -93,6 +93,11 @@ class HackHubConfigurationTest {
                 () -> assertNotNull(
                         context.getBean(
                                 InviareSottomissioneControl.class
+                        )
+                ),
+                () -> assertNotNull(
+                        context.getBean(
+                                AggiornareSottomissioneControl.class
                         )
                 )
         );
