@@ -6,11 +6,12 @@ import io.github.filipp0o.hackhub.domain.Utente;
 import java.util.List;
 import java.util.Objects;
 
-public class UtenteRepositoryImpl implements UtenteRepository {
+public class InMemoryUtenteRepository
+        implements UtenteRepository {
 
     private final List<Utente> utentiAssegnabili;
 
-    public UtenteRepositoryImpl(
+    public InMemoryUtenteRepository(
             List<Utente> utentiAssegnabili
     ) {
         Objects.requireNonNull(

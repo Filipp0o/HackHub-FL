@@ -9,7 +9,7 @@ import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
-import io.github.filipp0o.hackhub.infrastructure.PartecipazioneRepositoryImpl;
+import io.github.filipp0o.hackhub.infrastructure.InMemoryPartecipazioneRepository;
 import io.github.filipp0o.hackhub.infrastructure.SegnalazioneRepositoryImpl;
 import org.junit.jupiter.api.Test;
 
@@ -63,7 +63,7 @@ class EsaminareSegnalazioneDaNotificaBoundaryTest {
         EsaminareSegnalazioneControl control =
                 new EsaminareSegnalazioneControl(
                         new SegnalazioneRepositoryImpl(),
-                        new PartecipazioneRepositoryImpl()
+                        new InMemoryPartecipazioneRepository()
                 );
 
         EsaminareSegnalazioneBoundary boundary =

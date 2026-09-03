@@ -10,8 +10,8 @@ class TeamRepositoryImplTest {
 
     @Test
     void inizialmenteNessunUtenteAppartieneAUnTeam() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         assertFalse(
                 repository.verificaAppartenenzaTeam(
@@ -22,8 +22,8 @@ class TeamRepositoryImplTest {
 
     @Test
     void rifiutaUtenteNulloDuranteLaVerifica() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         assertThrows(
                 NullPointerException.class,
@@ -33,8 +33,8 @@ class TeamRepositoryImplTest {
 
     @Test
     void rifiutaTeamNulloDuranteIlSalvataggio() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         assertThrows(
                 NullPointerException.class,
@@ -44,8 +44,8 @@ class TeamRepositoryImplTest {
 
     @Test
     void riconosceIlMembroDiUnTeamSalvato() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         Utente utente = new Utente(1L);
         Team team = Team.crea(
@@ -63,8 +63,8 @@ class TeamRepositoryImplTest {
 
     @Test
     void riconosceUnUtenteConLoStessoIdentificativo() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         Utente membroSalvato = new Utente(1L);
         Team team = Team.crea(
@@ -86,8 +86,8 @@ class TeamRepositoryImplTest {
 
     @Test
     void nonRiconosceUnUtenteEstraneoAiTeamSalvati() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         Utente membro = new Utente(1L);
         Team team = Team.crea(

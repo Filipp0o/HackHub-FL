@@ -17,8 +17,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void rifiutaHackathonNulloDuranteIlRecupero() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         assertThrows(
                 NullPointerException.class,
@@ -28,8 +28,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void rifiutaHackathonNulloDuranteIlRecuperoDelleNonEscluse() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         assertThrows(
                 NullPointerException.class,
@@ -40,8 +40,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void rifiutaPartecipazioneNullaDuranteIlSalvataggio() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         assertThrows(
                 NullPointerException.class,
@@ -51,8 +51,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void restituisceListaVuotaSeNonEsistonoPartecipazioni() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon hackathon =
                 creaHackathon(
@@ -68,8 +68,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void restituisceSoloPartecipazioniDellHackathonSelezionato() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon primoHackathon =
                 creaHackathon("Primo Hackathon");
@@ -114,8 +114,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void recuperaSoloPartecipazioniNonEscluse() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon hackathon =
                 creaHackathon("Hackathon");
@@ -148,8 +148,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void restituisceListeNonModificabili() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon hackathon =
                 creaHackathon("Hackathon");
@@ -192,8 +192,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void recuperaPartecipazioneDelTeamNellHackathon() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon hackathon =
                 creaHackathon("Hackathon");
@@ -228,8 +228,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void recuperaPartecipazioneDistingueTeamEHackathon() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon primoHackathon =
                 creaHackathon("Primo Hackathon");
@@ -290,8 +290,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void recuperaPartecipazioneFallisceSeNonEsiste() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon hackathon =
                 creaHackathon("Hackathon");
@@ -316,8 +316,8 @@ class PartecipazioneRepositoryImplTest {
 
     @Test
     void recuperaPartecipazioneRifiutaParametriNulli() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon hackathon =
                 creaHackathon("Hackathon");

@@ -8,8 +8,8 @@ import io.github.filipp0o.hackhub.domain.Sottomissione;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
 import io.github.filipp0o.hackhub.domain.Valutazione;
-import io.github.filipp0o.hackhub.infrastructure.HackathonRepositoryImpl;
-import io.github.filipp0o.hackhub.infrastructure.PartecipazioneRepositoryImpl;
+import io.github.filipp0o.hackhub.infrastructure.InMemoryHackathonRepository;
+import io.github.filipp0o.hackhub.infrastructure.InMemoryPartecipazioneRepository;
 import io.github.filipp0o.hackhub.infrastructure.SegnalazioneRepositoryImpl;
 import org.junit.jupiter.api.Test;
 
@@ -41,8 +41,8 @@ class ProclamareTeamVincitoreAmmissibilitaTest {
                         11L
                 );
 
-        PartecipazioneRepositoryImpl partecipazioneRepository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository partecipazioneRepository =
+                new InMemoryPartecipazioneRepository();
 
         partecipazioneRepository.salva(
                 partecipazioneValutata
@@ -54,7 +54,7 @@ class ProclamareTeamVincitoreAmmissibilitaTest {
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
                         partecipazioneRepository,
-                        new HackathonRepositoryImpl(
+                        new InMemoryHackathonRepository(
                                 partecipazioneRepository
                         ),
                         new SegnalazioneRepositoryImpl()

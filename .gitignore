@@ -27,6 +27,11 @@ bin/
 *.bak.vpp
 *.~vpp
 
+# DATABASE H2
+data/
+*.mv.db
+*.trace.db
+
 # SISTEMA OPERATIVO
 .DS_Store
 Thumbs.db

@@ -17,8 +17,8 @@ class IscrivereTeamHackathonRepositoryTest {
 
     @Test
     void recuperaTeamDellUtente() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         Utente membroSalvato =
                 new Utente(10L);
@@ -51,8 +51,8 @@ class IscrivereTeamHackathonRepositoryTest {
 
     @Test
     void recuperaTeamRifiutaUtenteNullo() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         assertThrows(
                 NullPointerException.class,
@@ -62,8 +62,8 @@ class IscrivereTeamHackathonRepositoryTest {
 
     @Test
     void recuperaTeamFallisceSeUtenteNonAppartieneAdAlcunTeam() {
-        TeamRepositoryImpl repository =
-                new TeamRepositoryImpl();
+        InMemoryTeamRepository repository =
+                new InMemoryTeamRepository();
 
         assertThrows(
                 IllegalStateException.class,
@@ -75,12 +75,12 @@ class IscrivereTeamHackathonRepositoryTest {
 
     @Test
     void recuperaSoloHackathonApertiAlleIscrizioni() {
-        PartecipazioneRepositoryImpl
+        InMemoryPartecipazioneRepository
                 partecipazioneRepository =
-                new PartecipazioneRepositoryImpl();
+                new InMemoryPartecipazioneRepository();
 
-        HackathonRepositoryImpl repository =
-                new HackathonRepositoryImpl(
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(
                         partecipazioneRepository
                 );
 
@@ -106,12 +106,12 @@ class IscrivereTeamHackathonRepositoryTest {
 
     @Test
     void listaHackathonApertiNonEModificabile() {
-        PartecipazioneRepositoryImpl
+        InMemoryPartecipazioneRepository
                 partecipazioneRepository =
-                new PartecipazioneRepositoryImpl();
+                new InMemoryPartecipazioneRepository();
 
-        HackathonRepositoryImpl repository =
-                new HackathonRepositoryImpl(
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(
                         partecipazioneRepository
                 );
 
@@ -136,8 +136,8 @@ class IscrivereTeamHackathonRepositoryTest {
 
     @Test
     void riconoscePartecipazioneEsistente() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon hackathon =
                 creaHackathonAperto(
@@ -173,8 +173,8 @@ class IscrivereTeamHackathonRepositoryTest {
 
     @Test
     void nonRiconoscePartecipazioneDiAltroTeamOHackathon() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon primoHackathon =
                 creaHackathonAperto(
@@ -229,8 +229,8 @@ class IscrivereTeamHackathonRepositoryTest {
 
     @Test
     void esistePartecipazioneRifiutaParametriNulli() {
-        PartecipazioneRepositoryImpl repository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository repository =
+                new InMemoryPartecipazioneRepository();
 
         Hackathon hackathon =
                 creaHackathonAperto(

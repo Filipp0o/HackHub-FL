@@ -18,13 +18,13 @@ import io.github.filipp0o.hackhub.application.TeamRepository;
 import io.github.filipp0o.hackhub.application.UtenteRepository;
 import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl;
 import io.github.filipp0o.hackhub.application.ValutazioneRepository;
-import io.github.filipp0o.hackhub.infrastructure.HackathonRepositoryImpl;
-import io.github.filipp0o.hackhub.infrastructure.PartecipazioneRepositoryImpl;
+import io.github.filipp0o.hackhub.infrastructure.InMemoryHackathonRepository;
+import io.github.filipp0o.hackhub.infrastructure.InMemoryPartecipazioneRepository;
 import io.github.filipp0o.hackhub.infrastructure.SegnalazioneRepositoryImpl;
 import io.github.filipp0o.hackhub.infrastructure.SistemaPagamentoAdapter;
 import io.github.filipp0o.hackhub.infrastructure.SottomissioneRepositoryImpl;
-import io.github.filipp0o.hackhub.infrastructure.TeamRepositoryImpl;
-import io.github.filipp0o.hackhub.infrastructure.UtenteRepositoryImpl;
+import io.github.filipp0o.hackhub.infrastructure.InMemoryTeamRepository;
+import io.github.filipp0o.hackhub.infrastructure.InMemoryUtenteRepository;
 import io.github.filipp0o.hackhub.infrastructure.ValutazioneRepositoryImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,24 +37,24 @@ public class HackHubConfiguration {
 
     @Bean
     public UtenteRepository utenteRepository() {
-        return new UtenteRepositoryImpl(List.of());
+        return new InMemoryUtenteRepository(List.of());
     }
 
     @Bean
     public TeamRepository teamRepository() {
-        return new TeamRepositoryImpl();
+        return new InMemoryTeamRepository();
     }
 
     @Bean
     public PartecipazioneRepository partecipazioneRepository() {
-        return new PartecipazioneRepositoryImpl();
+        return new InMemoryPartecipazioneRepository();
     }
 
     @Bean
     public HackathonRepository hackathonRepository(
             PartecipazioneRepository partecipazioneRepository
     ) {
-        return new HackathonRepositoryImpl(
+        return new InMemoryHackathonRepository(
                 partecipazioneRepository
         );
     }

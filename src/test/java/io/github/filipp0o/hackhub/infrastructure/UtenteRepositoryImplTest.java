@@ -14,7 +14,7 @@ class UtenteRepositoryImplTest {
     void rifiutaListaUtentiNulla() {
         assertThrows(
                 NullPointerException.class,
-                () -> new UtenteRepositoryImpl(null)
+                () -> new InMemoryUtenteRepository(null)
         );
     }
 
@@ -26,7 +26,7 @@ class UtenteRepositoryImplTest {
 
         assertThrows(
                 NullPointerException.class,
-                () -> new UtenteRepositoryImpl(utenti)
+                () -> new InMemoryUtenteRepository(utenti)
         );
     }
 
@@ -35,8 +35,8 @@ class UtenteRepositoryImplTest {
         Utente primoUtente = new Utente(1L);
         Utente secondoUtente = new Utente(2L);
 
-        UtenteRepositoryImpl repository =
-                new UtenteRepositoryImpl(
+        InMemoryUtenteRepository repository =
+                new InMemoryUtenteRepository(
                         List.of(
                                 primoUtente,
                                 secondoUtente
@@ -62,8 +62,8 @@ class UtenteRepositoryImplTest {
 
         utentiOriginali.add(primoUtente);
 
-        UtenteRepositoryImpl repository =
-                new UtenteRepositoryImpl(
+        InMemoryUtenteRepository repository =
+                new InMemoryUtenteRepository(
                         utentiOriginali
                 );
 
@@ -77,8 +77,8 @@ class UtenteRepositoryImplTest {
 
     @Test
     void restituisceUnaListaNonModificabile() {
-        UtenteRepositoryImpl repository =
-                new UtenteRepositoryImpl(
+        InMemoryUtenteRepository repository =
+                new InMemoryUtenteRepository(
                         List.of(new Utente(1L))
                 );
 

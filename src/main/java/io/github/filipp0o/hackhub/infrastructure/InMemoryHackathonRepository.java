@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class HackathonRepositoryImpl
+public class InMemoryHackathonRepository
         implements HackathonRepository {
 
     private final List<Hackathon> hackathonSalvati =
@@ -19,7 +19,7 @@ public class HackathonRepositoryImpl
     private final PartecipazioneRepository
             partecipazioneRepository;
 
-    public HackathonRepositoryImpl(
+    public InMemoryHackathonRepository(
             PartecipazioneRepository partecipazioneRepository
     ) {
         this.partecipazioneRepository =
@@ -114,13 +114,31 @@ public class HackathonRepositoryImpl
     }
 
     @Override
-    public void salva(Hackathon hackathon) {
-        hackathonSalvati.add(
+    public void salva(
+            Hackathon hackathon
+    ) {
+        Hackathon hackathonValido =
                 Objects.requireNonNull(
                         hackathon,
                         "L'hackathon è obbligatorio"
-                )
-        );
+                );
+
+        for (int indice = 0;
+             indice < hackathonSalvati.size();
+             indice++) {
+            if (Objects.equals(
+                    hackathonSalvati.get(indice).getId(),
+                    hackathonValido.getId()
+            )) {
+                hackathonSalvati.set(
+                        indice,
+                        hackathonValido
+                );
+                return;
+            }
+        }
+
+        hackathonSalvati.add(hackathonValido);
     }
 
     private boolean haSottomissioneNonValutata(

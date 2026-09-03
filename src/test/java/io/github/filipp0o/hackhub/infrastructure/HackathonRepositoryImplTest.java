@@ -22,13 +22,13 @@ class HackathonRepositoryImplTest {
     void rifiutaRepositoryPartecipazioniNullo() {
         assertThrows(
                 NullPointerException.class,
-                () -> new HackathonRepositoryImpl(null)
+                () -> new InMemoryHackathonRepository(null)
         );
     }
 
     @Test
     void rifiutaGiudiceNullo() {
-        HackathonRepositoryImpl repository =
+        InMemoryHackathonRepository repository =
                 creaRepository();
 
         assertThrows(
@@ -39,7 +39,7 @@ class HackathonRepositoryImplTest {
 
     @Test
     void rifiutaMentoreNullo() {
-        HackathonRepositoryImpl repository =
+        InMemoryHackathonRepository repository =
                 creaRepository();
 
         assertThrows(
@@ -50,7 +50,7 @@ class HackathonRepositoryImplTest {
 
     @Test
     void rifiutaHackathonNulloDuranteIlSalvataggio() {
-        HackathonRepositoryImpl repository =
+        InMemoryHackathonRepository repository =
                 creaRepository();
 
         assertThrows(
@@ -61,7 +61,7 @@ class HackathonRepositoryImplTest {
 
     @Test
     void rifiutaIdentificativoHackathonNullo() {
-        HackathonRepositoryImpl repository =
+        InMemoryHackathonRepository repository =
                 creaRepository();
 
         assertThrows(
@@ -72,7 +72,7 @@ class HackathonRepositoryImplTest {
 
     @Test
     void restituisceTuttiGliHackathonSalvati() {
-        HackathonRepositoryImpl repository =
+        InMemoryHackathonRepository repository =
                 creaRepository();
 
         Utente giudice = new Utente(2L);
@@ -116,7 +116,7 @@ class HackathonRepositoryImplTest {
 
     @Test
     void recuperaHackathonTramiteIdentificativo() {
-        HackathonRepositoryImpl repository =
+        InMemoryHackathonRepository repository =
                 creaRepository();
 
         Utente giudice = new Utente(2L);
@@ -150,7 +150,7 @@ class HackathonRepositoryImplTest {
 
     @Test
     void segnalaHackathonNonTrovato() {
-        HackathonRepositoryImpl repository =
+        InMemoryHackathonRepository repository =
                 creaRepository();
 
         assertThrows(
@@ -163,11 +163,11 @@ class HackathonRepositoryImplTest {
 
     @Test
     void restituisceSoloHackathonValutabiliConSottomissioniPendenti() {
-        PartecipazioneRepositoryImpl partecipazioneRepository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository partecipazioneRepository =
+                new InMemoryPartecipazioneRepository();
 
-        HackathonRepositoryImpl repository =
-                new HackathonRepositoryImpl(
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(
                         partecipazioneRepository
                 );
 
@@ -271,11 +271,11 @@ class HackathonRepositoryImplTest {
 
     @Test
     void riconosceGiudiceTramiteIdentificativo() {
-        PartecipazioneRepositoryImpl partecipazioneRepository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository partecipazioneRepository =
+                new InMemoryPartecipazioneRepository();
 
-        HackathonRepositoryImpl repository =
-                new HackathonRepositoryImpl(
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(
                         partecipazioneRepository
                 );
 
@@ -305,11 +305,11 @@ class HackathonRepositoryImplTest {
 
     @Test
     void restituisceSoloHackathonSegnalabiliConTeamIscritti() {
-        PartecipazioneRepositoryImpl partecipazioneRepository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository partecipazioneRepository =
+                new InMemoryPartecipazioneRepository();
 
-        HackathonRepositoryImpl repository =
-                new HackathonRepositoryImpl(
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(
                         partecipazioneRepository
                 );
 
@@ -395,11 +395,11 @@ class HackathonRepositoryImplTest {
 
     @Test
     void restituisceListeNonModificabili() {
-        PartecipazioneRepositoryImpl partecipazioneRepository =
-                new PartecipazioneRepositoryImpl();
+        InMemoryPartecipazioneRepository partecipazioneRepository =
+                new InMemoryPartecipazioneRepository();
 
-        HackathonRepositoryImpl repository =
-                new HackathonRepositoryImpl(
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(
                         partecipazioneRepository
                 );
 
@@ -451,14 +451,14 @@ class HackathonRepositoryImplTest {
         );
     }
 
-    private HackathonRepositoryImpl creaRepository() {
-        return new HackathonRepositoryImpl(
-                new PartecipazioneRepositoryImpl()
+    private InMemoryHackathonRepository creaRepository() {
+        return new InMemoryHackathonRepository(
+                new InMemoryPartecipazioneRepository()
         );
     }
 
     private Partecipazione salvaPartecipazione(
-            PartecipazioneRepositoryImpl repository,
+            InMemoryPartecipazioneRepository repository,
             Hackathon hackathon,
             Long idResponsabile,
             boolean conSottomissione
