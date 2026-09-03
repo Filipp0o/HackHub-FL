@@ -58,7 +58,7 @@ class HackathonTest {
                         hackathon.getDimensioneMassimaTeam()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_ISCRIZIONE,
+                        TipoStatoHackathon.IN_ISCRIZIONE,
                         hackathon.getStato()
                 ),
                 () -> assertEquals(
@@ -294,7 +294,7 @@ class HackathonTest {
         );
 
         assertEquals(
-                StatoHackathon.IN_ISCRIZIONE,
+                TipoStatoHackathon.IN_ISCRIZIONE,
                 hackathon.getStato()
         );
     }
@@ -306,7 +306,7 @@ class HackathonTest {
         hackathon.aggiornaStato(hackathon.getDataInizio());
 
         assertEquals(
-                StatoHackathon.IN_CORSO,
+                TipoStatoHackathon.IN_CORSO,
                 hackathon.getStato()
         );
     }
@@ -321,7 +321,7 @@ class HackathonTest {
         );
 
         assertEquals(
-                StatoHackathon.IN_VALUTAZIONE,
+                TipoStatoHackathon.IN_VALUTAZIONE,
                 hackathon.getStato()
         );
     }
@@ -335,7 +335,7 @@ class HackathonTest {
         );
 
         assertEquals(
-                StatoHackathon.IN_VALUTAZIONE,
+                TipoStatoHackathon.IN_VALUTAZIONE,
                 hackathon.getStato()
         );
     }
@@ -350,7 +350,7 @@ class HackathonTest {
         );
 
         assertEquals(
-                StatoHackathon.IN_ISCRIZIONE,
+                TipoStatoHackathon.IN_ISCRIZIONE,
                 hackathon.getStato()
         );
     }
@@ -534,7 +534,7 @@ class HackathonTest {
 
         assertAll(
                 () -> assertEquals(
-                        StatoHackathon.CONCLUSO,
+                        TipoStatoHackathon.CONCLUSO,
                         hackathon.getStato()
                 ),
                 () -> assertSame(
@@ -554,7 +554,7 @@ class HackathonTest {
         );
 
         assertEquals(
-                StatoHackathon.IN_ISCRIZIONE,
+                TipoStatoHackathon.IN_ISCRIZIONE,
                 hackathon.getStato()
         );
     }
@@ -570,7 +570,7 @@ class HackathonTest {
         );
 
         assertEquals(
-                StatoHackathon.IN_VALUTAZIONE,
+                TipoStatoHackathon.IN_VALUTAZIONE,
                 hackathon.getStato()
         );
     }

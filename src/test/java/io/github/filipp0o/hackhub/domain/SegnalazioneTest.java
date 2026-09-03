@@ -141,7 +141,7 @@ class SegnalazioneTest {
 
         assertAll(
                 () -> assertEquals(
-                        StatoHackathon.IN_ISCRIZIONE,
+                        TipoStatoHackathon.IN_ISCRIZIONE,
                         hackathonNonSegnalabile.getStato()
                 ),
                 () -> assertThrows(

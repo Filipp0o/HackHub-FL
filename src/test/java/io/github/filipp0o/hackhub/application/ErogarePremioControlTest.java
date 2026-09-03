@@ -4,13 +4,11 @@ import io.github.filipp0o.hackhub.domain.DatiHackathon;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.StatoRiscossionePremio;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -459,21 +457,9 @@ class ErogarePremioControlTest {
     private void portaInValutazione(
             Hackathon hackathon
     ) {
-        try {
-            Field campoStato =
-                    Hackathon.class.getDeclaredField("stato");
-
-            campoStato.setAccessible(true);
-            campoStato.set(
-                    hackathon,
-                    StatoHackathon.IN_VALUTAZIONE
-            );
-        } catch (ReflectiveOperationException eccezione) {
-            throw new AssertionError(
-                    "Impossibile predisporre l'hackathon in valutazione",
-                    eccezione
-            );
-        }
+        hackathon.aggiornaStato(
+                hackathon.getDataFine().plusDays(1)
+        );
     }
 
     private static class SistemaPagamentoGatewayFinto

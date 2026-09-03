@@ -2,7 +2,7 @@ package io.github.filipp0o.hackhub.application;
 
 import io.github.filipp0o.hackhub.domain.DatiHackathon;
 import io.github.filipp0o.hackhub.domain.Hackathon;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import io.github.filipp0o.hackhub.domain.Utente;
 import org.junit.jupiter.api.Test;
 
@@ -301,7 +301,7 @@ class CreareHackathonControlTest {
                         hackathonSalvato.getMentori()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_ISCRIZIONE,
+                        TipoStatoHackathon.IN_ISCRIZIONE,
                         hackathonSalvato.getStato()
                 )
         );

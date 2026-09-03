@@ -134,7 +134,9 @@ public class Hackathon {
 
         this.mentori = List.copyOf(mentori);
         this.id = SEQUENZA_ID.getAndIncrement();
-        this.stato = StatoHackathon.IN_ISCRIZIONE;
+        this.stato = StatoHackathonFactory.ricostruisci(
+                TipoStatoHackathon.IN_ISCRIZIONE
+        );
     }
 
     public static Hackathon crea(
@@ -163,8 +165,20 @@ public class Hackathon {
     }
 
     public boolean isApertoAlleIscrizioni() {
-        return stato == StatoHackathon.IN_ISCRIZIONE
+        return stato.consenteIscrizioni()
                 && !LocalDate.now().isAfter(scadenzaIscrizioni);
+    }
+
+    public boolean consenteSegnalazioni() {
+        return stato.consenteSegnalazioni();
+    }
+
+    public boolean consenteValutazioni() {
+        return stato.consenteValutazioni();
+    }
+
+    public boolean consenteRiscossionePremio() {
+        return stato.consenteRiscossionePremio();
     }
 
     public boolean rispettaDimensioneMassima(
@@ -189,25 +203,17 @@ public class Hackathon {
                 "La data corrente è obbligatoria"
         );
 
-        if (stato == StatoHackathon.CONCLUSO) {
-            return;
-        }
-
-        if (dataValida.isAfter(dataFine)) {
-            stato = StatoHackathon.IN_VALUTAZIONE;
-            return;
-        }
-
-        if (!dataValida.isBefore(dataInizio)
-                && stato == StatoHackathon.IN_ISCRIZIONE) {
-            stato = StatoHackathon.IN_CORSO;
-        }
+        stato = stato.aggiorna(
+                dataValida,
+                dataInizio,
+                dataFine
+        );
     }
 
     public void registraPartecipazioneVincitrice(
             Partecipazione partecipazione
     ) {
-        if (stato != StatoHackathon.IN_VALUTAZIONE) {
+        if (!stato.consenteValutazioni()) {
             throw new IllegalStateException(
                     "Il vincitore può essere registrato solo durante la valutazione"
             );
@@ -242,7 +248,7 @@ public class Hackathon {
     }
 
     public void concludi() {
-        if (stato != StatoHackathon.IN_VALUTAZIONE) {
+        if (!stato.consenteValutazioni()) {
             throw new IllegalStateException(
                     "Può essere concluso solo un hackathon in valutazione"
             );
@@ -254,7 +260,7 @@ public class Hackathon {
             );
         }
 
-        this.stato = StatoHackathon.CONCLUSO;
+        this.stato = stato.concludi();
     }
 
     void registraRiscossionePremio(
@@ -266,7 +272,7 @@ public class Hackathon {
                         "La riscossione del premio è obbligatoria"
                 );
 
-        if (stato != StatoHackathon.CONCLUSO) {
+        if (!stato.consenteRiscossionePremio()) {
             throw new IllegalStateException(
                     "La riscossione può essere creata solo per un hackathon concluso"
             );
@@ -327,8 +333,8 @@ public class Hackathon {
         return dimensioneMassimaTeam;
     }
 
-    public StatoHackathon getStato() {
-        return stato;
+    public TipoStatoHackathon getStato() {
+        return stato.tipo();
     }
 
     public Utente getOrganizzatore() {

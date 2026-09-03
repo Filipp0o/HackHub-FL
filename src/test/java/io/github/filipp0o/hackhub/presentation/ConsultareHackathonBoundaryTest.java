@@ -4,7 +4,6 @@ import io.github.filipp0o.hackhub.application.ConsultareHackathonControl;
 import io.github.filipp0o.hackhub.application.HackathonRepository;
 import io.github.filipp0o.hackhub.domain.DatiHackathon;
 import io.github.filipp0o.hackhub.domain.Hackathon;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.Utente;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

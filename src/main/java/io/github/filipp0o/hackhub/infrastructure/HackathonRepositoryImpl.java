@@ -4,7 +4,6 @@ import io.github.filipp0o.hackhub.application.HackathonRepository;
 import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.Utente;
 
 import java.util.ArrayList;
@@ -40,10 +39,7 @@ public class HackathonRepositoryImpl
         );
 
         return hackathonSalvati.stream()
-                .filter(hackathon ->
-                        hackathon.getStato()
-                                == StatoHackathon.IN_VALUTAZIONE
-                )
+                .filter(Hackathon::consenteValutazioni)
                 .filter(hackathon ->
                         Objects.equals(
                                 hackathon.getGiudice().getId(),
@@ -64,12 +60,7 @@ public class HackathonRepositoryImpl
         );
 
         return hackathonSalvati.stream()
-                .filter(hackathon ->
-                        hackathon.getStato()
-                                == StatoHackathon.IN_CORSO
-                                || hackathon.getStato()
-                                == StatoHackathon.IN_VALUTAZIONE
-                )
+                .filter(Hackathon::consenteSegnalazioni)
                 .filter(hackathon ->
                         hackathon.getMentori().stream()
                                 .anyMatch(mentoreAssegnato ->

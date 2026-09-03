@@ -113,7 +113,7 @@ class IscrivereTeamHackathonDomainTest {
 
         assertAll(
                 () -> assertEquals(
-                        StatoHackathon.IN_CORSO,
+                        TipoStatoHackathon.IN_CORSO,
                         hackathon.getStato()
                 ),
                 () -> assertFalse(

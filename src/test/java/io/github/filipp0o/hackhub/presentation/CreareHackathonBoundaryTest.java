@@ -4,7 +4,7 @@ import io.github.filipp0o.hackhub.application.CreareHackathonControl;
 import io.github.filipp0o.hackhub.application.HackathonRepository;
 import io.github.filipp0o.hackhub.application.UtenteRepository;
 import io.github.filipp0o.hackhub.domain.Hackathon;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import io.github.filipp0o.hackhub.domain.Utente;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -109,7 +109,7 @@ class CreareHackathonBoundaryTest {
                                 .toList()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_ISCRIZIONE,
+                        TipoStatoHackathon.IN_ISCRIZIONE,
                         hackathonSalvato.getStato()
                 )
         );

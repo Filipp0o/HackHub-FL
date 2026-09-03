@@ -7,7 +7,7 @@ import io.github.filipp0o.hackhub.domain.DatiHackathon;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import io.github.filipp0o.hackhub.domain.StatoRiscossionePremio;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
@@ -170,7 +170,7 @@ class ConfigurareRiscossionePremioBoundaryTest {
         risultato.concludi();
 
         assertEquals(
-                StatoHackathon.CONCLUSO,
+                TipoStatoHackathon.CONCLUSO,
                 risultato.getStato()
         );
 

@@ -11,7 +11,7 @@ import io.github.filipp0o.hackhub.domain.NotificaSegnalazione;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import io.github.filipp0o.hackhub.domain.StatoRiscossionePremio;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
@@ -144,7 +144,7 @@ class ProclamareTeamVincitoreBoundaryTest {
                         hackathon.getVincitrice()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_VALUTAZIONE,
+                        TipoStatoHackathon.IN_VALUTAZIONE,
                         hackathon.getStato()
                 )
         );
@@ -164,7 +164,7 @@ class ProclamareTeamVincitoreBoundaryTest {
                         hackathon.getVincitrice()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.CONCLUSO,
+                        TipoStatoHackathon.CONCLUSO,
                         hackathon.getStato()
                 ),
                 () -> assertNotNull(

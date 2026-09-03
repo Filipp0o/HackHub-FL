@@ -2,7 +2,7 @@ package io.github.filipp0o.hackhub.presentation;
 
 import io.github.filipp0o.hackhub.application.ConsultareHackathonControl;
 import io.github.filipp0o.hackhub.domain.Hackathon;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -105,7 +105,7 @@ public class ConsultareHackathonBoundary {
     public record RiepilogoHackathon(
             Long id,
             String nome,
-            StatoHackathon stato,
+            TipoStatoHackathon stato,
             LocalDate scadenzaIscrizioni,
             LocalDate dataInizio,
             LocalDate dataFine,
@@ -124,7 +124,7 @@ public class ConsultareHackathonBoundary {
             String luogo,
             BigDecimal importoPremio,
             Integer dimensioneMassimaTeam,
-            StatoHackathon stato
+            TipoStatoHackathon stato
     ) {
     }
 }

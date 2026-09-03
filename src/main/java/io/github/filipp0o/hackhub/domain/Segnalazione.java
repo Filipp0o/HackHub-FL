@@ -39,9 +39,7 @@ public class Segnalazione {
 
         Hackathon hackathon = partecipazione.getHackathon();
 
-        if (hackathon.getStato() != StatoHackathon.IN_CORSO
-                && hackathon.getStato()
-                != StatoHackathon.IN_VALUTAZIONE) {
+        if (!hackathon.consenteSegnalazioni()) {
             throw new IllegalStateException(
                     "La segnalazione può essere creata solo per un hackathon in corso o in valutazione"
             );

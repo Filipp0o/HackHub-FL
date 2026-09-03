@@ -5,7 +5,7 @@ import io.github.filipp0o.hackhub.domain.DatiValutazione;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
 import io.github.filipp0o.hackhub.domain.Valutazione;
@@ -146,7 +146,7 @@ class ValutareSottomissioneControlTest {
                         risultato
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_VALUTAZIONE,
+                        TipoStatoHackathon.IN_VALUTAZIONE,
                         hackathon.getStato()
                 ),
                 () -> assertSame(

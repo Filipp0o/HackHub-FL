@@ -4,7 +4,6 @@ import io.github.filipp0o.hackhub.domain.DatiValutazione;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.Utente;
 import io.github.filipp0o.hackhub.domain.Valutazione;
 
@@ -63,8 +62,7 @@ public class ValutareSottomissioneControl {
 
         hackathonValido.aggiornaStato(LocalDate.now());
 
-        if (hackathonValido.getStato()
-                != StatoHackathon.IN_VALUTAZIONE) {
+        if (!hackathonValido.consenteValutazioni()) {
             throw new IllegalStateException(
                     "L'hackathon non è in valutazione"
             );
@@ -129,8 +127,7 @@ public class ValutareSottomissioneControl {
 
         hackathon.aggiornaStato(LocalDate.now());
 
-        if (hackathon.getStato()
-                != StatoHackathon.IN_VALUTAZIONE) {
+        if (!hackathon.consenteValutazioni()) {
             throw new IllegalStateException(
                     "L'hackathon non è in valutazione"
             );

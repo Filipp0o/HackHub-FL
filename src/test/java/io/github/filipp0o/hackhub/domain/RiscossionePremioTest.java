@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.lang.reflect.Field;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RiscossionePremioTest {
@@ -265,21 +264,11 @@ class RiscossionePremioTest {
                 List.of(new Utente(3L))
         );
     }
-    private void portaInValutazione(Hackathon hackathon) {
-        try {
-            Field campoStato =
-                    Hackathon.class.getDeclaredField("stato");
-
-            campoStato.setAccessible(true);
-            campoStato.set(
-                    hackathon,
-                    StatoHackathon.IN_VALUTAZIONE
-            );
-        } catch (ReflectiveOperationException eccezione) {
-            throw new AssertionError(
-                    "Impossibile predisporre l'hackathon in valutazione",
-                    eccezione
-            );
-        }
+    private void portaInValutazione(
+            Hackathon hackathon
+    ) {
+        hackathon.aggiornaStato(
+                hackathon.getDataFine().plusDays(1)
+        );
     }
 }

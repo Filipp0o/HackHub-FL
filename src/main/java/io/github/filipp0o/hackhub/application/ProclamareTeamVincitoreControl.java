@@ -5,7 +5,6 @@ import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
 import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
 import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
 import io.github.filipp0o.hackhub.domain.Utente;
 
@@ -181,8 +180,7 @@ public class ProclamareTeamVincitoreControl {
     private void verificaHackathonInValutazione(
             Hackathon hackathon
     ) {
-        if (hackathon.getStato()
-                != StatoHackathon.IN_VALUTAZIONE) {
+        if (!hackathon.consenteValutazioni()) {
             throw new IllegalStateException(
                     "L'hackathon non è in valutazione"
             );

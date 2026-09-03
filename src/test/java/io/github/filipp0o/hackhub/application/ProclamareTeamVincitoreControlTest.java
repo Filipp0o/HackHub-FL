@@ -8,7 +8,7 @@ import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
 import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
-import io.github.filipp0o.hackhub.domain.StatoHackathon;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import io.github.filipp0o.hackhub.domain.StatoRiscossionePremio;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
@@ -193,7 +193,7 @@ class ProclamareTeamVincitoreControlTest {
                         partecipazioneRepository.numeroRecuperiNonEscluse
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_VALUTAZIONE,
+                        TipoStatoHackathon.IN_VALUTAZIONE,
                         hackathon.getStato()
                 )
         );
@@ -263,7 +263,7 @@ class ProclamareTeamVincitoreControlTest {
 
         assertAll(
                 () -> assertEquals(
-                        StatoHackathon.IN_ISCRIZIONE,
+                        TipoStatoHackathon.IN_ISCRIZIONE,
                         hackathon.getStato()
                 ),
                 () -> assertEquals(
@@ -612,7 +612,7 @@ class ProclamareTeamVincitoreControlTest {
                         hackathon.getRiscossionePremio()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_VALUTAZIONE,
+                        TipoStatoHackathon.IN_VALUTAZIONE,
                         hackathon.getStato()
                 ),
                 () -> assertEquals(
@@ -789,7 +789,7 @@ class ProclamareTeamVincitoreControlTest {
                         hackathon.getVincitrice()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.CONCLUSO,
+                        TipoStatoHackathon.CONCLUSO,
                         hackathon.getStato()
                 ),
                 () -> assertNotNull(
@@ -864,7 +864,7 @@ class ProclamareTeamVincitoreControlTest {
                         hackathon.getRiscossionePremio()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_VALUTAZIONE,
+                        TipoStatoHackathon.IN_VALUTAZIONE,
                         hackathon.getStato()
                 ),
                 () -> assertEquals(
@@ -923,7 +923,7 @@ class ProclamareTeamVincitoreControlTest {
                         hackathon.getRiscossionePremio()
                 ),
                 () -> assertEquals(
-                        StatoHackathon.IN_VALUTAZIONE,
+                        TipoStatoHackathon.IN_VALUTAZIONE,
                         hackathon.getStato()
                 ),
                 () -> assertEquals(
