@@ -761,9 +761,15 @@ class ProclamareTeamVincitoreControlTest {
         HackathonRepositoryFinto hackathonRepository =
                 new HackathonRepositoryFinto();
 
+        PartecipazioneRepositoryFinto partecipazioneRepository =
+                new PartecipazioneRepositoryFinto();
+
+        partecipazioneRepository.partecipazioni =
+                List.of(partecipazioneVincitrice);
+
         ProclamareTeamVincitoreControl control =
                 new ProclamareTeamVincitoreControl(
-                        new PartecipazioneRepositoryFinto(),
+                        partecipazioneRepository,
                         hackathonRepository,
                         new SegnalazioneRepositoryFinto()
                 );
@@ -930,6 +936,95 @@ class ProclamareTeamVincitoreControlTest {
                         0,
                         hackathonRepository.numeroSalvataggi
                 )
+        );
+    }
+
+    @Test
+    void nonConfermaDirettamenteSeUnAltraSottomissioneNonEValutata() {
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon = creaHackathonInValutazione(organizzatore);
+        Partecipazione candidata = creaPartecipazioneValutata(hackathon, 10L);
+        Partecipazione nonValutata = creaPartecipazione(hackathon, 11L);
+        new Sottomissione(nonValutata, "Sottomissione ancora da valutare");
+
+        PartecipazioneRepositoryFinto partecipazioneRepository =
+                new PartecipazioneRepositoryFinto();
+        partecipazioneRepository.partecipazioni = List.of(candidata, nonValutata);
+
+        HackathonRepositoryFinto hackathonRepository =
+                new HackathonRepositoryFinto();
+        ProclamareTeamVincitoreControl control = new ProclamareTeamVincitoreControl(
+                partecipazioneRepository,
+                hackathonRepository,
+                new SegnalazioneRepositoryFinto()
+        );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> control.confermaProclamazione(
+                        organizzatore,
+                        hackathon,
+                        candidata
+                )
+        );
+
+        assertAll(
+                () -> assertEquals(TipoStatoHackathon.IN_VALUTAZIONE, hackathon.getStato()),
+                () -> assertNull(hackathon.getVincitrice()),
+                () -> assertNull(hackathon.getRiscossionePremio()),
+                () -> assertEquals(0, hackathonRepository.numeroSalvataggi)
+        );
+    }
+
+    @Test
+    void nonConfermaSeArrivaUnaSegnalazioneDopoLAvvio() {
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon = creaHackathonInValutazione(organizzatore);
+        Partecipazione candidata = creaPartecipazioneValutata(hackathon, 10L);
+
+        PartecipazioneRepositoryFinto partecipazioneRepository =
+                new PartecipazioneRepositoryFinto();
+        partecipazioneRepository.partecipazioni = List.of(candidata);
+        partecipazioneRepository.partecipazioniNonEscluse = List.of(candidata);
+
+        SegnalazioneRepositoryFinto segnalazioneRepository =
+                new SegnalazioneRepositoryFinto();
+        HackathonRepositoryFinto hackathonRepository =
+                new HackathonRepositoryFinto();
+        ProclamareTeamVincitoreControl control = new ProclamareTeamVincitoreControl(
+                partecipazioneRepository,
+                hackathonRepository,
+                segnalazioneRepository
+        );
+
+        assertEquals(
+                List.of(candidata),
+                control.avviaProclamazioneTeamVincitore(organizzatore, hackathon)
+        );
+        control.preparaProclamazione(hackathon, candidata);
+
+        segnalazioneRepository.segnalazioniDaEsaminare = List.of(
+                Segnalazione.crea(
+                        new Utente(3L),
+                        candidata,
+                        "Violazione segnalata dopo la selezione del vincitore"
+                )
+        );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> control.confermaProclamazione(
+                        organizzatore,
+                        hackathon,
+                        candidata
+                )
+        );
+
+        assertAll(
+                () -> assertEquals(TipoStatoHackathon.IN_VALUTAZIONE, hackathon.getStato()),
+                () -> assertNull(hackathon.getVincitrice()),
+                () -> assertNull(hackathon.getRiscossionePremio()),
+                () -> assertEquals(0, hackathonRepository.numeroSalvataggi)
         );
     }
 

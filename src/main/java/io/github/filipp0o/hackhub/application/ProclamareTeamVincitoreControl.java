@@ -166,6 +166,21 @@ public class ProclamareTeamVincitoreControl {
                 partecipazioneValida
         );
 
+        verificaAssenzaSegnalazioniDaEsaminare(
+                hackathonValido,
+                segnalazioneRepository
+                        .ottieniSegnalazioniDaEsaminare(
+                                organizzatoreValido
+                        )
+        );
+
+        verificaSottomissioniValutate(
+                partecipazioneRepository
+                        .ottieniPartecipazioni(hackathonValido)
+        );
+
+
+
         hackathonValido.registraPartecipazioneVincitrice(
                 partecipazioneValida
         );
