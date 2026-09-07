@@ -62,6 +62,33 @@ public class JdbcUtenteRepository implements UtenteRepository {
     }
 
     @Override
+    public Utente recuperaPerEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("L'email è obbligatoria");
+        }
+
+        try {
+            return jdbcClient.sql("""
+                            SELECT id, email, password_hash
+                            FROM utente
+                            WHERE email = :email
+                            """)
+                    .param("email", email)
+                    .query((rs, rowNum) -> Utente.ricostruisci(
+                            rs.getLong("id"),
+                            rs.getString("email"),
+                            rs.getString("password_hash")
+                    ))
+                    .optional()
+                    .orElse(null);
+        } catch (DataAccessException eccezione) {
+            throw new IllegalStateException(
+                    "Impossibile recuperare l'utente per email", eccezione
+            );
+        }
+    }
+
+    @Override
     public void salva(Utente utente) {
         Objects.requireNonNull(utente, "L'utente è obbligatorio");
 

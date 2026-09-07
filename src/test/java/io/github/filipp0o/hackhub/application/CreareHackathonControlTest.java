@@ -377,6 +377,13 @@ class CreareHackathonControlTest {
         }
 
         @Override
+        public Utente recuperaPerEmail(String email) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
+
+        @Override
         public void salva(Utente utente) {
             throw new UnsupportedOperationException(
                     "Non utilizzato in questo test"

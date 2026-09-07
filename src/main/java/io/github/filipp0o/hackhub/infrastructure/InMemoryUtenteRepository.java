@@ -62,6 +62,20 @@ public class InMemoryUtenteRepository implements UtenteRepository {
     }
 
     @Override
+    public Utente recuperaPerEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException(
+                    "L'email è obbligatoria"
+            );
+        }
+
+        return utenti.values().stream()
+                .filter(utente -> email.equals(utente.recuperaEmail()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
     public void salva(Utente utente) {
         Objects.requireNonNull(
                 utente,
