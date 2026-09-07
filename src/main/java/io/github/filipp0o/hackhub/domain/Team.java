@@ -116,6 +116,23 @@ public class Team {
         return membri.size();
     }
 
+    public void aggiungiMembro(Utente utente) {
+        Utente nuovoMembro = Objects.requireNonNull(
+                utente,
+                "Il nuovo membro è obbligatorio"
+        );
+
+        if (membri.stream().anyMatch(membro ->
+                stessaIdentita(membro, nuovoMembro)
+        )) {
+            throw new IllegalArgumentException(
+                    "L'utente appartiene già al team"
+            );
+        }
+
+        membri.add(nuovoMembro);
+    }
+
     public Long getId() {
         return id;
     }
