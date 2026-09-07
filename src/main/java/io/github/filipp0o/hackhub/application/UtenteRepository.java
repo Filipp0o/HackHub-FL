@@ -8,6 +8,20 @@ public interface UtenteRepository {
 
     List<Utente> recuperaUtentiAssegnabili();
 
+    /** Recupera gli altri account registrati, escludendo i riferimenti con solo ID. */
+    default List<Utente> recuperaUtentiInvitabili(Utente utente) {
+        java.util.Objects.requireNonNull(utente, "L'utente è obbligatorio");
+        if (utente.getId() == null) {
+            throw new IllegalArgumentException("L'utente deve avere un ID");
+        }
+
+        return recuperaUtentiAssegnabili().stream()
+                .filter(candidato -> !utente.getId().equals(candidato.getId()))
+                .filter(candidato -> candidato.recuperaEmail() != null
+                        && candidato.recuperaPasswordHash() != null)
+                .toList();
+    }
+
     boolean esistePerEmail(String email);
 
     /**
