@@ -27,7 +27,7 @@ public class RegistrarsiControl {
         verificaDatiRegistrazione(email, password);
 
         if (utenteRepository.esistePerEmail(email)) {
-            throw new IllegalStateException("L'email è già registrata");
+            throw new EmailGiaRegistrataException();
         }
 
         String passwordHash = codificatorePassword.codifica(password);
@@ -42,6 +42,14 @@ public class RegistrarsiControl {
 
         if (password == null || password.isBlank()) {
             throw new IllegalArgumentException("La password è obbligatoria");
+        }
+    }
+
+    public static class EmailGiaRegistrataException
+            extends IllegalStateException {
+
+        public EmailGiaRegistrataException() {
+            super("L'email è già registrata");
         }
     }
 }
