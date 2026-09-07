@@ -5,6 +5,7 @@ import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
 import io.github.filipp0o.hackhub.domain.Team;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -167,6 +168,29 @@ public class InMemoryPartecipazioneRepository
                         secondo.getId()
                 )
         );
+    }
+
+    @Override
+    public List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
+            Team team
+    ) {
+        Team teamValido = Objects.requireNonNull(
+                team,
+                "Il team è obbligatorio"
+        );
+
+        return partecipazioniSalvate.stream()
+                .filter(partecipazione ->
+                        stessoTeam(
+                                partecipazione.getTeam(),
+                                teamValido
+                        )
+                )
+                .filter(partecipazione ->
+                        partecipazione.ottieniHackathon().getStato()
+                                != TipoStatoHackathon.CONCLUSO
+                )
+                .toList();
     }
 
     private boolean stessoTeam(

@@ -27,4 +27,8 @@ public interface PartecipazioneRepository {
     );
 
     void salva(Partecipazione partecipazione);
+
+    List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
+            Team team
+    );
 }

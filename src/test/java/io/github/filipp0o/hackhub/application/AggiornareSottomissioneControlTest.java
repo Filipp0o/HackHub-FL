@@ -467,6 +467,15 @@ class AggiornareSottomissioneControlTest {
     private static class PartecipazioneRepositoryFinto
             implements PartecipazioneRepository {
 
+        @Override
+        public List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
+                Team team
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
+
         private Partecipazione partecipazione;
         private Team teamRicevuto;
         private Hackathon hackathonRicevuto;

@@ -340,6 +340,15 @@ class IscrivereTeamHackathonBoundaryTest {
     private static class PartecipazioneRepositoryFinto
             implements PartecipazioneRepository {
 
+        @Override
+        public List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
+                Team team
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
+
         private boolean
                 partecipazioneEsistente;
 
