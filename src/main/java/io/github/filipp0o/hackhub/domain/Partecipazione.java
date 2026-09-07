@@ -1,14 +1,10 @@
 package io.github.filipp0o.hackhub.domain;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Partecipazione {
 
-    private static final AtomicLong SEQUENZA_ID =
-            new AtomicLong(1);
-
-    private final Long id;
+    private Long id;
     private StatoPartecipazione stato;
 
     private final Hackathon hackathon;
@@ -16,42 +12,24 @@ public class Partecipazione {
 
     private Sottomissione sottomissione;
 
-    public Partecipazione(
-            Hackathon hackathon,
-            Team team
-    ) {
+    public Partecipazione(Hackathon hackathon, Team team) {
         this.hackathon = Objects.requireNonNull(
-                hackathon,
-                "L'hackathon è obbligatorio"
+                hackathon, "L'hackathon è obbligatorio"
         );
-
         this.team = Objects.requireNonNull(
-                team,
-                "Il team è obbligatorio"
+                team, "Il team è obbligatorio"
         );
-
-        this.id = SEQUENZA_ID.getAndIncrement();
         this.stato = StatoPartecipazione.ATTIVA;
     }
 
-    public static Partecipazione crea(
-            Hackathon hackathon,
-            Team team
-    ) {
-        return new Partecipazione(
-                hackathon,
-                team
-        );
+    public static Partecipazione crea(Hackathon hackathon, Team team) {
+        return new Partecipazione(hackathon, team);
     }
 
-    void registraSottomissione(
-            Sottomissione sottomissione
-    ) {
-        Sottomissione sottomissioneValida =
-                Objects.requireNonNull(
-                        sottomissione,
-                        "La sottomissione è obbligatoria"
-                );
+    void registraSottomissione(Sottomissione sottomissione) {
+        Sottomissione sottomissioneValida = Objects.requireNonNull(
+                sottomissione, "La sottomissione è obbligatoria"
+        );
 
         if (this.sottomissione != null) {
             throw new IllegalStateException(
@@ -64,6 +42,26 @@ public class Partecipazione {
 
     public Hackathon ottieniHackathon() {
         return hackathon;
+    }
+
+    public void assegnaId(Long id) {
+        Long idValido = Objects.requireNonNull(
+                id, "L'id della partecipazione è obbligatorio"
+        );
+
+        if (idValido <= 0) {
+            throw new IllegalArgumentException(
+                    "L'id della partecipazione deve essere maggiore di zero"
+            );
+        }
+
+        if (this.id != null) {
+            throw new IllegalStateException(
+                    "L'id della partecipazione è già stato assegnato"
+            );
+        }
+
+        this.id = idValido;
     }
 
     public Long getId() {

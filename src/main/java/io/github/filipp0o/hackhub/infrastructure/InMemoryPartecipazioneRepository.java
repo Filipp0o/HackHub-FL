@@ -17,157 +17,104 @@ public class InMemoryPartecipazioneRepository
     private final List<Partecipazione> partecipazioniSalvate =
             new ArrayList<>();
 
+    private long prossimoId = 1L;
+
     @Override
-    public List<Partecipazione> ottieniPartecipazioni(
-            Hackathon hackathon
-    ) {
+    public List<Partecipazione> ottieniPartecipazioni(Hackathon hackathon) {
         Hackathon hackathonValido = Objects.requireNonNull(
-                hackathon,
-                "L'hackathon è obbligatorio"
+                hackathon, "L'hackathon è obbligatorio"
         );
 
         return partecipazioniSalvate.stream()
-                .filter(partecipazione ->
-                        stessoHackathon(
-                                partecipazione.getHackathon(),
-                                hackathonValido
-                        )
-                )
+                .filter(partecipazione -> stessoHackathon(
+                        partecipazione.getHackathon(), hackathonValido
+                ))
                 .toList();
     }
 
     @Override
-    public List<Partecipazione>
-    recuperaPartecipazioniNonEscluse(
+    public List<Partecipazione> recuperaPartecipazioniNonEscluse(
             Hackathon hackathon
     ) {
         Hackathon hackathonValido = Objects.requireNonNull(
-                hackathon,
-                "L'hackathon è obbligatorio"
+                hackathon, "L'hackathon è obbligatorio"
         );
 
         return partecipazioniSalvate.stream()
+                .filter(partecipazione -> stessoHackathon(
+                        partecipazione.getHackathon(), hackathonValido
+                ))
                 .filter(partecipazione ->
-                        stessoHackathon(
-                                partecipazione.getHackathon(),
-                                hackathonValido
-                        )
-                )
-                .filter(partecipazione ->
-                        partecipazione.getStato()
-                                != StatoPartecipazione.ESCLUSA
-                )
+                        partecipazione.getStato() != StatoPartecipazione.ESCLUSA)
                 .toList();
     }
 
     @Override
-    public boolean esistePartecipazione(
-            Team team,
-            Hackathon hackathon
-    ) {
+    public boolean esistePartecipazione(Team team, Hackathon hackathon) {
         Team teamValido = Objects.requireNonNull(
-                team,
-                "Il team è obbligatorio"
+                team, "Il team è obbligatorio"
         );
-
         Hackathon hackathonValido = Objects.requireNonNull(
-                hackathon,
-                "L'hackathon è obbligatorio"
+                hackathon, "L'hackathon è obbligatorio"
         );
 
         return partecipazioniSalvate.stream()
                 .anyMatch(partecipazione ->
-                        stessoTeam(
-                                partecipazione.getTeam(),
-                                teamValido
-                        )
+                        stessoTeam(partecipazione.getTeam(), teamValido)
                                 && stessoHackathon(
-                                partecipazione.getHackathon(),
-                                hackathonValido
-                        )
-                );
+                                partecipazione.getHackathon(), hackathonValido
+                        ));
     }
 
     @Override
     public Partecipazione recuperaPartecipazione(
-            Team team,
-            Hackathon hackathon
+            Team team, Hackathon hackathon
     ) {
         Team teamValido = Objects.requireNonNull(
-                team,
-                "Il team è obbligatorio"
+                team, "Il team è obbligatorio"
         );
-
         Hackathon hackathonValido = Objects.requireNonNull(
-                hackathon,
-                "L'hackathon è obbligatorio"
+                hackathon, "L'hackathon è obbligatorio"
         );
 
         return partecipazioniSalvate.stream()
                 .filter(partecipazione ->
-                        stessoTeam(
-                                partecipazione.getTeam(),
-                                teamValido
-                        )
-                )
+                        stessoTeam(partecipazione.getTeam(), teamValido))
                 .filter(partecipazione ->
                         stessoHackathon(
-                                partecipazione.getHackathon(),
-                                hackathonValido
-                        )
-                )
+                                partecipazione.getHackathon(), hackathonValido
+                        ))
                 .findFirst()
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Il team non è iscritto all'hackathon"
-                        )
-                );
+                .orElseThrow(() -> new IllegalStateException(
+                        "Il team non è iscritto all'hackathon"
+                ));
     }
 
     @Override
-    public void salva(
-            Partecipazione partecipazione
-    ) {
-        Partecipazione partecipazioneValida =
-                Objects.requireNonNull(
-                        partecipazione,
-                        "La partecipazione è obbligatoria"
-                );
+    public void salva(Partecipazione partecipazione) {
+        Partecipazione partecipazioneValida = Objects.requireNonNull(
+                partecipazione, "La partecipazione è obbligatoria"
+        );
 
-        for (int indice = 0;
-             indice < partecipazioniSalvate.size();
-             indice++) {
+        if (partecipazioneValida.getId() == null) {
+            partecipazioneValida.assegnaId(prossimoId++);
+        } else {
+            prossimoId = Math.max(
+                    prossimoId, partecipazioneValida.getId() + 1
+            );
+        }
+
+        for (int indice = 0; indice < partecipazioniSalvate.size(); indice++) {
             if (Objects.equals(
-                    partecipazioniSalvate
-                            .get(indice)
-                            .getId(),
+                    partecipazioniSalvate.get(indice).getId(),
                     partecipazioneValida.getId()
             )) {
-                partecipazioniSalvate.set(
-                        indice,
-                        partecipazioneValida
-                );
+                partecipazioniSalvate.set(indice, partecipazioneValida);
                 return;
             }
         }
 
-        partecipazioniSalvate.add(
-                partecipazioneValida
-        );
-    }
-
-    private boolean stessoHackathon(
-            Hackathon primo,
-            Hackathon secondo
-    ) {
-        return primo == secondo
-                || (
-                primo.getId() != null
-                        && Objects.equals(
-                        primo.getId(),
-                        secondo.getId()
-                )
-        );
+        partecipazioniSalvate.add(partecipazioneValida);
     }
 
     @Override
@@ -175,35 +122,27 @@ public class InMemoryPartecipazioneRepository
             Team team
     ) {
         Team teamValido = Objects.requireNonNull(
-                team,
-                "Il team è obbligatorio"
+                team, "Il team è obbligatorio"
         );
 
         return partecipazioniSalvate.stream()
                 .filter(partecipazione ->
-                        stessoTeam(
-                                partecipazione.getTeam(),
-                                teamValido
-                        )
-                )
+                        stessoTeam(partecipazione.getTeam(), teamValido))
                 .filter(partecipazione ->
                         partecipazione.ottieniHackathon().getStato()
-                                != TipoStatoHackathon.CONCLUSO
-                )
+                                != TipoStatoHackathon.CONCLUSO)
                 .toList();
     }
 
-    private boolean stessoTeam(
-            Team primo,
-            Team secondo
-    ) {
+    private boolean stessoHackathon(Hackathon primo, Hackathon secondo) {
         return primo == secondo
-                || (
-                primo.getId() != null
-                        && Objects.equals(
-                        primo.getId(),
-                        secondo.getId()
-                )
-        );
+                || (primo.getId() != null
+                && Objects.equals(primo.getId(), secondo.getId()));
+    }
+
+    private boolean stessoTeam(Team primo, Team secondo) {
+        return primo == secondo
+                || (primo.getId() != null
+                && Objects.equals(primo.getId(), secondo.getId()));
     }
 }

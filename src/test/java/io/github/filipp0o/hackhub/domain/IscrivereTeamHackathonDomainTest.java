@@ -47,7 +47,7 @@ class IscrivereTeamHackathonDomainTest {
                 );
 
         assertAll(
-                () -> assertNotNull(
+                () -> assertNull(
                         partecipazione.getId()
                 ),
                 () -> assertSame(

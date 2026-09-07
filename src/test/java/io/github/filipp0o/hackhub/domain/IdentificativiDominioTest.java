@@ -51,22 +51,12 @@ class IdentificativiDominioTest {
     }
 
     @Test
-    void assegnaIdentificativiDistintiAllePartecipazioni() {
-        Partecipazione primaPartecipazione =
-                creaPartecipazione();
-
-        Partecipazione secondaPartecipazione =
-                creaPartecipazione();
-
-        assertAll(
-                () -> assertNotNull(primaPartecipazione.getId()),
-                () -> assertNotNull(secondaPartecipazione.getId()),
-                () -> assertTrue(primaPartecipazione.getId() > 0),
-                () -> assertTrue(secondaPartecipazione.getId() > 0),
-                () -> assertNotEquals(
-                        primaPartecipazione.getId(),
-                        secondaPartecipazione.getId()
-                )
+    void nuovePartecipazioniAttendonoIdDalRepository() {
+        org.junit.jupiter.api.Assertions.assertNull(
+                creaPartecipazione().getId()
+        );
+        org.junit.jupiter.api.Assertions.assertNull(
+                creaPartecipazione().getId()
         );
     }
 

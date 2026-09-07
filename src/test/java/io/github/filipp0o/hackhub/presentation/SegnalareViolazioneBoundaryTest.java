@@ -64,6 +64,8 @@ class SegnalareViolazioneBoundaryTest {
                 team
         );
 
+        partecipazione.assegnaId(1L);
+
         segnalazioneRepository =
                 new SegnalazioneRepositoryFinto();
 
