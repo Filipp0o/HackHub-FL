@@ -5,8 +5,7 @@ import java.util.Objects;
 public class Utente {
 
     private Long id;
-    private final String email;
-    private final String passwordHash;
+    private final Credenziali credenziali;
 
     /**
      * Crea un riferimento con solo ID per i flussi esistenti.
@@ -14,8 +13,7 @@ public class Utente {
      * Per un account completo usare crea oppure ricostruisci.
      */
     public Utente(Long id) {
-        this.email = null;
-        this.passwordHash = null;
+        this.credenziali = null;
         assegnaId(id);
     }
 
@@ -23,14 +21,9 @@ public class Utente {
             String email,
             String passwordHash
     ) {
-        this.email = richiediTesto(
+        this.credenziali = Credenziali.crea(
                 email,
-                "L'email dell'utente è obbligatoria"
-        );
-
-        this.passwordHash = richiediTesto(
-                passwordHash,
-                "L'hash della password è obbligatorio"
+                passwordHash
         );
     }
 
@@ -73,25 +66,18 @@ public class Utente {
     }
 
     public String recuperaEmail() {
-        return email;
+        return credenziali == null
+                ? null
+                : credenziali.recuperaEmail();
     }
 
     public String recuperaPasswordHash() {
-        return passwordHash;
+        return credenziali == null
+                ? null
+                : credenziali.recuperaPasswordHash();
     }
 
     public Long getId() {
         return id;
-    }
-
-    private static String richiediTesto(
-            String valore,
-            String messaggio
-    ) {
-        if (valore == null || valore.isBlank()) {
-            throw new IllegalArgumentException(messaggio);
-        }
-
-        return valore;
     }
 }
