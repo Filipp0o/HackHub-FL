@@ -1,7 +1,9 @@
 package io.github.filipp0o.hackhub.configuration;
 
+import io.github.filipp0o.hackhub.application.AccettareInvitoTeamControl;
 import io.github.filipp0o.hackhub.application.InvitoRepository;
 import io.github.filipp0o.hackhub.application.InvitareUtentiTeamControl;
+import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
 import io.github.filipp0o.hackhub.application.TeamRepository;
 import io.github.filipp0o.hackhub.application.UtenteRepository;
 import io.github.filipp0o.hackhub.infrastructure.InMemoryInvitoRepository;
@@ -24,6 +26,17 @@ public class InvitiConfiguration {
     ) {
         return new InvitareUtentiTeamControl(
                 utenteRepository, teamRepository, invitoRepository
+        );
+    }
+
+    @Bean
+    public AccettareInvitoTeamControl accettareInvitoTeamControl(
+            InvitoRepository invitoRepository,
+            TeamRepository teamRepository,
+            PartecipazioneRepository partecipazioneRepository
+    ) {
+        return new AccettareInvitoTeamControl(
+                invitoRepository, teamRepository, partecipazioneRepository
         );
     }
 }
