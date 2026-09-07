@@ -1,5 +1,6 @@
 package io.github.filipp0o.hackhub.configuration;
 
+import io.github.filipp0o.hackhub.application.CodificatorePassword;
 import io.github.filipp0o.hackhub.application.ConfigurareRiscossionePremioControl;
 import io.github.filipp0o.hackhub.application.CreareHackathonControl;
 import io.github.filipp0o.hackhub.application.CreareTeamControl;
@@ -24,7 +25,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.github.filipp0o.hackhub.application.AggiornareSottomissioneControl;
 import io.github.filipp0o.hackhub.application.ConsultareHackathonControl;
 @SpringBootTest
@@ -32,6 +35,21 @@ class HackHubConfigurationTest {
 
     @Autowired
     private ApplicationContext context;
+
+    @Test
+    void configuraCodificatorePasswordUtilizzabileDaiControl() {
+        CodificatorePassword codificatore =
+                context.getBean(CodificatorePassword.class);
+        String password = "Password-di-prova!42";
+        String hash = codificatore.codifica(password);
+
+        assertAll(
+                () -> assertTrue(codificatore.verifica(password, hash)),
+                () -> assertFalse(
+                        codificatore.verifica("Password-errata!42", hash)
+                )
+        );
+    }
 
     @Test
     void configuraComponentiApplicativi() {

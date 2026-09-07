@@ -1,5 +1,6 @@
 package io.github.filipp0o.hackhub.configuration;
 
+import io.github.filipp0o.hackhub.application.CodificatorePassword;
 import io.github.filipp0o.hackhub.application.ConfigurareRiscossionePremioControl;
 import io.github.filipp0o.hackhub.application.CreareHackathonControl;
 import io.github.filipp0o.hackhub.application.CreareTeamControl;
@@ -18,6 +19,7 @@ import io.github.filipp0o.hackhub.application.TeamRepository;
 import io.github.filipp0o.hackhub.application.UtenteRepository;
 import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl;
 import io.github.filipp0o.hackhub.application.ValutazioneRepository;
+import io.github.filipp0o.hackhub.infrastructure.BCryptPasswordEncoderAdapter;
 import io.github.filipp0o.hackhub.infrastructure.InMemoryHackathonRepository;
 import io.github.filipp0o.hackhub.infrastructure.InMemoryPartecipazioneRepository;
 import io.github.filipp0o.hackhub.infrastructure.SegnalazioneRepositoryImpl;
@@ -34,6 +36,11 @@ import io.github.filipp0o.hackhub.application.AggiornareSottomissioneControl;
 import io.github.filipp0o.hackhub.application.ConsultareHackathonControl;
 @Configuration
 public class HackHubConfiguration {
+
+    @Bean
+    public CodificatorePassword codificatorePassword() {
+        return new BCryptPasswordEncoderAdapter();
+    }
 
     @Bean
     public UtenteRepository utenteRepository() {
