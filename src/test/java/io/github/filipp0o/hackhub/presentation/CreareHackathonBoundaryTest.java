@@ -158,6 +158,20 @@ class CreareHackathonBoundaryTest {
         public List<Utente> recuperaUtentiAssegnabili() {
             return List.of();
         }
+
+        @Override
+        public boolean esistePerEmail(String email) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
+
+        @Override
+        public void salva(Utente utente) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
     }
 
     private static class HackathonRepositoryFinto

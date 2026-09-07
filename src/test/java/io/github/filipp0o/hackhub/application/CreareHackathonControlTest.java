@@ -360,15 +360,27 @@ class CreareHackathonControlTest {
     private static class UtenteRepositoryFinto
             implements UtenteRepository {
 
-        private List<Utente> utentiAssegnabili =
-                List.of();
-
+        private List<Utente> utentiAssegnabili = List.of();
         private int numeroRecuperi;
 
         @Override
         public List<Utente> recuperaUtentiAssegnabili() {
             numeroRecuperi++;
             return utentiAssegnabili;
+        }
+
+        @Override
+        public boolean esistePerEmail(String email) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
+
+        @Override
+        public void salva(Utente utente) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
         }
     }
 

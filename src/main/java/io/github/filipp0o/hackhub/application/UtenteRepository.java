@@ -7,4 +7,8 @@ import java.util.List;
 public interface UtenteRepository {
 
     List<Utente> recuperaUtentiAssegnabili();
+
+    boolean esistePerEmail(String email);
+
+    void salva(Utente utente);
 }
