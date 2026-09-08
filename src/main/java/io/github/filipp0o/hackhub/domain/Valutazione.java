@@ -19,31 +19,34 @@ public class Valutazione {
             Utente giudice,
             DatiValutazione dati
     ) {
-        this.sottomissione = Objects.requireNonNull(
-                sottomissione,
-                "La sottomissione è obbligatoria"
-        );
+        this(sottomissione, giudice, dati, LocalDateTime.now());
+    }
 
+    private Valutazione(
+            Sottomissione sottomissione,
+            Utente giudice,
+            DatiValutazione dati,
+            LocalDateTime dataOra
+    ) {
+        this.sottomissione = Objects.requireNonNull(
+                sottomissione, "La sottomissione è obbligatoria"
+        );
         this.giudice = Objects.requireNonNull(
-                giudice,
-                "Il giudice è obbligatorio"
+                giudice, "Il giudice è obbligatorio"
         );
 
         Objects.requireNonNull(
-                dati,
-                "I dati della valutazione sono obbligatori"
+                dati, "I dati della valutazione sono obbligatori"
         );
 
-        if (dati.giudizio() == null
-                || dati.giudizio().isBlank()) {
+        if (dati.giudizio() == null || dati.giudizio().isBlank()) {
             throw new IllegalArgumentException(
                     "Il giudizio è obbligatorio"
             );
         }
 
         BigDecimal punteggio = Objects.requireNonNull(
-                dati.punteggio(),
-                "Il punteggio è obbligatorio"
+                dati.punteggio(), "Il punteggio è obbligatorio"
         );
 
         if (punteggio.compareTo(BigDecimal.ZERO) < 0
@@ -55,7 +58,10 @@ public class Valutazione {
 
         this.giudizio = dati.giudizio();
         this.punteggio = punteggio;
-        this.dataOra = LocalDateTime.now();
+        this.dataOra = Objects.requireNonNull(
+                dataOra,
+                "La data e ora della valutazione sono obbligatorie"
+        );
     }
 
     public static Valutazione crea(
@@ -64,14 +70,47 @@ public class Valutazione {
             DatiValutazione dati
     ) {
         Valutazione valutazione = new Valutazione(
-                sottomissione,
-                giudice,
-                dati
+                sottomissione, giudice, dati
         );
 
         sottomissione.registraValutazione(valutazione);
-
         return valutazione;
+    }
+
+    public static Valutazione ricostruisci(
+            Long id,
+            Sottomissione sottomissione,
+            Utente giudice,
+            DatiValutazione dati,
+            LocalDateTime dataOra
+    ) {
+        Valutazione valutazione = new Valutazione(
+                sottomissione, giudice, dati, dataOra
+        );
+
+        valutazione.assegnaId(id);
+        sottomissione.registraValutazione(valutazione);
+        return valutazione;
+    }
+
+    public void assegnaId(Long id) {
+        Long idValido = Objects.requireNonNull(
+                id, "L'id della valutazione è obbligatorio"
+        );
+
+        if (idValido <= 0) {
+            throw new IllegalArgumentException(
+                    "L'id della valutazione deve essere maggiore di zero"
+            );
+        }
+
+        if (this.id != null) {
+            throw new IllegalStateException(
+                    "L'id della valutazione è già stato assegnato"
+            );
+        }
+
+        this.id = idValido;
     }
 
     public Long getId() {
