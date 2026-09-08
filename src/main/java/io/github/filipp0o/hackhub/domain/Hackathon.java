@@ -148,6 +148,103 @@ public class Hackathon {
         );
     }
 
+    public static Hackathon ricostruisci(DatiRipristinoHackathon salvato) {
+        Objects.requireNonNull(
+                salvato, "I dati di ripristino sono obbligatori"
+        );
+
+        TipoStatoHackathon tipo = Objects.requireNonNull(
+                salvato.stato(), "Lo stato è obbligatorio"
+        );
+
+        var datiVincitrice = salvato.vincitrice();
+
+        if (tipo == TipoStatoHackathon.CONCLUSO && datiVincitrice == null) {
+            throw new IllegalArgumentException(
+                    "Un hackathon concluso deve avere una vincitrice"
+            );
+        }
+
+        if (datiVincitrice != null) {
+            if (tipo != TipoStatoHackathon.IN_VALUTAZIONE
+                    && tipo != TipoStatoHackathon.CONCLUSO) {
+                throw new IllegalArgumentException(
+                        "Vincitrice incompatibile con lo stato dell'hackathon"
+                );
+            }
+
+            if (datiVincitrice.stato() != StatoPartecipazione.ATTIVA) {
+                throw new IllegalArgumentException(
+                        "La partecipazione vincitrice deve essere attiva"
+                );
+            }
+        }
+
+        if (salvato.riscossione() != null
+                && tipo != TipoStatoHackathon.CONCLUSO) {
+            throw new IllegalArgumentException(
+                    "La riscossione richiede un hackathon concluso"
+            );
+        }
+
+        Hackathon hackathon = new Hackathon(
+                salvato.dati(),
+                salvato.organizzatore(),
+                salvato.giudice(),
+                salvato.mentori()
+        );
+
+        hackathon.assegnaId(salvato.id());
+        hackathon.stato = StatoHackathonFactory.ricostruisci(tipo);
+
+        if (datiVincitrice != null) {
+            Partecipazione vincitrice = Partecipazione.ricostruisci(
+                    datiVincitrice.id(),
+                    hackathon,
+                    datiVincitrice.team(),
+                    datiVincitrice.stato()
+            );
+
+            var datiSottomissione = datiVincitrice.sottomissione();
+
+            if (datiSottomissione != null) {
+                Sottomissione sottomissione = Sottomissione.ricostruisci(
+                        datiSottomissione.id(),
+                        vincitrice,
+                        datiSottomissione.contenuto()
+                );
+
+                var datiValutazione = datiSottomissione.valutazione();
+
+                if (datiValutazione != null) {
+                    Valutazione.ricostruisci(
+                            datiValutazione.id(),
+                            sottomissione,
+                            datiValutazione.giudice(),
+                            datiValutazione.dati(),
+                            datiValutazione.dataOra()
+                    );
+                }
+            }
+
+            hackathon.vincitrice = vincitrice;
+        }
+
+        var datiRiscossione = salvato.riscossione();
+
+        if (datiRiscossione != null) {
+            RiscossionePremio.ricostruisci(
+                    datiRiscossione.id(),
+                    hackathon,
+                    datiRiscossione.stato(),
+                    datiRiscossione.beneficiaryRef(),
+                    datiRiscossione.paymentRef()
+            );
+        }
+
+        return hackathon;
+    }
+
     private static String richiediTesto(
             String valore,
             String messaggio
