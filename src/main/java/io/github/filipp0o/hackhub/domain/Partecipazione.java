@@ -13,17 +13,40 @@ public class Partecipazione {
     private Sottomissione sottomissione;
 
     public Partecipazione(Hackathon hackathon, Team team) {
+        this(hackathon, team, StatoPartecipazione.ATTIVA);
+    }
+
+    private Partecipazione(
+            Hackathon hackathon,
+            Team team,
+            StatoPartecipazione stato
+    ) {
         this.hackathon = Objects.requireNonNull(
                 hackathon, "L'hackathon è obbligatorio"
         );
         this.team = Objects.requireNonNull(
                 team, "Il team è obbligatorio"
         );
-        this.stato = StatoPartecipazione.ATTIVA;
+        this.stato = Objects.requireNonNull(
+                stato, "Lo stato della partecipazione è obbligatorio"
+        );
     }
 
     public static Partecipazione crea(Hackathon hackathon, Team team) {
         return new Partecipazione(hackathon, team);
+    }
+
+    public static Partecipazione ricostruisci(
+            Long id,
+            Hackathon hackathon,
+            Team team,
+            StatoPartecipazione stato
+    ) {
+        Partecipazione partecipazione = new Partecipazione(
+                hackathon, team, stato
+        );
+        partecipazione.assegnaId(id);
+        return partecipazione;
     }
 
     void registraSottomissione(Sottomissione sottomissione) {
