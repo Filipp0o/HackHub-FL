@@ -14,49 +14,47 @@ public class SottomissioneRepositoryImpl
     private final List<Sottomissione> sottomissioniSalvate =
             new ArrayList<>();
 
+    private long prossimoId = 1L;
+
     @Override
     public Sottomissione recuperaSottomissione(
             Partecipazione partecipazione
     ) {
-        Partecipazione partecipazioneValida =
-                Objects.requireNonNull(
-                        partecipazione,
-                        "La partecipazione è obbligatoria"
-                );
+        Partecipazione partecipazioneValida = Objects.requireNonNull(
+                partecipazione, "La partecipazione è obbligatoria"
+        );
 
         return sottomissioniSalvate.stream()
                 .filter(sottomissione ->
                         sottomissione.getPartecipazione()
-                                == partecipazioneValida
-                )
+                                == partecipazioneValida)
                 .findFirst()
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Sottomissione non trovata"
-                        )
-                );
+                .orElseThrow(() -> new IllegalStateException(
+                        "Sottomissione non trovata"
+                ));
     }
 
     @Override
-    public void salva(
-            Sottomissione sottomissione
-    ) {
-        Sottomissione sottomissioneValida =
-                Objects.requireNonNull(
-                        sottomissione,
-                        "La sottomissione è obbligatoria"
-                );
+    public void salva(Sottomissione sottomissione) {
+        Sottomissione sottomissioneValida = Objects.requireNonNull(
+                sottomissione, "La sottomissione è obbligatoria"
+        );
+
+        if (sottomissioneValida.getId() == null) {
+            sottomissioneValida.assegnaId(prossimoId++);
+        } else {
+            prossimoId = Math.max(
+                    prossimoId, sottomissioneValida.getId() + 1
+            );
+        }
 
         sottomissioniSalvate.removeIf(
-                sottomissioneSalvata ->
-                        Objects.equals(
-                                sottomissioneSalvata.getId(),
-                                sottomissioneValida.getId()
-                        )
+                sottomissioneSalvata -> Objects.equals(
+                        sottomissioneSalvata.getId(),
+                        sottomissioneValida.getId()
+                )
         );
 
-        sottomissioniSalvate.add(
-                sottomissioneValida
-        );
+        sottomissioniSalvate.add(sottomissioneValida);
     }
 }

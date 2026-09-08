@@ -24,22 +24,12 @@ class IdentificativiDominioTest {
     }
 
     @Test
-    void assegnaIdentificativiDistintiAlleSottomissioni() {
-        Sottomissione primaSottomissione =
-                creaSottomissione("Prima sottomissione");
-
-        Sottomissione secondaSottomissione =
-                creaSottomissione("Seconda sottomissione");
-
-        assertAll(
-                () -> assertNotNull(primaSottomissione.getId()),
-                () -> assertNotNull(secondaSottomissione.getId()),
-                () -> assertTrue(primaSottomissione.getId() > 0),
-                () -> assertTrue(secondaSottomissione.getId() > 0),
-                () -> assertNotEquals(
-                        primaSottomissione.getId(),
-                        secondaSottomissione.getId()
-                )
+    void nuoveSottomissioniAttendonoIdDalRepository() {
+        org.junit.jupiter.api.Assertions.assertNull(
+                creaSottomissione("Prima").getId()
+        );
+        org.junit.jupiter.api.Assertions.assertNull(
+                creaSottomissione("Seconda").getId()
         );
     }
 

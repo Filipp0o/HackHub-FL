@@ -1,14 +1,10 @@
 package io.github.filipp0o.hackhub.domain;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Sottomissione {
 
-    private static final AtomicLong SEQUENZA_ID =
-            new AtomicLong(1);
-
-    private final Long id;
+    private Long id;
     private String contenuto;
 
     private final Partecipazione partecipazione;
@@ -18,36 +14,70 @@ public class Sottomissione {
             Partecipazione partecipazione,
             String contenuto
     ) {
+        this(partecipazione, contenuto, null);
+    }
+
+    private Sottomissione(
+            Partecipazione partecipazione,
+            String contenuto,
+            Long id
+    ) {
         this.partecipazione = Objects.requireNonNull(
-                partecipazione,
-                "La partecipazione è obbligatoria"
+                partecipazione, "La partecipazione è obbligatoria"
         );
 
         this.contenuto = validaContenuto(contenuto);
 
-        partecipazione.registraSottomissione(this);
+        if (id != null) {
+            assegnaId(id);
+        }
 
-        this.id = SEQUENZA_ID.getAndIncrement();
+        partecipazione.registraSottomissione(this);
     }
 
     public static Sottomissione crea(
             Partecipazione partecipazione,
             String contenuto
     ) {
-        return new Sottomissione(
-                partecipazione,
-                contenuto
-        );
+        return new Sottomissione(partecipazione, contenuto);
     }
 
-    void registraValutazione(
-            Valutazione valutazione
+    public static Sottomissione ricostruisci(
+            Long id,
+            Partecipazione partecipazione,
+            String contenuto
     ) {
-        Valutazione valutazioneValida =
-                Objects.requireNonNull(
-                        valutazione,
-                        "La valutazione è obbligatoria"
-                );
+        Objects.requireNonNull(
+                id, "L'id della sottomissione è obbligatorio"
+        );
+
+        return new Sottomissione(partecipazione, contenuto, id);
+    }
+
+    public void assegnaId(Long id) {
+        Long idValido = Objects.requireNonNull(
+                id, "L'id della sottomissione è obbligatorio"
+        );
+
+        if (idValido <= 0) {
+            throw new IllegalArgumentException(
+                    "L'id della sottomissione deve essere maggiore di zero"
+            );
+        }
+
+        if (this.id != null) {
+            throw new IllegalStateException(
+                    "L'id della sottomissione è già stato assegnato"
+            );
+        }
+
+        this.id = idValido;
+    }
+
+    void registraValutazione(Valutazione valutazione) {
+        Valutazione valutazioneValida = Objects.requireNonNull(
+                valutazione, "La valutazione è obbligatoria"
+        );
 
         if (this.valutazione != null) {
             throw new IllegalStateException(
@@ -72,12 +102,8 @@ public class Sottomissione {
         return contenuto;
     }
 
-    public void aggiornaContenuto(
-            String nuovoContenuto
-    ) {
-        contenuto = validaContenuto(
-                nuovoContenuto
-        );
+    public void aggiornaContenuto(String nuovoContenuto) {
+        contenuto = validaContenuto(nuovoContenuto);
     }
 
     public String getContenuto() {
@@ -92,9 +118,7 @@ public class Sottomissione {
         return valutazione;
     }
 
-    private static String validaContenuto(
-            String contenuto
-    ) {
+    private static String validaContenuto(String contenuto) {
         if (contenuto == null || contenuto.isBlank()) {
             throw new IllegalArgumentException(
                     "Il contenuto della sottomissione è obbligatorio"

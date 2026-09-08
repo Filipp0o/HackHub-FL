@@ -62,6 +62,8 @@ class ValutareSottomissioneBoundaryTest {
                 "Repository del progetto"
         );
 
+        sottomissione.assegnaId(1L);
+
         valutazioneRepository =
                 new ValutazioneRepositoryFinto();
 

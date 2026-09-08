@@ -52,7 +52,7 @@ class SottomissioneTest {
                 );
 
         assertAll(
-                () -> assertNotNull(
+                () -> assertNull(
                         sottomissione.getId()
                 ),
                 () -> assertEquals(
