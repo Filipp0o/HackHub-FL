@@ -4,14 +4,7 @@ import io.github.filipp0o.hackhub.application.HackathonRepository;
 import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
 import io.github.filipp0o.hackhub.application.SegnalareViolazioneControl;
 import io.github.filipp0o.hackhub.application.SegnalazioneRepository;
-import io.github.filipp0o.hackhub.domain.DatiHackathon;
-import io.github.filipp0o.hackhub.domain.Hackathon;
-import io.github.filipp0o.hackhub.domain.NotificaSegnalazione;
-import io.github.filipp0o.hackhub.domain.Partecipazione;
-import io.github.filipp0o.hackhub.domain.Segnalazione;
-import io.github.filipp0o.hackhub.domain.StatoSegnalazione;
-import io.github.filipp0o.hackhub.domain.Team;
-import io.github.filipp0o.hackhub.domain.Utente;
+import io.github.filipp0o.hackhub.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -22,16 +15,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
 class SegnalareViolazioneBoundaryTest {
@@ -43,57 +29,37 @@ class SegnalareViolazioneBoundaryTest {
 
     @BeforeEach
     void configuraBoundary() {
+        SessioneUtente sessione = new SessioneUtente();
+        sessione.registra(new Utente(3L));
+
         Utente organizzatore = new Utente(1L);
         Utente mentore = new Utente(3L);
 
-        hackathon = creaHackathonInCorso(
-                organizzatore,
-                mentore
-        );
-
+        hackathon = creaHackathonInCorso(organizzatore, mentore);
         hackathon.assegnaId(1L);
 
         Utente responsabile = new Utente(4L);
+        Team team = Team.crea("Team Alpha", responsabile, responsabile);
 
-        Team team = Team.crea(
-                "Team Alpha",
-                responsabile,
-                responsabile
-        );
-
-        partecipazione = new Partecipazione(
-                hackathon,
-                team
-        );
-
+        partecipazione = new Partecipazione(hackathon, team);
         partecipazione.assegnaId(1L);
 
-        segnalazioneRepository =
-                new SegnalazioneRepositoryFinto();
+        segnalazioneRepository = new SegnalazioneRepositoryFinto();
 
-        SegnalareViolazioneControl control =
-                new SegnalareViolazioneControl(
-                        new HackathonRepositoryFinto(
-                                hackathon
-                        ),
-                        new PartecipazioneRepositoryFinto(
-                                partecipazione
-                        ),
-                        segnalazioneRepository
-                );
+        SegnalareViolazioneControl control = new SegnalareViolazioneControl(
+                new HackathonRepositoryFinto(hackathon),
+                new PartecipazioneRepositoryFinto(partecipazione),
+                segnalazioneRepository
+        );
 
         mockMvc = standaloneSetup(
-                new SegnalareViolazioneBoundary(control)
+                new SegnalareViolazioneBoundary(control, sessione)
         ).build();
     }
 
     @Test
-    void restituisceHackathonSegnalabili()
-            throws Exception {
-        mockMvc.perform(
-                        get("/api/segnalazioni/hackathons")
-                                .param("mentoreId", "3")
-                )
+    void restituisceHackathonSegnalabili() throws Exception {
+        mockMvc.perform(get("/api/segnalazioni/hackathons"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id")
                         .value(hackathon.getId().intValue()))
@@ -102,21 +68,14 @@ class SegnalareViolazioneBoundaryTest {
     }
 
     @Test
-    void restituiscePartecipazioniSegnalabili()
-            throws Exception {
-        mockMvc.perform(
-                        get(
-                                "/api/segnalazioni/hackathons/{hackathonId}/partecipazioni",
-                                hackathon.getId()
-                        ).param("mentoreId", "3")
-                )
+    void restituiscePartecipazioniSegnalabili() throws Exception {
+        mockMvc.perform(get(
+                        "/api/segnalazioni/hackathons/{hackathonId}/partecipazioni",
+                        hackathon.getId()
+                ))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id")
-                        .value(
-                                partecipazione
-                                        .getId()
-                                        .intValue()
-                        ))
+                        .value(partecipazione.getId().intValue()))
                 .andExpect(jsonPath("$[0].nomeTeam")
                         .value("Team Alpha"))
                 .andExpect(jsonPath("$[0].responsabileId")
@@ -126,24 +85,18 @@ class SegnalareViolazioneBoundaryTest {
     }
 
     @Test
-    void registraSegnalazioneENotificaTramiteApiRest()
-            throws Exception {
-        mockMvc.perform(
-                        post(
-                                "/api/segnalazioni/hackathons/{hackathonId}/partecipazioni/{partecipazioneId}",
-                                hackathon.getId(),
-                                partecipazione.getId()
-                        )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content("""
-                                        {
-                                          "mentoreId": 3,
-                                          "descrizione": "Uso di materiale non consentito"
-                                        }
-                                        """)
+    void registraSegnalazioneENotificaTramiteApiRest() throws Exception {
+        mockMvc.perform(post(
+                        "/api/segnalazioni/hackathons/{hackathonId}/partecipazioni/{partecipazioneId}",
+                        hackathon.getId(),
+                        partecipazione.getId()
                 )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "descrizione": "Uso di materiale non consentito"
+                                }
+                                """))
                 .andExpect(status().isCreated());
 
         Segnalazione segnalazione =
@@ -169,9 +122,7 @@ class SegnalareViolazioneBoundaryTest {
                 ),
                 () -> assertEquals(
                         3L,
-                        segnalazione
-                                .getMentoreSegnalante()
-                                .getId()
+                        segnalazione.getMentoreSegnalante().getId()
                 ),
                 () -> assertSame(
                         segnalazione,
@@ -186,24 +137,18 @@ class SegnalareViolazioneBoundaryTest {
     }
 
     @Test
-    void restituisceNotFoundPerPartecipazioneSconosciuta()
-            throws Exception {
-        mockMvc.perform(
-                        post(
-                                "/api/segnalazioni/hackathons/{hackathonId}/partecipazioni/{partecipazioneId}",
-                                hackathon.getId(),
-                                Long.MAX_VALUE
-                        )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content("""
-                                        {
-                                          "mentoreId": 3,
-                                          "descrizione": "Violazione"
-                                        }
-                                        """)
+    void restituisceNotFoundPerPartecipazioneSconosciuta() throws Exception {
+        mockMvc.perform(post(
+                        "/api/segnalazioni/hackathons/{hackathonId}/partecipazioni/{partecipazioneId}",
+                        hackathon.getId(),
+                        Long.MAX_VALUE
                 )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "descrizione": "Violazione"
+                                }
+                                """))
                 .andExpect(status().isNotFound());
     }
 
@@ -211,7 +156,10 @@ class SegnalareViolazioneBoundaryTest {
     void rifiutaControlNullo() {
         assertThrows(
                 NullPointerException.class,
-                () -> new SegnalareViolazioneBoundary(null)
+                () -> new SegnalareViolazioneBoundary(
+                        null,
+                        new SessioneUtente()
+                )
         );
     }
 
@@ -249,33 +197,24 @@ class SegnalareViolazioneBoundaryTest {
 
         private final Hackathon hackathon;
 
-        private HackathonRepositoryFinto(
-                Hackathon hackathon
-        ) {
+        private HackathonRepositoryFinto(Hackathon hackathon) {
             this.hackathon = hackathon;
         }
 
         @Override
-        public List<Hackathon> ottieniHackathonValutabili(
-                Utente giudice
-        ) {
+        public List<Hackathon> ottieniHackathonValutabili(Utente giudice) {
             return List.of();
         }
 
         @Override
-        public List<Hackathon> ottieniHackathonSegnalabili(
-                Utente mentore
-        ) {
-            boolean assegnato = hackathon.getMentori()
-                    .stream()
+        public List<Hackathon> ottieniHackathonSegnalabili(Utente mentore) {
+            boolean assegnato = hackathon.getMentori().stream()
                     .anyMatch(utente -> Objects.equals(
                             utente.getId(),
                             mentore.getId()
                     ));
 
-            return assegnato
-                    ? List.of(hackathon)
-                    : List.of();
+            return assegnato ? List.of(hackathon) : List.of();
         }
 
         @Override
@@ -297,9 +236,7 @@ class SegnalareViolazioneBoundaryTest {
         }
 
         @Override
-        public Hackathon recuperaHackathon(
-                Long hackathonId
-        ) {
+        public Hackathon recuperaHackathon(Long hackathonId) {
             throw new UnsupportedOperationException(
                     "Non utilizzato in questo test"
             );
@@ -308,15 +245,6 @@ class SegnalareViolazioneBoundaryTest {
 
     private static class PartecipazioneRepositoryFinto
             implements PartecipazioneRepository {
-
-        @Override
-        public List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
-                Team team
-        ) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
-        }
 
         private final Partecipazione partecipazione;
 
@@ -333,7 +261,6 @@ class SegnalareViolazioneBoundaryTest {
             if (partecipazione.getHackathon() == hackathon) {
                 return List.of(partecipazione);
             }
-
             return List.of();
         }
 
@@ -349,10 +276,7 @@ class SegnalareViolazioneBoundaryTest {
         }
 
         @Override
-        public boolean esistePartecipazione(
-                Team team,
-                Hackathon hackathon
-        ) {
+        public boolean esistePartecipazione(Team team, Hackathon hackathon) {
             throw new UnsupportedOperationException(
                     "Non utilizzato in questo test"
             );
@@ -362,6 +286,15 @@ class SegnalareViolazioneBoundaryTest {
         public Partecipazione recuperaPartecipazione(
                 Team team,
                 Hackathon hackathon
+        ) {
+            throw new UnsupportedOperationException(
+                    "Non utilizzato in questo test"
+            );
+        }
+
+        @Override
+        public List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
+                Team team
         ) {
             throw new UnsupportedOperationException(
                     "Non utilizzato in questo test"
@@ -397,9 +330,7 @@ class SegnalareViolazioneBoundaryTest {
         }
 
         @Override
-        public void salvaNotifica(
-                NotificaSegnalazione notifica
-        ) {
+        public void salvaNotifica(NotificaSegnalazione notifica) {
             notificaSalvata = notifica;
         }
     }

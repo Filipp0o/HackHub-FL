@@ -17,12 +17,20 @@ public class CreareTeamBoundary {
 
     private final CreareTeamControl creareTeamControl;
 
+    private final SessioneUtente sessioneUtente;
+
     public CreareTeamBoundary(
-            CreareTeamControl creareTeamControl
+            CreareTeamControl creareTeamControl,
+            SessioneUtente sessioneUtente
     ) {
         this.creareTeamControl = Objects.requireNonNull(
                 creareTeamControl,
                 "Il control di creazione del team è obbligatorio"
+        );
+
+        this.sessioneUtente = Objects.requireNonNull(
+                sessioneUtente,
+                "La sessione utente è obbligatoria"
         );
     }
 
@@ -37,9 +45,7 @@ public class CreareTeamBoundary {
                         "La richiesta di creazione è obbligatoria"
                 );
 
-        Utente utente = new Utente(
-                richiestaValida.utenteId()
-        );
+        Utente utente = sessioneUtente.recupera();
 
         creareTeamControl.avviaCreazioneTeam(utente);
         creareTeamControl.verificaNomeTeam(
@@ -52,7 +58,6 @@ public class CreareTeamBoundary {
     }
 
     public record RichiestaCreazioneTeam(
-            Long utenteId,
             String nome
     ) {
     }

@@ -29,8 +29,31 @@ public class CreareHackathonControl {
         );
     }
 
+    /**
+     * Esclude i riferimenti con solo ID, che non rappresentano
+     * account registrati.
+     */
     public List<Utente> recuperaUtentiAssegnabili() {
-        return utenteRepository.recuperaUtentiAssegnabili();
+        return utenteRepository.recuperaUtentiAssegnabili().stream()
+                .filter(utente -> utente.getId() != null
+                        && utente.recuperaEmail() != null
+                        && utente.recuperaPasswordHash() != null)
+                .toList();
+    }
+
+    public Utente recuperaUtenteAssegnabile(Long utenteId) {
+        if (utenteId == null || utenteId <= 0) {
+            throw new IllegalArgumentException(
+                    "L'ID dello staff deve essere positivo"
+            );
+        }
+
+        return recuperaUtentiAssegnabili().stream()
+                .filter(utente -> utenteId.equals(utente.getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "L'utente selezionato per lo staff non è registrato"
+                ));
     }
 
     public List<String> verificaInformazioniEStaff(

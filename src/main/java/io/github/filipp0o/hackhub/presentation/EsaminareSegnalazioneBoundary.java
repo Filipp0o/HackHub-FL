@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,25 +26,30 @@ public class EsaminareSegnalazioneBoundary {
     private final EsaminareSegnalazioneControl
             esaminareSegnalazioneControl;
 
+    private final SessioneUtente sessioneUtente;
+
     public EsaminareSegnalazioneBoundary(
             EsaminareSegnalazioneControl
-                    esaminareSegnalazioneControl
+                    esaminareSegnalazioneControl,
+            SessioneUtente sessioneUtente
     ) {
         this.esaminareSegnalazioneControl =
                 Objects.requireNonNull(
                         esaminareSegnalazioneControl,
                         "Il control di esame è obbligatorio"
                 );
+
+        this.sessioneUtente = Objects.requireNonNull(
+                sessioneUtente,
+                "La sessione utente è obbligatoria"
+        );
     }
 
     @GetMapping("/da-esaminare")
     public List<RiepilogoSegnalazione>
-    ottieniSegnalazioniDaEsaminare(
-            @RequestParam Long organizzatoreId
-    ) {
-        Utente organizzatore = new Utente(
-                organizzatoreId
-        );
+    ottieniSegnalazioniDaEsaminare() {
+
+        Utente organizzatore = sessioneUtente.recupera();
 
         return esaminareSegnalazioneControl
                 .avviaEsameSegnalazioni(organizzatore)
@@ -56,12 +60,9 @@ public class EsaminareSegnalazioneBoundary {
 
     @GetMapping("/{segnalazioneId}")
     public RiepilogoSegnalazione selezionaSegnalazione(
-            @PathVariable Long segnalazioneId,
-            @RequestParam Long organizzatoreId
+            @PathVariable Long segnalazioneId
     ) {
-        Utente organizzatore = new Utente(
-                organizzatoreId
-        );
+        Utente organizzatore = sessioneUtente.recupera();
 
         Segnalazione segnalazione = trovaSegnalazione(
                 segnalazioneId,
@@ -77,16 +78,14 @@ public class EsaminareSegnalazioneBoundary {
         );
     }
 
-    public RiepilogoSegnalazione
-    selezionaNotificaSegnalazione(
-            NotificaSegnalazione notificaSegnalazione,
-            Utente organizzatore
+    public RiepilogoSegnalazione selezionaNotificaSegnalazione(
+            NotificaSegnalazione notificaSegnalazione
     ) {
         return creaRiepilogo(
                 esaminareSegnalazioneControl
                         .apriSegnalazioneDaNotifica(
                                 notificaSegnalazione,
-                                organizzatore
+                                sessioneUtente.recupera()
                         )
         );
     }
@@ -103,9 +102,7 @@ public class EsaminareSegnalazioneBoundary {
                         "La decisione è obbligatoria"
                 );
 
-        Utente organizzatore = new Utente(
-                richiestaValida.organizzatoreId()
-        );
+        Utente organizzatore = sessioneUtente.recupera();
 
         Segnalazione segnalazione = trovaSegnalazione(
                 segnalazioneId,
@@ -181,7 +178,6 @@ public class EsaminareSegnalazioneBoundary {
     }
 
     public record RichiestaDecisione(
-            Long organizzatoreId,
             EsitoSegnalazione esito,
             String motivazione
     ) {

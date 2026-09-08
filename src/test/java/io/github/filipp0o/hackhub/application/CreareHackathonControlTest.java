@@ -15,6 +15,52 @@ import static org.junit.jupiter.api.Assertions.*;
 class CreareHackathonControlTest {
 
     @Test
+    void staffAssegnabileRichiedeAccountCompletoConIdentitaPersistente() {
+        Utente registrato = Utente.ricostruisci(
+                1L, "staff@example.com", "hash"
+        );
+        Utente riferimento = new Utente(2L);
+        Utente nonSalvato = Utente.crea(
+                "non-salvato@example.com", "hash"
+        );
+
+        UtenteRepositoryFinto repository = new UtenteRepositoryFinto();
+        repository.utentiAssegnabili = List.of(
+                registrato,
+                riferimento,
+                nonSalvato
+        );
+
+        CreareHackathonControl control = new CreareHackathonControl(
+                repository,
+                new HackathonRepositoryFinto()
+        );
+
+        assertEquals(
+                List.of(registrato),
+                control.recuperaUtentiAssegnabili()
+        );
+
+        assertSame(
+                registrato,
+                control.recuperaUtenteAssegnabile(1L)
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> control.recuperaUtenteAssegnabile(2L)
+        );
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> control.recuperaUtenteAssegnabile(3L)
+        );
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> control.recuperaUtenteAssegnabile(null)
+        );
+    }
+
+    @Test
     void rifiutaDipendenzeNulle() {
         assertAll(
                 () -> assertThrows(
@@ -36,23 +82,27 @@ class CreareHackathonControlTest {
 
     @Test
     void recuperaUtentiAssegnabiliDalRepository() {
-        Utente primoUtente = new Utente(1L);
-        Utente secondoUtente = new Utente(2L);
+        Utente primoUtente = Utente.ricostruisci(
+                1L, "primo@example.com", "hash"
+        );
+        Utente secondoUtente = Utente.ricostruisci(
+                2L, "secondo@example.com", "hash"
+        );
 
         UtenteRepositoryFinto utenteRepository =
                 new UtenteRepositoryFinto();
 
-        utenteRepository.utentiAssegnabili =
-                List.of(primoUtente, secondoUtente);
+        utenteRepository.utentiAssegnabili = List.of(
+                primoUtente,
+                secondoUtente
+        );
 
-        CreareHackathonControl control =
-                new CreareHackathonControl(
-                        utenteRepository,
-                        new HackathonRepositoryFinto()
-                );
+        CreareHackathonControl control = new CreareHackathonControl(
+                utenteRepository,
+                new HackathonRepositoryFinto()
+        );
 
-        List<Utente> risultato =
-                control.recuperaUtentiAssegnabili();
+        List<Utente> risultato = control.recuperaUtentiAssegnabili();
 
         assertAll(
                 () -> assertEquals(
@@ -68,146 +118,113 @@ class CreareHackathonControlTest {
 
     @Test
     void verificaInformazioniEStaffValidiSenzaErrori() {
-        CreareHackathonControl control =
-                new CreareHackathonControl(
-                        new UtenteRepositoryFinto(),
-                        new HackathonRepositoryFinto()
-                );
+        CreareHackathonControl control = new CreareHackathonControl(
+                new UtenteRepositoryFinto(),
+                new HackathonRepositoryFinto()
+        );
 
-        List<String> errori =
-                control.verificaInformazioniEStaff(
-                        creaDatiValidi(),
-                        new Utente(2L),
-                        List.of(new Utente(3L))
-                );
+        List<String> errori = control.verificaInformazioniEStaff(
+                creaDatiValidi(),
+                new Utente(2L),
+                List.of(new Utente(3L))
+        );
 
         assertTrue(errori.isEmpty());
     }
 
     @Test
     void rilevaInformazioniEStaffNonValidi() {
-        CreareHackathonControl control =
-                new CreareHackathonControl(
-                        new UtenteRepositoryFinto(),
-                        new HackathonRepositoryFinto()
-                );
+        CreareHackathonControl control = new CreareHackathonControl(
+                new UtenteRepositoryFinto(),
+                new HackathonRepositoryFinto()
+        );
 
-        DatiHackathon datiNonValidi =
-                new DatiHackathon(
-                        " ",
-                        " ",
-                        " ",
-                        LocalDate.of(2026, 10, 10),
-                        LocalDate.of(2026, 10, 10),
-                        LocalDate.of(2026, 10, 9),
-                        " ",
-                        BigDecimal.ZERO,
-                        0
-                );
+        DatiHackathon datiNonValidi = new DatiHackathon(
+                " ",
+                " ",
+                " ",
+                LocalDate.of(2026, 10, 10),
+                LocalDate.of(2026, 10, 10),
+                LocalDate.of(2026, 10, 9),
+                " ",
+                BigDecimal.ZERO,
+                0
+        );
 
-        List<String> errori =
-                control.verificaInformazioniEStaff(
-                        datiNonValidi,
-                        null,
-                        List.of()
-                );
+        List<String> errori = control.verificaInformazioniEStaff(
+                datiNonValidi,
+                null,
+                List.of()
+        );
 
         assertAll(
-                () -> assertTrue(
-                        errori.contains(
-                                "Il nome è obbligatorio"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "Il regolamento è obbligatorio"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "I criteri di valutazione sono obbligatori"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "Il luogo è obbligatorio"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "La scadenza delle iscrizioni deve precedere la data di inizio"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "La data di fine deve essere successiva alla data di inizio"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "L'importo del premio deve essere maggiore di zero"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "La dimensione massima del team deve essere maggiore di zero"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "Il giudice è obbligatorio"
-                        )
-                ),
-                () -> assertTrue(
-                        errori.contains(
-                                "Deve essere assegnato almeno un mentore"
-                        )
-                )
+                () -> assertTrue(errori.contains(
+                        "Il nome è obbligatorio"
+                )),
+                () -> assertTrue(errori.contains(
+                        "Il regolamento è obbligatorio"
+                )),
+                () -> assertTrue(errori.contains(
+                        "I criteri di valutazione sono obbligatori"
+                )),
+                () -> assertTrue(errori.contains(
+                        "Il luogo è obbligatorio"
+                )),
+                () -> assertTrue(errori.contains(
+                        "La scadenza delle iscrizioni deve precedere la data di inizio"
+                )),
+                () -> assertTrue(errori.contains(
+                        "La data di fine deve essere successiva alla data di inizio"
+                )),
+                () -> assertTrue(errori.contains(
+                        "L'importo del premio deve essere maggiore di zero"
+                )),
+                () -> assertTrue(errori.contains(
+                        "La dimensione massima del team deve essere maggiore di zero"
+                )),
+                () -> assertTrue(errori.contains(
+                        "Il giudice è obbligatorio"
+                )),
+                () -> assertTrue(errori.contains(
+                        "Deve essere assegnato almeno un mentore"
+                ))
         );
     }
 
     @Test
     void rilevaDatiHackathonMancanti() {
-        CreareHackathonControl control =
-                new CreareHackathonControl(
-                        new UtenteRepositoryFinto(),
-                        new HackathonRepositoryFinto()
-                );
+        CreareHackathonControl control = new CreareHackathonControl(
+                new UtenteRepositoryFinto(),
+                new HackathonRepositoryFinto()
+        );
 
-        List<String> errori =
-                control.verificaInformazioniEStaff(
-                        null,
-                        new Utente(2L),
-                        List.of(new Utente(3L))
-                );
+        List<String> errori = control.verificaInformazioniEStaff(
+                null,
+                new Utente(2L),
+                List.of(new Utente(3L))
+        );
 
         assertEquals(
-                List.of(
-                        "I dati dell'hackathon sono obbligatori"
-                ),
+                List.of("I dati dell'hackathon sono obbligatori"),
                 errori
         );
     }
 
     @Test
     void rilevaMentoriMancanti() {
-        CreareHackathonControl control =
-                new CreareHackathonControl(
-                        new UtenteRepositoryFinto(),
-                        new HackathonRepositoryFinto()
-                );
+        CreareHackathonControl control = new CreareHackathonControl(
+                new UtenteRepositoryFinto(),
+                new HackathonRepositoryFinto()
+        );
 
-        List<String> errori =
-                control.verificaInformazioniEStaff(
-                        creaDatiValidi(),
-                        new Utente(2L),
-                        null
-                );
+        List<String> errori = control.verificaInformazioniEStaff(
+                creaDatiValidi(),
+                new Utente(2L),
+                null
+        );
 
         assertEquals(
-                List.of(
-                        "La lista dei mentori è obbligatoria"
-                ),
+                List.of("La lista dei mentori è obbligatoria"),
                 errori
         );
     }
@@ -220,28 +237,21 @@ class CreareHackathonControlTest {
         HackathonRepositoryFinto hackathonRepository =
                 new HackathonRepositoryFinto();
 
-        CreareHackathonControl control =
-                new CreareHackathonControl(
-                        utenteRepository,
-                        hackathonRepository
-                );
+        CreareHackathonControl control = new CreareHackathonControl(
+                utenteRepository,
+                hackathonRepository
+        );
 
         DatiHackathon dati = creaDatiValidi();
         Utente organizzatore = new Utente(1L);
         Utente giudice = new Utente(2L);
 
-        List<Utente> mentori =
-                List.of(
-                        new Utente(3L),
-                        new Utente(4L)
-                );
-
-        control.crea(
-                dati,
-                organizzatore,
-                giudice,
-                mentori
+        List<Utente> mentori = List.of(
+                new Utente(3L),
+                new Utente(4L)
         );
+
+        control.crea(dati, organizzatore, giudice, mentori);
 
         Hackathon hackathonSalvato =
                 hackathonRepository.hackathonSalvato;
@@ -312,11 +322,10 @@ class CreareHackathonControlTest {
         HackathonRepositoryFinto hackathonRepository =
                 new HackathonRepositoryFinto();
 
-        CreareHackathonControl control =
-                new CreareHackathonControl(
-                        new UtenteRepositoryFinto(),
-                        hackathonRepository
-                );
+        CreareHackathonControl control = new CreareHackathonControl(
+                new UtenteRepositoryFinto(),
+                hackathonRepository
+        );
 
         DatiHackathon dati = creaDatiValidi();
         Utente organizzatore = new Utente(1L);
@@ -357,8 +366,7 @@ class CreareHackathonControlTest {
         );
     }
 
-    private static class UtenteRepositoryFinto
-            implements UtenteRepository {
+    private static class UtenteRepositoryFinto implements UtenteRepository {
 
         private List<Utente> utentiAssegnabili = List.of();
         private int numeroRecuperi;
@@ -398,16 +406,12 @@ class CreareHackathonControlTest {
         private int numeroSalvataggi;
 
         @Override
-        public List<Hackathon> ottieniHackathonValutabili(
-                Utente giudice
-        ) {
+        public List<Hackathon> ottieniHackathonValutabili(Utente giudice) {
             return List.of();
         }
 
         @Override
-        public List<Hackathon> ottieniHackathonSegnalabili(
-                Utente mentore
-        ) {
+        public List<Hackathon> ottieniHackathonSegnalabili(Utente mentore) {
             return List.of();
         }
 
@@ -432,9 +436,7 @@ class CreareHackathonControlTest {
         }
 
         @Override
-        public Hackathon recuperaHackathon(
-                Long hackathonId
-        ) {
+        public Hackathon recuperaHackathon(Long hackathonId) {
             throw new UnsupportedOperationException(
                     "Non utilizzato in questo test"
             );

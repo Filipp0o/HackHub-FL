@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,22 +26,28 @@ public class ValutareSottomissioneBoundary {
     private final ValutareSottomissioneControl
             valutareSottomissioneControl;
 
+    private final SessioneUtente sessioneUtente;
+
     public ValutareSottomissioneBoundary(
             ValutareSottomissioneControl
-                    valutareSottomissioneControl
+                    valutareSottomissioneControl,
+            SessioneUtente sessioneUtente
     ) {
         this.valutareSottomissioneControl =
                 Objects.requireNonNull(
                         valutareSottomissioneControl,
                         "Il control di valutazione è obbligatorio"
                 );
+
+        this.sessioneUtente = Objects.requireNonNull(
+                sessioneUtente,
+                "La sessione utente è obbligatoria"
+        );
     }
 
     @GetMapping("/hackathons")
-    public List<RiepilogoHackathon> ottieniHackathonValutabili(
-            @RequestParam Long giudiceId
-    ) {
-        Utente giudice = new Utente(giudiceId);
+    public List<RiepilogoHackathon> ottieniHackathonValutabili() {
+        Utente giudice = sessioneUtente.recupera();
 
         return valutareSottomissioneControl
                 .avviaValutazioneSottomissione(giudice)
@@ -59,10 +64,9 @@ public class ValutareSottomissioneBoundary {
     )
     public List<RiepilogoSottomissione>
     ottieniSottomissioniDaValutare(
-            @PathVariable Long hackathonId,
-            @RequestParam Long giudiceId
+            @PathVariable Long hackathonId
     ) {
-        Utente giudice = new Utente(giudiceId);
+        Utente giudice = sessioneUtente.recupera();
 
         Hackathon hackathon = trovaHackathonValutabile(
                 hackathonId,
@@ -97,9 +101,7 @@ public class ValutareSottomissioneBoundary {
                         "La richiesta di valutazione è obbligatoria"
                 );
 
-        Utente giudice = new Utente(
-                richiestaValida.giudiceId()
-        );
+        Utente giudice = sessioneUtente.recupera();
 
         Hackathon hackathon = trovaHackathonValutabile(
                 hackathonId,
@@ -181,7 +183,6 @@ public class ValutareSottomissioneBoundary {
     }
 
     public record RichiestaValutazione(
-            Long giudiceId,
             String giudizio,
             BigDecimal punteggio
     ) {

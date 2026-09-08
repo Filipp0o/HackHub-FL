@@ -1,14 +1,7 @@
 package io.github.filipp0o.hackhub.presentation;
 
 import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
-import io.github.filipp0o.hackhub.domain.DatiHackathon;
-import io.github.filipp0o.hackhub.domain.EsitoSegnalazione;
-import io.github.filipp0o.hackhub.domain.Hackathon;
-import io.github.filipp0o.hackhub.domain.NotificaSegnalazione;
-import io.github.filipp0o.hackhub.domain.Partecipazione;
-import io.github.filipp0o.hackhub.domain.Segnalazione;
-import io.github.filipp0o.hackhub.domain.Team;
-import io.github.filipp0o.hackhub.domain.Utente;
+import io.github.filipp0o.hackhub.domain.*;
 import io.github.filipp0o.hackhub.infrastructure.InMemoryPartecipazioneRepository;
 import io.github.filipp0o.hackhub.infrastructure.SegnalazioneRepositoryImpl;
 import org.junit.jupiter.api.Test;
@@ -17,9 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class EsaminareSegnalazioneDaNotificaBoundaryTest {
 
@@ -34,31 +25,21 @@ class EsaminareSegnalazioneDaNotificaBoundaryTest {
         );
 
         Utente responsabile = new Utente(4L);
-
-        Team team = Team.crea(
-                "Team Alpha",
-                responsabile,
-                responsabile
-        );
+        Team team = Team.crea("Team Alpha", responsabile, responsabile);
 
         Partecipazione partecipazione =
-                new Partecipazione(
-                        hackathon,
-                        team
-                );
+                new Partecipazione(hackathon, team);
 
-        Segnalazione segnalazione =
-                Segnalazione.crea(
-                        mentore,
-                        partecipazione,
-                        "Uso di materiale non consentito"
-                );
+        Segnalazione segnalazione = Segnalazione.crea(
+                mentore,
+                partecipazione,
+                "Uso di materiale non consentito"
+        );
 
-        NotificaSegnalazione notifica =
-                NotificaSegnalazione.crea(
-                        segnalazione,
-                        organizzatore
-                );
+        NotificaSegnalazione notifica = NotificaSegnalazione.crea(
+                segnalazione,
+                organizzatore
+        );
 
         EsaminareSegnalazioneControl control =
                 new EsaminareSegnalazioneControl(
@@ -66,44 +47,31 @@ class EsaminareSegnalazioneDaNotificaBoundaryTest {
                         new InMemoryPartecipazioneRepository()
                 );
 
-        EsaminareSegnalazioneBoundary boundary =
-                new EsaminareSegnalazioneBoundary(
-                        control
-                );
+        SessioneUtente sessione = new SessioneUtente();
+        sessione.registra(organizzatore);
 
-        EsaminareSegnalazioneBoundary.RiepilogoSegnalazione
-                risultato =
-                boundary.selezionaNotificaSegnalazione(
-                        notifica,
-                        new Utente(1L)
-                );
+        EsaminareSegnalazioneBoundary boundary =
+                new EsaminareSegnalazioneBoundary(control, sessione);
+
+        EsaminareSegnalazioneBoundary.RiepilogoSegnalazione risultato =
+                boundary.selezionaNotificaSegnalazione(notifica);
 
         assertAll(
-                () -> assertEquals(
-                        segnalazione.getId(),
-                        risultato.id()
-                ),
+                () -> assertEquals(segnalazione.getId(), risultato.id()),
                 () -> assertEquals(
                         "Uso di materiale non consentito",
                         risultato.descrizione()
                 ),
-                () -> assertEquals(
-                        "Team Alpha",
-                        risultato.nomeTeam()
-                ),
+                () -> assertEquals("Team Alpha", risultato.nomeTeam()),
                 () -> assertEquals(
                         "Regolamento ufficiale",
                         risultato.regolamento()
                 ),
                 () -> assertEquals(
-                        List.of(
-                                EsitoSegnalazione.values()
-                        ),
+                        List.of(EsitoSegnalazione.values()),
                         risultato.esitiDisponibili()
                 ),
-                () -> assertTrue(
-                        notifica.getLetta()
-                )
+                () -> assertTrue(notifica.getLetta())
         );
     }
 

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,20 +23,26 @@ public class SegnalareViolazioneBoundary {
 
     private final SegnalareViolazioneControl segnalareViolazioneControl;
 
+    private final SessioneUtente sessioneUtente;
+
     public SegnalareViolazioneBoundary(
-            SegnalareViolazioneControl segnalareViolazioneControl
+            SegnalareViolazioneControl segnalareViolazioneControl,
+            SessioneUtente sessioneUtente
     ) {
         this.segnalareViolazioneControl = Objects.requireNonNull(
                 segnalareViolazioneControl,
                 "Il control di segnalazione è obbligatorio"
         );
+
+        this.sessioneUtente = Objects.requireNonNull(
+                sessioneUtente,
+                "La sessione utente è obbligatoria"
+        );
     }
 
     @GetMapping("/hackathons")
-    public List<RiepilogoHackathon> ottieniHackathonSegnalabili(
-            @RequestParam Long mentoreId
-    ) {
-        Utente mentore = new Utente(mentoreId);
+    public List<RiepilogoHackathon> ottieniHackathonSegnalabili() {
+        Utente mentore = sessioneUtente.recupera();
 
         return segnalareViolazioneControl
                 .avviaSegnalazioneViolazione(mentore)
@@ -51,10 +56,9 @@ public class SegnalareViolazioneBoundary {
 
     @GetMapping("/hackathons/{hackathonId}/partecipazioni")
     public List<RiepilogoPartecipazione> ottieniPartecipazioniSegnalabili(
-            @PathVariable Long hackathonId,
-            @RequestParam Long mentoreId
+            @PathVariable Long hackathonId
     ) {
-        Utente mentore = new Utente(mentoreId);
+        Utente mentore = sessioneUtente.recupera();
 
         Hackathon hackathon = trovaHackathonSegnalabile(
                 hackathonId,
@@ -83,9 +87,7 @@ public class SegnalareViolazioneBoundary {
                         "La richiesta di segnalazione è obbligatoria"
                 );
 
-        Utente mentore = new Utente(
-                richiestaValida.mentoreId()
-        );
+        Utente mentore = sessioneUtente.recupera();
 
         Hackathon hackathon = trovaHackathonSegnalabile(
                 hackathonId,
@@ -179,7 +181,6 @@ public class SegnalareViolazioneBoundary {
     }
 
     public record RichiestaSegnalazione(
-            Long mentoreId,
             String descrizione
     ) {
     }

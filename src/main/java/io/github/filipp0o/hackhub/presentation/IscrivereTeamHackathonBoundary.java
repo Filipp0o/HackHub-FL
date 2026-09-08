@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,19 +24,29 @@ public class IscrivereTeamHackathonBoundary {
     private final IscrivereTeamHackathonControl
             iscrivereTeamHackathonControl;
 
+    private final SessioneUtente sessioneUtente;
+
     public IscrivereTeamHackathonBoundary(
-            IscrivereTeamHackathonControl iscrivereTeamHackathonControl
+            IscrivereTeamHackathonControl iscrivereTeamHackathonControl,
+            SessioneUtente sessioneUtente
     ) {
         this.iscrivereTeamHackathonControl =
                 Objects.requireNonNull(
                         iscrivereTeamHackathonControl,
                         "Il control di iscrizione è obbligatorio"
                 );
+
+        this.sessioneUtente = Objects.requireNonNull(
+                sessioneUtente,
+                "La sessione utente è obbligatoria"
+        );
     }
 
     @GetMapping("/hackathons")
     public List<RiepilogoHackathonAperto>
     ottieniHackathonAperti() {
+
+        sessioneUtente.recupera();
 
         return iscrivereTeamHackathonControl
                 .avviaIscrizione()
@@ -49,44 +58,30 @@ public class IscrivereTeamHackathonBoundary {
     @PostMapping("/hackathons/{hackathonId}")
     @ResponseStatus(HttpStatus.CREATED)
     public void iscriviTeam(
-            @PathVariable Long hackathonId,
-            @RequestBody RichiestaIscrizione richiesta
+            @PathVariable Long hackathonId
     ) {
-        Long hackathonIdValido =
-                Objects.requireNonNull(
-                        hackathonId,
-                        "L'id dell'hackathon è obbligatorio"
-                );
+        Long hackathonIdValido = Objects.requireNonNull(
+                hackathonId,
+                "L'id dell'hackathon è obbligatorio"
+        );
 
-        RichiestaIscrizione richiestaValida =
-                Objects.requireNonNull(
-                        richiesta,
-                        "La richiesta di iscrizione è obbligatoria"
-                );
+        Utente utente = sessioneUtente.recupera();
 
-        Utente utente =
-                new Utente(
-                        richiestaValida.utenteId()
-                );
-
-        Hackathon hackathon =
-                trovaHackathonAperto(
-                        hackathonIdValido
-                );
+        Hackathon hackathon = trovaHackathonAperto(
+                hackathonIdValido
+        );
 
         try {
-            Team team =
-                    iscrivereTeamHackathonControl
-                            .verificaIscrizione(
-                                    utente,
-                                    hackathon
-                            );
-
-            iscrivereTeamHackathonControl
-                    .confermaIscrizione(
-                            team,
+            Team team = iscrivereTeamHackathonControl
+                    .verificaIscrizione(
+                            utente,
                             hackathon
                     );
+
+            iscrivereTeamHackathonControl.confermaIscrizione(
+                    team,
+                    hackathon
+            );
         } catch (IllegalStateException eccezione) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -140,11 +135,6 @@ public class IscrivereTeamHackathonBoundary {
             LocalDate dataFine,
             String luogo,
             Integer dimensioneMassimaTeam
-    ) {
-    }
-
-    public record RichiestaIscrizione(
-            Long utenteId
     ) {
     }
 }

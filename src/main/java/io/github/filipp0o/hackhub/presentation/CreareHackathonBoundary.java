@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,14 +23,22 @@ public class CreareHackathonBoundary {
     private final CreareHackathonControl
             creareHackathonControl;
 
+    private final SessioneUtente sessioneUtente;
+
     public CreareHackathonBoundary(
-            CreareHackathonControl creareHackathonControl
+            CreareHackathonControl creareHackathonControl,
+            SessioneUtente sessioneUtente
     ) {
         this.creareHackathonControl =
                 Objects.requireNonNull(
                         creareHackathonControl,
                         "Il control di creazione dell'hackathon è obbligatorio"
                 );
+
+        this.sessioneUtente = Objects.requireNonNull(
+                sessioneUtente,
+                "La sessione utente è obbligatoria"
+        );
     }
 
     @PostMapping
@@ -56,14 +65,12 @@ public class CreareHackathonBoundary {
                 richiestaValida.dimensioneMassimaTeam()
         );
 
-        Utente organizzatore = new Utente(
-                richiestaValida.organizzatoreId()
-        );
+        Utente organizzatore = sessioneUtente.recupera();
 
         Utente giudice =
                 richiestaValida.giudiceId() == null
                         ? null
-                        : new Utente(
+                        : creareHackathonControl.recuperaUtenteAssegnabile(
                         richiestaValida.giudiceId()
                 );
 
@@ -72,7 +79,7 @@ public class CreareHackathonBoundary {
                         ? null
                         : richiestaValida.mentoriIds()
                         .stream()
-                        .map(Utente::new)
+                        .map(creareHackathonControl::recuperaUtenteAssegnabile)
                         .toList();
 
         List<String> errori =
@@ -107,9 +114,27 @@ public class CreareHackathonBoundary {
             String luogo,
             BigDecimal importoPremio,
             Integer dimensioneMassimaTeam,
-            Long organizzatoreId,
             Long giudiceId,
             List<Long> mentoriIds
+    ) {
+    }
+
+    @GetMapping("/utenti-assegnabili")
+    public List<UtenteAssegnabile> ottieniUtentiAssegnabili() {
+        sessioneUtente.recupera();
+
+        return creareHackathonControl.recuperaUtentiAssegnabili()
+                .stream()
+                .map(utente -> new UtenteAssegnabile(
+                        utente.getId(),
+                        utente.recuperaEmail()
+                ))
+                .toList();
+    }
+
+    public record UtenteAssegnabile(
+            Long id,
+            String email
     ) {
     }
 }
