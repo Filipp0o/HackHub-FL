@@ -5,26 +5,99 @@ import java.util.Objects;
 public class RiscossionePremio {
 
     private Long id;
-
     private StatoRiscossionePremio stato;
     private String beneficiaryRef;
     private String paymentRef;
 
     private final Hackathon hackathon;
 
-    private RiscossionePremio(Hackathon hackathon) {
+    private RiscossionePremio(
+            Long id,
+            Hackathon hackathon,
+            StatoRiscossionePremio stato,
+            String beneficiaryRef,
+            String paymentRef
+    ) {
         this.hackathon = Objects.requireNonNull(
-                hackathon,
-                "L'hackathon è obbligatorio"
+                hackathon, "L'hackathon è obbligatorio"
+        );
+        this.stato = Objects.requireNonNull(
+                stato, "Lo stato della riscossione è obbligatorio"
         );
 
-        this.stato = StatoRiscossionePremio.DA_CONFIGURARE;
+        boolean coerente = switch (stato) {
+            case DA_CONFIGURARE ->
+                    beneficiaryRef == null && paymentRef == null;
+            case PRONTA ->
+                    testoPresente(beneficiaryRef) && paymentRef == null;
+            case EROGATA ->
+                    testoPresente(beneficiaryRef) && testoPresente(paymentRef);
+        };
+
+        if (!coerente) {
+            throw new IllegalArgumentException(
+                    "Riferimenti incompatibili con lo stato della riscossione"
+            );
+        }
+
+        this.beneficiaryRef = beneficiaryRef;
+        this.paymentRef = paymentRef;
+
+        if (id != null) {
+            assegnaId(id);
+        }
 
         this.hackathon.registraRiscossionePremio(this);
     }
 
     public static RiscossionePremio crea(Hackathon hackathon) {
-        return new RiscossionePremio(hackathon);
+        return new RiscossionePremio(
+                null,
+                hackathon,
+                StatoRiscossionePremio.DA_CONFIGURARE,
+                null,
+                null
+        );
+    }
+
+    public static RiscossionePremio ricostruisci(
+            Long id,
+            Hackathon hackathon,
+            StatoRiscossionePremio stato,
+            String beneficiaryRef,
+            String paymentRef
+    ) {
+        Objects.requireNonNull(
+                id, "L'id della riscossione è obbligatorio"
+        );
+
+        return new RiscossionePremio(
+                id, hackathon, stato, beneficiaryRef, paymentRef
+        );
+    }
+
+    public void assegnaId(Long id) {
+        Long idValido = Objects.requireNonNull(
+                id, "L'id della riscossione è obbligatorio"
+        );
+
+        if (idValido <= 0) {
+            throw new IllegalArgumentException(
+                    "L'id della riscossione deve essere maggiore di zero"
+            );
+        }
+
+        if (this.id != null) {
+            throw new IllegalStateException(
+                    "L'id della riscossione è già stato assegnato"
+            );
+        }
+
+        this.id = idValido;
+    }
+
+    private static boolean testoPresente(String testo) {
+        return testo != null && !testo.isBlank();
     }
 
     public void configura(String beneficiaryRef) {
