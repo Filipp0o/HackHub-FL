@@ -23,9 +23,7 @@ public class CreareTeamControl {
         );
 
         if (teamRepository.verificaAppartenenzaTeam(utente)) {
-            throw new IllegalStateException(
-                    "L'utente appartiene già a un team"
-            );
+            throw new UtenteGiaInTeamException();
         }
     }
 
@@ -38,12 +36,28 @@ public class CreareTeamControl {
     }
 
     public void creaTeam(String nome, Utente utente) {
-        Team team = Team.crea(
-                nome,
-                utente,
-                utente
-        );
+        Team team = Team.crea(nome, utente, utente);
 
-        teamRepository.salva(team);
+        try {
+            teamRepository.salva(team);
+        } catch (RuntimeException errore) {
+            throw new CreazioneTeamFallitaException(errore);
+        }
+    }
+
+    public static class UtenteGiaInTeamException
+            extends IllegalStateException {
+
+        public UtenteGiaInTeamException() {
+            super("L'utente appartiene già a un team");
+        }
+    }
+
+    public static class CreazioneTeamFallitaException
+            extends IllegalStateException {
+
+        public CreazioneTeamFallitaException(Throwable causa) {
+            super("Il team non è stato creato", causa);
+        }
     }
 }

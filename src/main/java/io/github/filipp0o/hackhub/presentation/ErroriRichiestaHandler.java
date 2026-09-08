@@ -1,5 +1,6 @@
 package io.github.filipp0o.hackhub.presentation;
 
+import io.github.filipp0o.hackhub.application.CreareTeamControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +31,30 @@ public class ErroriRichiestaHandler {
             IllegalArgumentException errore
     ) {
         return ResponseEntity.badRequest()
+                .body(new ErroreRichiesta(
+                        errore.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(
+            CreareTeamControl.UtenteGiaInTeamException.class
+    )
+    public ResponseEntity<ErroreRichiesta> utenteGiaInTeam(
+            CreareTeamControl.UtenteGiaInTeamException errore
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErroreRichiesta(
+                        errore.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(
+            CreareTeamControl.CreazioneTeamFallitaException.class
+    )
+    public ResponseEntity<ErroreRichiesta> creazioneTeamFallita(
+            CreareTeamControl.CreazioneTeamFallitaException errore
+    ) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErroreRichiesta(
                         errore.getMessage()
                 ));
