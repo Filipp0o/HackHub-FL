@@ -51,6 +51,8 @@ class SegnalareViolazioneBoundaryTest {
                 mentore
         );
 
+        hackathon.assegnaId(1L);
+
         Utente responsabile = new Utente(4L);
 
         Team team = Team.crea(

@@ -53,6 +53,8 @@ class IscrivereTeamHackathonBoundaryTest {
         hackathon =
                 creaHackathonAperto();
 
+        hackathon.assegnaId(1L);
+
         HackathonRepositoryFinto
                 hackathonRepository =
                 new HackathonRepositoryFinto(

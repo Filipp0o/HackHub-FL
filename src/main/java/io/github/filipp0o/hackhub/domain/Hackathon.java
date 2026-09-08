@@ -4,14 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Hackathon {
 
-    private static final AtomicLong SEQUENZA_ID =
-            new AtomicLong(1);
-
-    private final Long id;
+    private Long id;
 
     private final String nome;
     private final String regolamento;
@@ -133,7 +129,6 @@ public class Hackathon {
         }
 
         this.mentori = List.copyOf(mentori);
-        this.id = SEQUENZA_ID.getAndIncrement();
         this.stato = StatoHackathonFactory.ricostruisci(
                 TipoStatoHackathon.IN_ISCRIZIONE
         );
@@ -291,6 +286,26 @@ public class Hackathon {
         }
 
         this.riscossionePremio = riscossioneValida;
+    }
+
+    public void assegnaId(Long id) {
+        Long idValido = Objects.requireNonNull(
+                id, "L'id dell'hackathon è obbligatorio"
+        );
+
+        if (idValido <= 0) {
+            throw new IllegalArgumentException(
+                    "L'id dell'hackathon deve essere maggiore di zero"
+            );
+        }
+
+        if (this.id != null) {
+            throw new IllegalStateException(
+                    "L'id dell'hackathon è già stato assegnato"
+            );
+        }
+
+        this.id = idValido;
     }
 
     public Long getId() {

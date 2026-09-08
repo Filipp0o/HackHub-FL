@@ -14,19 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class IdentificativiDominioTest {
 
     @Test
-    void assegnaIdentificativiDistintiAgliHackathon() {
-        Hackathon primoHackathon = creaHackathon();
-        Hackathon secondoHackathon = creaHackathon();
-
-        assertAll(
-                () -> assertNotNull(primoHackathon.getId()),
-                () -> assertNotNull(secondoHackathon.getId()),
-                () -> assertTrue(primoHackathon.getId() > 0),
-                () -> assertTrue(secondoHackathon.getId() > 0),
-                () -> assertNotEquals(
-                        primoHackathon.getId(),
-                        secondoHackathon.getId()
-                )
+    void nuoviHackathonAttendonoIdDalRepository() {
+        org.junit.jupiter.api.Assertions.assertNull(
+                creaHackathon().getId()
+        );
+        org.junit.jupiter.api.Assertions.assertNull(
+                creaHackathon().getId()
         );
     }
 

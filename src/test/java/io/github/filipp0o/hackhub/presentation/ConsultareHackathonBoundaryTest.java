@@ -106,6 +106,8 @@ class ConsultareHackathonBoundaryTest {
         HackathonRepositoryFinto repository =
                 new HackathonRepositoryFinto();
 
+        hackathon.assegnaId(1L);
+
         repository.hackathonRecuperato =
                 hackathon;
 

@@ -13,6 +13,8 @@ import java.util.Objects;
 public class InMemoryHackathonRepository
         implements HackathonRepository {
 
+    private long prossimoId = 1L;
+
     private final List<Hackathon> hackathonSalvati =
             new ArrayList<>();
 
@@ -114,26 +116,25 @@ public class InMemoryHackathonRepository
     }
 
     @Override
-    public void salva(
-            Hackathon hackathon
-    ) {
-        Hackathon hackathonValido =
-                Objects.requireNonNull(
-                        hackathon,
-                        "L'hackathon è obbligatorio"
-                );
+    public void salva(Hackathon hackathon) {
+        Hackathon hackathonValido = Objects.requireNonNull(
+                hackathon, "L'hackathon è obbligatorio"
+        );
 
-        for (int indice = 0;
-             indice < hackathonSalvati.size();
-             indice++) {
+        if (hackathonValido.getId() == null) {
+            hackathonValido.assegnaId(prossimoId++);
+        } else {
+            prossimoId = Math.max(
+                    prossimoId, hackathonValido.getId() + 1
+            );
+        }
+
+        for (int indice = 0; indice < hackathonSalvati.size(); indice++) {
             if (Objects.equals(
                     hackathonSalvati.get(indice).getId(),
                     hackathonValido.getId()
             )) {
-                hackathonSalvati.set(
-                        indice,
-                        hackathonValido
-                );
+                hackathonSalvati.set(indice, hackathonValido);
                 return;
             }
         }

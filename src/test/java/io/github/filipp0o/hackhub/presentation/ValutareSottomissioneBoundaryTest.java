@@ -44,6 +44,8 @@ class ValutareSottomissioneBoundaryTest {
         Utente giudice = new Utente(2L);
         hackathon = creaHackathonInValutazione(giudice);
 
+        hackathon.assegnaId(1L);
+
         Utente responsabile = new Utente(4L);
 
         Team team = Team.crea(
