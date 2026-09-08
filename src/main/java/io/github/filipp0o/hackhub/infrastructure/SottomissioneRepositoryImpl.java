@@ -25,9 +25,10 @@ public class SottomissioneRepositoryImpl
         );
 
         return sottomissioniSalvate.stream()
-                .filter(sottomissione ->
-                        sottomissione.getPartecipazione()
-                                == partecipazioneValida)
+                .filter(sottomissione -> stessaPartecipazione(
+                        sottomissione.getPartecipazione(),
+                        partecipazioneValida
+                ))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
                         "Sottomissione non trovata"
@@ -56,5 +57,14 @@ public class SottomissioneRepositoryImpl
         );
 
         sottomissioniSalvate.add(sottomissioneValida);
+    }
+
+    private boolean stessaPartecipazione(
+            Partecipazione prima,
+            Partecipazione seconda
+    ) {
+        return prima == seconda
+                || (prima.getId() != null
+                && Objects.equals(prima.getId(), seconda.getId()));
     }
 }
