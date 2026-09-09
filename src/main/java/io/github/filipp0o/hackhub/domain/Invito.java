@@ -57,6 +57,10 @@ public class Invito {
         accettato = true;
     }
 
+    public void annullaAccettazioneNonRegistrata() {
+        accettato = false;
+    }
+
     public Long getId() {
         return id;
     }

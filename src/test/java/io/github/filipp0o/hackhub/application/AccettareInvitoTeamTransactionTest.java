@@ -1,5 +1,6 @@
 package io.github.filipp0o.hackhub.application;
 
+import io.github.filipp0o.hackhub.application.AccettareInvitoTeamControl.AccettazioneInvitoFallitaException;
 import io.github.filipp0o.hackhub.domain.Invito;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
@@ -136,18 +137,20 @@ class AccettareInvitoTeamTransactionTest {
     void erroreSqlDuranteSalvataggioTeamAnnullaAncheInvito() {
         teams.guastoDurante = true;
 
-        IllegalStateException errore = assertThrows(
-                IllegalStateException.class,
+        AccettazioneInvitoFallitaException errore = assertThrows(
+                AccettazioneInvitoFallitaException.class,
                 () -> control.richiediAccettazioneInvito(
                         destinatario, invito
                 )
         );
 
         assertEquals(
-                "Impossibile salvare il team",
+                "Accettazione non completata",
                 errore.getMessage()
         );
         assertNotNull(errore.getCause());
+        assertEquals("Impossibile salvare il team", errore.getCause().getMessage());
+        assertNotNull(errore.getCause().getCause());
 
         verificaRollback();
     }
@@ -156,8 +159,8 @@ class AccettareInvitoTeamTransactionTest {
     void erroreDopoSalvataggioTeamAnnullaEntrambeLeScritture() {
         teams.guastoDopo = true;
 
-        IllegalStateException errore = assertThrows(
-                IllegalStateException.class,
+        AccettazioneInvitoFallitaException errore = assertThrows(
+                AccettazioneInvitoFallitaException.class,
                 () -> control.richiediAccettazioneInvito(
                         destinatario, invito
                 )
@@ -165,10 +168,16 @@ class AccettareInvitoTeamTransactionTest {
 
         assertEquals(
                 "Guasto dopo il salvataggio del team",
-                errore.getMessage()
+                errore.getCause().getMessage()
         );
 
         verificaRollback();
+
+        teams.guastoDopo = false;
+        assertDoesNotThrow(() ->
+                control.richiediAccettazioneInvito(destinatario, invito));
+        assertTrue(inviti.recuperaInvitiRicevuti(destinatario).isEmpty());
+        assertEquals(2, teams.recuperaTeam(creatore).numeroMembri());
     }
 
     private void verificaRollback() {

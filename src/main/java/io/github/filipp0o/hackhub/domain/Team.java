@@ -133,6 +133,18 @@ public class Team {
         membri.add(nuovoMembro);
     }
 
+    public void annullaAggiuntaMembroNonRegistrata(Utente utente) {
+        Utente membroDaAnnullare = Objects.requireNonNull(
+                utente, "Il membro da annullare è obbligatorio"
+        );
+
+        if (stessaIdentita(membroDaAnnullare, responsabile)) {
+            return;
+        }
+
+        membri.removeIf(membro -> membro == membroDaAnnullare);
+    }
+
     public Long getId() {
         return id;
     }

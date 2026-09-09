@@ -64,10 +64,20 @@ public class AccettareInvitoTeamControl {
         verificaAmmissibilitaNuovoMembro(team);
 
         ricevuto.registraAccettazione();
-        team.aggiungiMembro(utente);
+        boolean membroAggiunto = false;
 
-        invitoRepository.salva(ricevuto);
-        teamRepository.salva(team);
+        try {
+            team.aggiungiMembro(utente);
+            membroAggiunto = true;
+            invitoRepository.salva(ricevuto);
+            teamRepository.salva(team);
+        } catch (RuntimeException errore) {
+            if (membroAggiunto) {
+                team.annullaAggiuntaMembroNonRegistrata(utente);
+            }
+            ricevuto.annullaAccettazioneNonRegistrata();
+            throw new AccettazioneInvitoFallitaException(errore);
+        }
     }
 
     public void verificaAmmissibilitaNuovoMembro(Team team) {
@@ -109,6 +119,14 @@ public class AccettareInvitoTeamControl {
             super(
                     "L'ingresso supera la dimensione massima consentita per il team"
             );
+        }
+    }
+
+    public static class AccettazioneInvitoFallitaException
+            extends IllegalStateException {
+
+        public AccettazioneInvitoFallitaException(Throwable causa) {
+            super("Accettazione non completata", causa);
         }
     }
 }

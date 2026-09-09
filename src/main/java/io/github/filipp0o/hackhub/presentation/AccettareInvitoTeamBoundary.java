@@ -4,6 +4,7 @@ import io.github.filipp0o.hackhub.application.AccettareInvitoTeamControl;
 import io.github.filipp0o.hackhub.domain.Invito;
 import io.github.filipp0o.hackhub.domain.Utente;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -109,6 +110,7 @@ public class AccettareInvitoTeamBoundary {
         return esito(200, "Nessun invito disponibile");
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<EsitoAccettazione> mostraSelezioneInvitoObbligatoria() {
         return esito(400, "È necessario selezionare un invito");
     }
