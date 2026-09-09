@@ -330,13 +330,38 @@ public class Hackathon {
             );
         }
 
-        if (partecipazioneValida.getHackathon() != this) {
+        if (!haStessaIdentita(partecipazioneValida.getHackathon())) {
             throw new IllegalArgumentException(
                     "La partecipazione vincitrice deve appartenere a questo hackathon"
             );
         }
 
         this.vincitrice = partecipazioneValida;
+    }
+
+    public DatiRipristinoProclamazione creaRipristinoProclamazione() {
+        return new DatiRipristinoProclamazione(
+                this, stato, vincitrice, riscossionePremio
+        );
+    }
+
+    public void ripristinaProclamazione(DatiRipristinoProclamazione dati) {
+        Objects.requireNonNull(dati, "I dati di ripristino sono obbligatori");
+
+        if (dati.getHackathon() != this) {
+            throw new IllegalArgumentException(
+                    "Il ripristino appartiene a un'altra istanza di hackathon"
+            );
+        }
+
+        this.stato = dati.getStato();
+        this.vincitrice = dati.getVincitrice();
+        this.riscossionePremio = dati.getRiscossionePremio();
+    }
+
+    public boolean haStessaIdentita(Hackathon altro) {
+        return this == altro
+                || (altro != null && id != null && id.equals(altro.getId()));
     }
 
     public void concludi() {

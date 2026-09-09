@@ -1028,6 +1028,119 @@ class ProclamareTeamVincitoreControlTest {
         );
     }
 
+    @Test
+    void ripristinaHackathonSeIlSalvataggioFallisce() {
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon = creaHackathonInValutazione(organizzatore);
+        Partecipazione candidata = creaPartecipazioneValutata(hackathon, 10L);
+        PartecipazioneRepositoryFinto partecipazioni =
+                new PartecipazioneRepositoryFinto();
+        partecipazioni.partecipazioni = List.of(candidata);
+        RuntimeException errore = new RuntimeException("Salvataggio fallito");
+
+        HackathonRepositoryFinto repository = new HackathonRepositoryFinto() {
+            @Override
+            public void salva(Hackathon ricevuto) {
+                assertEquals(TipoStatoHackathon.CONCLUSO, ricevuto.getStato());
+                assertSame(candidata, ricevuto.getVincitrice());
+                assertNotNull(ricevuto.getRiscossionePremio());
+                throw errore;
+            }
+        };
+        ProclamareTeamVincitoreControl control =
+                new ProclamareTeamVincitoreControl(
+                        partecipazioni, repository, new SegnalazioneRepositoryFinto()
+                );
+
+        RuntimeException ricevuto = assertThrows(
+                RuntimeException.class,
+                () -> control.confermaProclamazione(
+                        organizzatore, hackathon, candidata
+                )
+        );
+
+        assertAll(
+                () -> assertSame(errore, ricevuto),
+                () -> assertEquals(
+                        TipoStatoHackathon.IN_VALUTAZIONE, hackathon.getStato()
+                ),
+                () -> assertNull(hackathon.getVincitrice()),
+                () -> assertNull(hackathon.getRiscossionePremio())
+        );
+    }
+
+    @Test
+    void proclamaConPartecipazioneCaricataSuUnAltraIstanzaDelloStessoHackathon() {
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon = creaHackathonInValutazione(organizzatore);
+        Hackathon altraIstanza = creaHackathonInValutazione(organizzatore);
+        hackathon.assegnaId(1000L);
+        altraIstanza.assegnaId(1000L);
+        Partecipazione candidata = creaPartecipazioneValutata(altraIstanza, 10L);
+        PartecipazioneRepositoryFinto partecipazioni =
+                new PartecipazioneRepositoryFinto();
+        partecipazioni.partecipazioni = List.of(candidata);
+        HackathonRepositoryFinto repository = new HackathonRepositoryFinto();
+        ProclamareTeamVincitoreControl control =
+                new ProclamareTeamVincitoreControl(
+                        partecipazioni, repository, new SegnalazioneRepositoryFinto()
+                );
+
+        control.preparaProclamazione(hackathon, candidata);
+        control.confermaProclamazione(organizzatore, hackathon, candidata);
+
+        assertAll(
+                () -> assertEquals(TipoStatoHackathon.CONCLUSO, hackathon.getStato()),
+                () -> assertSame(candidata, hackathon.getVincitrice()),
+                () -> assertNotNull(hackathon.getRiscossionePremio()),
+                () -> assertSame(hackathon, repository.hackathonSalvato),
+                () -> assertEquals(1, repository.numeroSalvataggi)
+        );
+    }
+
+    @Test
+    void bloccaSegnalazioneRiferitaAUnAltraIstanzaDelloStessoHackathon() {
+        Utente organizzatore = new Utente(1L);
+        Hackathon hackathon = creaHackathonInValutazione(organizzatore);
+        Hackathon altraIstanza = creaHackathonInValutazione(organizzatore);
+        hackathon.assegnaId(1000L);
+        altraIstanza.assegnaId(1000L);
+        Partecipazione candidata = creaPartecipazioneValutata(hackathon, 10L);
+        Partecipazione segnalata = creaPartecipazione(altraIstanza, 11L);
+        SegnalazioneRepositoryFinto segnalazioni = new SegnalazioneRepositoryFinto();
+        segnalazioni.segnalazioniDaEsaminare = List.of(
+                Segnalazione.crea(
+                        altraIstanza.getMentori().get(0), segnalata, "Violazione"
+                )
+        );
+        PartecipazioneRepositoryFinto partecipazioni =
+                new PartecipazioneRepositoryFinto();
+        partecipazioni.partecipazioni = List.of(candidata);
+        partecipazioni.partecipazioniNonEscluse = List.of(candidata);
+        HackathonRepositoryFinto repository = new HackathonRepositoryFinto();
+        ProclamareTeamVincitoreControl control =
+                new ProclamareTeamVincitoreControl(
+                        partecipazioni, repository, segnalazioni
+                );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> control.avviaProclamazioneTeamVincitore(organizzatore, hackathon)
+        );
+        assertThrows(
+                IllegalStateException.class,
+                () -> control.confermaProclamazione(organizzatore, hackathon, candidata)
+        );
+        assertAll(
+                () -> assertEquals(
+                        TipoStatoHackathon.IN_VALUTAZIONE, hackathon.getStato()
+                ),
+                () -> assertNull(hackathon.getVincitrice()),
+                () -> assertNull(hackathon.getRiscossionePremio()),
+                () -> assertEquals(0, repository.numeroSalvataggi)
+        );
+    }
+
     private Hackathon creaHackathonInValutazione(
             Utente organizzatore
     ) {

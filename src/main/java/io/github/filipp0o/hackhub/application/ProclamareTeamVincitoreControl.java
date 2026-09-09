@@ -7,6 +7,7 @@ import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
 import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
 import io.github.filipp0o.hackhub.domain.Utente;
+import io.github.filipp0o.hackhub.domain.DatiRipristinoProclamazione;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -181,15 +182,20 @@ public class ProclamareTeamVincitoreControl {
 
 
 
-        hackathonValido.registraPartecipazioneVincitrice(
-                partecipazioneValida
-        );
+        DatiRipristinoProclamazione ripristino =
+                hackathonValido.creaRipristinoProclamazione();
 
-        hackathonValido.concludi();
-
-        RiscossionePremio.crea(hackathonValido);
-
-        hackathonRepository.salva(hackathonValido);
+        try {
+            hackathonValido.registraPartecipazioneVincitrice(
+                    partecipazioneValida
+            );
+            hackathonValido.concludi();
+            RiscossionePremio.crea(hackathonValido);
+            hackathonRepository.salva(hackathonValido);
+        } catch (RuntimeException errore) {
+            hackathonValido.ripristinaProclamazione(ripristino);
+            throw errore;
+        }
     }
 
     private void verificaHackathonInValutazione(
@@ -238,7 +244,7 @@ public class ProclamareTeamVincitoreControl {
             Hackathon hackathon,
             Partecipazione partecipazione
     ) {
-        if (partecipazione.getHackathon() != hackathon) {
+        if (!hackathon.haStessaIdentita(partecipazione.getHackathon())) {
             throw new IllegalArgumentException(
                     "La partecipazione selezionata non appartiene a questo hackathon"
             );
@@ -267,17 +273,19 @@ public class ProclamareTeamVincitoreControl {
         }
     }
 
+
     private void verificaAssenzaSegnalazioniDaEsaminare(
             Hackathon hackathon,
             List<Segnalazione> segnalazioni
     ) {
-        boolean esisteSegnalazioneDaEsaminare =
-                segnalazioni.stream()
-                        .map(Segnalazione::getPartecipazione)
-                        .anyMatch(partecipazione ->
-                                partecipazione.getHackathon()
-                                        == hackathon
-                        );
+            boolean esisteSegnalazioneDaEsaminare =
+                    segnalazioni.stream()
+                            .map(Segnalazione::getPartecipazione)
+                            .anyMatch(partecipazione ->
+                                    hackathon.haStessaIdentita(
+                                            partecipazione.getHackathon()
+                                    )
+                            );
 
         if (esisteSegnalazioneDaEsaminare) {
             throw new IllegalStateException(

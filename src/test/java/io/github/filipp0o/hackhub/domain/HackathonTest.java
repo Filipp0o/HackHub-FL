@@ -575,6 +575,68 @@ class HackathonTest {
         );
     }
 
+    @Test
+    void confrontaIdentitaSenzaConfondereHackathonNonPersistiti() {
+        Hackathon primo = creaHackathonValido();
+        Hackathon secondo = creaHackathonValido();
+        Hackathon terzo = creaHackathonValido();
+
+        assertTrue(primo.haStessaIdentita(primo));
+        assertFalse(primo.haStessaIdentita(null));
+        assertFalse(primo.haStessaIdentita(secondo));
+
+        primo.assegnaId(1000L);
+        assertFalse(primo.haStessaIdentita(secondo));
+        assertFalse(secondo.haStessaIdentita(primo));
+
+        secondo.assegnaId(1000L);
+        terzo.assegnaId(2000L);
+        assertTrue(primo.haStessaIdentita(secondo));
+        assertTrue(secondo.haStessaIdentita(primo));
+        assertFalse(primo.haStessaIdentita(terzo));
+    }
+
+    @Test
+    void ripristinaLaProclamazioneConservandoLaVincitricePreesistente() {
+        Hackathon hackathon = creaHackathonValido();
+        portaInValutazione(hackathon);
+        Partecipazione vincitrice = creaPartecipazione(hackathon);
+        hackathon.registraPartecipazioneVincitrice(vincitrice);
+        DatiRipristinoProclamazione ripristino =
+                hackathon.creaRipristinoProclamazione();
+
+        hackathon.concludi();
+        RiscossionePremio.crea(hackathon);
+        hackathon.ripristinaProclamazione(ripristino);
+
+        assertAll(
+                () -> assertEquals(
+                        TipoStatoHackathon.IN_VALUTAZIONE, hackathon.getStato()
+                ),
+                () -> assertSame(vincitrice, hackathon.getVincitrice()),
+                () -> assertNull(hackathon.getRiscossionePremio())
+        );
+    }
+
+    @Test
+    void rifiutaRipristinoDiUnAltraIstanzaAncheConLoStessoId() {
+        Hackathon primo = creaHackathonValido();
+        Hackathon secondo = creaHackathonValido();
+        primo.assegnaId(1000L);
+        secondo.assegnaId(1000L);
+        portaInValutazione(primo);
+        DatiRipristinoProclamazione ripristino =
+                primo.creaRipristinoProclamazione();
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> secondo.ripristinaProclamazione(ripristino)
+        );
+        assertEquals(TipoStatoHackathon.IN_ISCRIZIONE, secondo.getStato());
+        assertNull(secondo.getVincitrice());
+        assertNull(secondo.getRiscossionePremio());
+    }
+
     private Partecipazione creaPartecipazione(
             Hackathon hackathon
     ) {
