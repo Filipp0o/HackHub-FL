@@ -8,6 +8,7 @@ import io.github.filipp0o.hackhub.domain.Sottomissione;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
 import io.github.filipp0o.hackhub.domain.Valutazione;
+import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -389,6 +390,79 @@ class HackathonRepositoryImplTest {
                 List.of(inCorso, inValutazione),
                 repository.ottieniHackathonSegnalabili(
                         new Utente(3L)
+                )
+        );
+    }
+
+    @Test
+    void includeHackathonIniziatoAncheSeLoStatoNonEraAggiornato() {
+        LocalDate oggi = LocalDate.now();
+        Utente mentore = new Utente(3L);
+        InMemoryPartecipazioneRepository partecipazioni =
+                new InMemoryPartecipazioneRepository();
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(partecipazioni);
+
+        Hackathon hackathon = creaHackathon(
+                "Hackathon iniziato",
+                new Utente(2L),
+                List.of(mentore),
+                oggi.minusDays(1),
+                oggi.plusDays(2)
+        );
+        salvaPartecipazione(partecipazioni, hackathon, 10L, false);
+        repository.salva(hackathon);
+
+        assertEquals(
+                TipoStatoHackathon.IN_ISCRIZIONE,
+                hackathon.getStato()
+        );
+
+        List<Hackathon> segnalabili =
+                repository.ottieniHackathonSegnalabili(mentore);
+
+        assertAll(
+                () -> assertEquals(List.of(hackathon), segnalabili),
+                () -> assertEquals(
+                        TipoStatoHackathon.IN_CORSO,
+                        hackathon.getStato()
+                )
+        );
+    }
+
+    @Test
+    void aggiornaHackathonInValutazioneMantenendoloSegnalabile() {
+        LocalDate oggi = LocalDate.now();
+        Utente mentore = new Utente(3L);
+        InMemoryPartecipazioneRepository partecipazioni =
+                new InMemoryPartecipazioneRepository();
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(partecipazioni);
+
+        Hackathon hackathon = creaHackathon(
+                "Hackathon da valutare",
+                new Utente(2L),
+                List.of(mentore),
+                oggi.minusDays(5),
+                oggi.minusDays(1)
+        );
+        hackathon.aggiornaStato(oggi.minusDays(3));
+        salvaPartecipazione(partecipazioni, hackathon, 10L, false);
+        repository.salva(hackathon);
+
+        assertEquals(
+                TipoStatoHackathon.IN_CORSO,
+                hackathon.getStato()
+        );
+
+        List<Hackathon> segnalabili =
+                repository.ottieniHackathonSegnalabili(mentore);
+
+        assertAll(
+                () -> assertEquals(List.of(hackathon), segnalabili),
+                () -> assertEquals(
+                        TipoStatoHackathon.IN_VALUTAZIONE,
+                        hackathon.getStato()
                 )
         );
     }

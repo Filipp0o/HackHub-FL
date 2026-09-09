@@ -9,6 +9,7 @@ import io.github.filipp0o.hackhub.domain.Utente;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.time.LocalDate;
 
 public class InMemoryHackathonRepository
         implements HackathonRepository {
@@ -61,8 +62,13 @@ public class InMemoryHackathonRepository
                 "Il mentore è obbligatorio"
         );
 
+        LocalDate dataCorrente = LocalDate.now();
+
         return hackathonSalvati.stream()
-                .filter(Hackathon::consenteSegnalazioni)
+                .filter(hackathon -> {
+                    hackathon.aggiornaStato(dataCorrente);
+                    return hackathon.consenteSegnalazioni();
+                })
                 .filter(hackathon ->
                         hackathon.getMentori().stream()
                                 .anyMatch(mentoreAssegnato ->
