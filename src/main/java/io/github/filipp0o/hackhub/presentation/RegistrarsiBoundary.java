@@ -3,6 +3,7 @@ package io.github.filipp0o.hackhub.presentation;
 import io.github.filipp0o.hackhub.application.RegistrarsiControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
@@ -49,7 +50,9 @@ public class RegistrarsiBoundary {
         } catch (RegistrarsiControl.EmailGiaRegistrataException errore) {
             return mostraEmailGiaRegistrata();
         } catch (IllegalArgumentException errore) {
-            return mostraDatiDaCorreggere();
+            return ResponseEntity.badRequest().body(
+                    new EsitoRegistrazione(errore.getMessage())
+            );
         } catch (RuntimeException errore) {
             return mostraRegistrazioneNonCompletata();
         }
@@ -62,10 +65,11 @@ public class RegistrarsiBoundary {
         );
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<EsitoRegistrazione> mostraDatiDaCorreggere() {
         return ResponseEntity.badRequest().body(
                 new EsitoRegistrazione(
-                        "Dati di registrazione da correggere"
+                        "Fornire email e password in una richiesta JSON valida"
                 )
         );
     }

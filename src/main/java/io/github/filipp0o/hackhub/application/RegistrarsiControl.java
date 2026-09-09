@@ -2,9 +2,19 @@ package io.github.filipp0o.hackhub.application;
 
 import io.github.filipp0o.hackhub.domain.Utente;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class RegistrarsiControl {
+
+    private static final Pattern FORMATO_EMAIL = Pattern.compile(
+            "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+"
+                    + "(?:\\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
+                    + "[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+                    + "(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+"
+    );
 
     private final UtenteRepository utenteRepository;
     private final CodificatorePassword codificatorePassword;
@@ -26,22 +36,51 @@ public class RegistrarsiControl {
     public void richiediRegistrazione(String email, String password) {
         verificaDatiRegistrazione(email, password);
 
-        if (utenteRepository.esistePerEmail(email)) {
+        boolean emailEsistente;
+        try {
+            emailEsistente = utenteRepository.esistePerEmail(email);
+        } catch (RuntimeException causa) {
+            throw new RegistrazioneFallitaException(causa);
+        }
+
+        if (emailEsistente) {
             throw new EmailGiaRegistrataException();
         }
 
         String passwordHash = codificatorePassword.codifica(password);
-        Utente utente = Utente.crea(email, passwordHash);
-        utenteRepository.salva(utente);
+
+        try {
+            Utente utente = Utente.crea(email, passwordHash);
+            utenteRepository.salva(utente);
+        } catch (RuntimeException causa) {
+            throw new RegistrazioneFallitaException(causa);
+        }
     }
 
     public void verificaDatiRegistrazione(String email, String password) {
+        List<String> errori = new ArrayList<>();
+
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("L'email è obbligatoria");
+            errori.add("L'email è obbligatoria");
+        } else if (email.length() > 320
+                || !FORMATO_EMAIL.matcher(email).matches()) {
+            errori.add("Il formato dell'email non è valido");
         }
 
         if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("La password è obbligatoria");
+            errori.add("La password è obbligatoria");
+        }
+
+        if (!errori.isEmpty()) {
+            throw new IllegalArgumentException(String.join("; ", errori));
+        }
+    }
+
+    public static class RegistrazioneFallitaException
+            extends IllegalStateException {
+
+        public RegistrazioneFallitaException(Throwable causa) {
+            super("Registrazione non completata", causa);
         }
     }
 

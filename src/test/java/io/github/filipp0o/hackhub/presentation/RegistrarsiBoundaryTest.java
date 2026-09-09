@@ -167,4 +167,55 @@ class RegistrarsiBoundaryTest {
         );
         assertTrue(repository.recuperaUtentiAssegnabili().isEmpty());
     }
+
+    @Test
+    void datiErratiIndicanoLeCorrezioniEConsentonoUnNuovoTentativo() {
+        var risposta = boundary.inserisciDatiRegistrazione("non-email", " ");
+
+        assertEquals(HttpStatus.BAD_REQUEST, risposta.getStatusCode());
+        assertEquals(
+                "Il formato dell'email non è valido; La password è obbligatoria",
+                risposta.getBody().messaggio()
+        );
+        assertTrue(repository.recuperaUtentiAssegnabili().isEmpty());
+
+        assertEquals(
+                HttpStatus.CREATED,
+                boundary.inserisciDatiRegistrazione(
+                        "uno@example.com", "segreto"
+                ).getStatusCode()
+        );
+        assertEquals(1, repository.recuperaUtentiAssegnabili().size());
+    }
+
+    @Test
+    void hashInvalidoDelCodificatoreProduceErroreInterno() {
+        CodificatorePassword difettoso = new CodificatorePassword() {
+
+            @Override
+            public String codifica(String password) {
+                return null;
+            }
+
+            @Override
+            public boolean verifica(String password, String hash) {
+                throw new UnsupportedOperationException();
+            }
+        };
+
+        RegistrarsiBoundary altra = new RegistrarsiBoundary(
+                new RegistrarsiControl(repository, difettoso)
+        );
+
+        var risposta = altra.inserisciDatiRegistrazione(
+                "uno@example.com", "segreto"
+        );
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, risposta.getStatusCode());
+        assertEquals(
+                "Registrazione non completata",
+                risposta.getBody().messaggio()
+        );
+        assertTrue(repository.recuperaUtentiAssegnabili().isEmpty());
+    }
 }
