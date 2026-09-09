@@ -41,13 +41,10 @@ class ValutareSottomissioneBoundaryTest {
 
         Utente responsabile = new Utente(4L);
         Team team = Team.crea("Team Alpha", responsabile, responsabile);
-
-        Partecipazione partecipazione =
-                new Partecipazione(hackathon, team);
+        Partecipazione partecipazione = new Partecipazione(hackathon, team);
 
         sottomissione = new Sottomissione(
-                partecipazione,
-                "Repository del progetto"
+                partecipazione, "Repository del progetto"
         );
         sottomissione.assegnaId(1L);
 
@@ -71,8 +68,7 @@ class ValutareSottomissioneBoundaryTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id")
                         .value(hackathon.getId().intValue()))
-                .andExpect(jsonPath("$[0].nome")
-                        .value("HackHub 2026"));
+                .andExpect(jsonPath("$[0].nome").value("HackHub 2026"));
     }
 
     @Test
@@ -106,27 +102,14 @@ class ValutareSottomissioneBoundaryTest {
                                 """))
                 .andExpect(status().isCreated());
 
-        Valutazione valutazione =
-                valutazioneRepository.valutazioneSalvata;
+        Valutazione valutazione = valutazioneRepository.valutazioneSalvata;
 
         assertAll(
                 () -> assertNotNull(valutazione),
-                () -> assertSame(
-                        valutazione,
-                        sottomissione.getValutazione()
-                ),
-                () -> assertEquals(
-                        "Ottimo progetto",
-                        valutazione.getGiudizio()
-                ),
-                () -> assertEquals(
-                        BigDecimal.valueOf(9),
-                        valutazione.getPunteggio()
-                ),
-                () -> assertEquals(
-                        2L,
-                        valutazione.getGiudice().getId()
-                )
+                () -> assertSame(valutazione, sottomissione.getValutazione()),
+                () -> assertEquals("Ottimo progetto", valutazione.getGiudizio()),
+                () -> assertEquals(BigDecimal.valueOf(9), valutazione.getPunteggio()),
+                () -> assertEquals(2L, valutazione.getGiudice().getId())
         );
     }
 
@@ -144,8 +127,7 @@ class ValutareSottomissioneBoundaryTest {
         assertThrows(
                 NullPointerException.class,
                 () -> new ValutareSottomissioneBoundary(
-                        null,
-                        new SessioneUtente()
+                        null, new SessioneUtente()
                 )
         );
     }
@@ -163,7 +145,8 @@ class ValutareSottomissioneBoundaryTest {
     void restituisceBadRequestPerDatiNonValidi(String richiesta) throws Exception {
         mockMvc.perform(post(
                         "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
-                        hackathon.getId(), sottomissione.getId()
+                        hackathon.getId(),
+                        sottomissione.getId()
                 )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(richiesta))
@@ -188,7 +171,8 @@ class ValutareSottomissioneBoundaryTest {
 
         mockMvc.perform(post(
                         "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
-                        hackathon.getId(), sottomissione.getId()
+                        hackathon.getId(),
+                        sottomissione.getId()
                 )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -208,7 +192,8 @@ class ValutareSottomissioneBoundaryTest {
 
         mockMvc.perform(post(
                         "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
-                        hackathon.getId(), sottomissione.getId()
+                        hackathon.getId(),
+                        sottomissione.getId()
                 )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -217,14 +202,22 @@ class ValutareSottomissioneBoundaryTest {
                 .andExpect(status().isCreated());
 
         assertNotNull(sottomissione.getValutazione());
-        assertSame(sottomissione.getValutazione(), valutazioneRepository.valutazioneSalvata);
-        assertEquals(new BigDecimal("8.5"), sottomissione.getValutazione().getPunteggio());
+        assertSame(
+                sottomissione.getValutazione(),
+                valutazioneRepository.valutazioneSalvata
+        );
+        assertEquals(
+                new BigDecimal("8.5"),
+                sottomissione.getValutazione().getPunteggio()
+        );
         assertEquals(1, valutazioneRepository.numeroSalvataggi);
     }
 
     @Test
     void restituisceConflictSeHackathonNonPiuValutabile() throws Exception {
-        hackathon.registraPartecipazioneVincitrice(sottomissione.getPartecipazione());
+        hackathon.registraPartecipazioneVincitrice(
+                sottomissione.getPartecipazione()
+        );
         hackathon.concludi();
 
         // Il repository finto conserva il candidato per verificare il ricontrollo.
@@ -236,7 +229,8 @@ class ValutareSottomissioneBoundaryTest {
 
         mockMvc.perform(post(
                         "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
-                        hackathon.getId(), sottomissione.getId()
+                        hackathon.getId(),
+                        sottomissione.getId()
                 )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -253,7 +247,9 @@ class ValutareSottomissioneBoundaryTest {
             throws Exception {
         ValutareSottomissioneControl control = new ValutareSottomissioneControl(
                 new HackathonRepositoryFinto(hackathon),
-                new PartecipazioneRepositoryFinto(sottomissione.getPartecipazione()),
+                new PartecipazioneRepositoryFinto(
+                        sottomissione.getPartecipazione()
+                ),
                 valutazioneRepository
         ) {
             @Override
@@ -270,7 +266,8 @@ class ValutareSottomissioneBoundaryTest {
 
         mvc.perform(post(
                         "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
-                        hackathon.getId(), sottomissione.getId()
+                        hackathon.getId(),
+                        sottomissione.getId()
                 )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -298,7 +295,8 @@ class ValutareSottomissioneBoundaryTest {
 
         mockMvc.perform(post(
                         "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
-                        hackathon.getId(), sottomissione.getId()
+                        hackathon.getId(),
+                        sottomissione.getId()
                 )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -306,6 +304,112 @@ class ValutareSottomissioneBoundaryTest {
                                 """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.messaggio").value("Accesso richiesto"));
+
+        assertNull(sottomissione.getValutazione());
+        assertEquals(0, valutazioneRepository.numeroSalvataggi);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "8.5", "10"})
+    void verificaPunteggioSenzaAssociareOSalvareValutazione(String punteggio)
+            throws Exception {
+        String richiesta =
+                "{\"giudizio\":\"Buon lavoro\",\"punteggio\":" + punteggio + "}";
+
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/1/sottomissioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(richiesta))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hackathonId").value(1))
+                .andExpect(jsonPath("$.sottomissioneId").value(1))
+                .andExpect(jsonPath("$.giudizio").value("Buon lavoro"))
+                .andExpect(risultato -> assertEquals(
+                        0,
+                        new BigDecimal(punteggio).compareTo(
+                                new com.fasterxml.jackson.databind.ObjectMapper()
+                                        .readTree(
+                                                risultato.getResponse()
+                                                        .getContentAsString()
+                                        )
+                                        .get("punteggio")
+                                        .decimalValue()
+                        )
+                ));
+
+        assertNull(sottomissione.getValutazione());
+        assertNull(valutazioneRepository.valutazioneSalvata);
+        assertEquals(0, valutazioneRepository.numeroSalvataggi);
+
+        mockMvc.perform(post("/api/valutazioni/hackathons/1/sottomissioni/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(richiesta))
+                .andExpect(status().isCreated());
+
+        assertEquals(1, valutazioneRepository.numeroSalvataggi);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{\"giudizio\":\"Buon lavoro\"}",
+            "{\"giudizio\":\"Buon lavoro\",\"punteggio\":null}",
+            "{\"giudizio\":\"Buon lavoro\",\"punteggio\":-0.1}",
+            "{\"giudizio\":\"Buon lavoro\",\"punteggio\":10.1}",
+            "{\"giudizio\":\"Buon lavoro\",\"punteggio\":\"abc\"}",
+            "{\"giudizio\":\"   \",\"punteggio\":8}",
+            "{\"punteggio\":8}",
+            "{",
+            "null",
+            ""
+    })
+    void correggeDatiPrimaDelRiepilogo(String richiesta) throws Exception {
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/1/sottomissioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(richiesta))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/1/sottomissioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"giudizio\":\"Corretto\",\"punteggio\":8.5}"))
+                .andExpect(status().isOk());
+
+        assertNull(sottomissione.getValutazione());
+        assertEquals(0, valutazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void confermaRicontrollaPunteggioModificatoDopoRiepilogo() throws Exception {
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/1/sottomissioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"giudizio\":\"Buon lavoro\",\"punteggio\":8}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/valutazioni/hackathons/1/sottomissioni/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"giudizio\":\"Buon lavoro\",\"punteggio\":11}"))
+                .andExpect(status().isBadRequest());
+
+        assertNull(sottomissione.getValutazione());
+        assertEquals(0, valutazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void verificaRichiedeSessione() throws Exception {
+        sessione.svuota();
+
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/1/sottomissioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"giudizio\":\"Buon lavoro\",\"punteggio\":8}"))
+                .andExpect(status().isUnauthorized());
 
         assertNull(sottomissione.getValutazione());
         assertEquals(0, valutazioneRepository.numeroSalvataggi);
@@ -337,8 +441,7 @@ class ValutareSottomissioneBoundaryTest {
         return risultato;
     }
 
-    private static class HackathonRepositoryFinto
-            implements HackathonRepository {
+    private static class HackathonRepositoryFinto implements HackathonRepository {
 
         private final Hackathon hackathon;
 
@@ -349,8 +452,7 @@ class ValutareSottomissioneBoundaryTest {
         @Override
         public List<Hackathon> ottieniHackathonValutabili(Utente giudice) {
             if (Objects.equals(
-                    hackathon.getGiudice().getId(),
-                    giudice.getId()
+                    hackathon.getGiudice().getId(), giudice.getId()
             )) {
                 return List.of(hackathon);
             }
@@ -368,23 +470,17 @@ class ValutareSottomissioneBoundaryTest {
 
         @Override
         public List<Hackathon> ottieniHackathonApertiAlleIscrizioni() {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
         public List<Hackathon> ottieniTuttiHackathon() {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
         public Hackathon recuperaHackathon(Long hackathonId) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
     }
 
@@ -393,16 +489,12 @@ class ValutareSottomissioneBoundaryTest {
 
         private final Partecipazione partecipazione;
 
-        private PartecipazioneRepositoryFinto(
-                Partecipazione partecipazione
-        ) {
+        private PartecipazioneRepositoryFinto(Partecipazione partecipazione) {
             this.partecipazione = partecipazione;
         }
 
         @Override
-        public List<Partecipazione> ottieniPartecipazioni(
-                Hackathon hackathon
-        ) {
+        public List<Partecipazione> ottieniPartecipazioni(Hackathon hackathon) {
             if (partecipazione.getHackathon() == hackathon) {
                 return List.of(partecipazione);
             }
@@ -422,9 +514,7 @@ class ValutareSottomissioneBoundaryTest {
 
         @Override
         public boolean esistePartecipazione(Team team, Hackathon hackathon) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
@@ -432,18 +522,14 @@ class ValutareSottomissioneBoundaryTest {
                 Team team,
                 Hackathon hackathon
         ) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
         public List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
                 Team team
         ) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
     }
 

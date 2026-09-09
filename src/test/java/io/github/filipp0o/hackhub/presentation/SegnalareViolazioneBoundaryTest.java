@@ -7,6 +7,8 @@ import io.github.filipp0o.hackhub.application.SegnalazioneRepository;
 import io.github.filipp0o.hackhub.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 
 class SegnalareViolazioneBoundaryTest {
 
+    private SessioneUtente sessione;
     private Hackathon hackathon;
     private Partecipazione partecipazione;
     private SegnalazioneRepositoryFinto segnalazioneRepository;
@@ -29,7 +32,7 @@ class SegnalareViolazioneBoundaryTest {
 
     @BeforeEach
     void configuraBoundary() {
-        SessioneUtente sessione = new SessioneUtente();
+        sessione = new SessioneUtente();
         sessione.registra(new Utente(3L));
 
         Utente organizzatore = new Utente(1L);
@@ -54,7 +57,7 @@ class SegnalareViolazioneBoundaryTest {
 
         mockMvc = standaloneSetup(
                 new SegnalareViolazioneBoundary(control, sessione)
-        ).build();
+        ).setControllerAdvice(new ErroriRichiestaHandler()).build();
     }
 
     @Test
@@ -63,8 +66,7 @@ class SegnalareViolazioneBoundaryTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id")
                         .value(hackathon.getId().intValue()))
-                .andExpect(jsonPath("$[0].nome")
-                        .value("HackHub 2026"));
+                .andExpect(jsonPath("$[0].nome").value("HackHub 2026"));
     }
 
     @Test
@@ -76,10 +78,8 @@ class SegnalareViolazioneBoundaryTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id")
                         .value(partecipazione.getId().intValue()))
-                .andExpect(jsonPath("$[0].nomeTeam")
-                        .value("Team Alpha"))
-                .andExpect(jsonPath("$[0].responsabileId")
-                        .value(4))
+                .andExpect(jsonPath("$[0].nomeTeam").value("Team Alpha"))
+                .andExpect(jsonPath("$[0].responsabileId").value(4))
                 .andExpect(jsonPath("$[0].regolamento")
                         .value("Regolamento ufficiale"));
     }
@@ -99,11 +99,8 @@ class SegnalareViolazioneBoundaryTest {
                                 """))
                 .andExpect(status().isCreated());
 
-        Segnalazione segnalazione =
-                segnalazioneRepository.segnalazioneSalvata;
-
-        NotificaSegnalazione notifica =
-                segnalazioneRepository.notificaSalvata;
+        Segnalazione segnalazione = segnalazioneRepository.segnalazioneSalvata;
+        NotificaSegnalazione notifica = segnalazioneRepository.notificaSalvata;
 
         assertAll(
                 () -> assertNotNull(segnalazione),
@@ -117,20 +114,16 @@ class SegnalareViolazioneBoundaryTest {
                         segnalazione.getStato()
                 ),
                 () -> assertSame(
-                        partecipazione,
-                        segnalazione.getPartecipazione()
+                        partecipazione, segnalazione.getPartecipazione()
                 ),
                 () -> assertEquals(
-                        3L,
-                        segnalazione.getMentoreSegnalante().getId()
+                        3L, segnalazione.getMentoreSegnalante().getId()
                 ),
                 () -> assertSame(
-                        segnalazione,
-                        notifica.getSegnalazione()
+                        segnalazione, notifica.getSegnalazione()
                 ),
                 () -> assertEquals(
-                        1L,
-                        notifica.getDestinatario().getId()
+                        1L, notifica.getDestinatario().getId()
                 ),
                 () -> assertFalse(notifica.getLetta())
         );
@@ -156,11 +149,97 @@ class SegnalareViolazioneBoundaryTest {
     void rifiutaControlNullo() {
         assertThrows(
                 NullPointerException.class,
-                () -> new SegnalareViolazioneBoundary(
-                        null,
-                        new SessioneUtente()
-                )
+                () -> new SegnalareViolazioneBoundary(null, new SessioneUtente())
         );
+    }
+
+    @Test
+    void verificaDescrizioneSenzaSalvareSegnalazioneONotifica() throws Exception {
+        mockMvc.perform(post(
+                        "/api/segnalazioni/hackathons/1/partecipazioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"descrizione\":\"Violazione del regolamento\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hackathonId").value(1))
+                .andExpect(jsonPath("$.partecipazioneId").value(1))
+                .andExpect(jsonPath("$.descrizione")
+                        .value("Violazione del regolamento"));
+
+        assertNull(segnalazioneRepository.segnalazioneSalvata);
+        assertNull(segnalazioneRepository.notificaSalvata);
+        assertEquals(0, segnalazioneRepository.numeroSalvataggi);
+
+        mockMvc.perform(post("/api/segnalazioni/hackathons/1/partecipazioni/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"descrizione\":\"Violazione del regolamento\"}"))
+                .andExpect(status().isCreated());
+
+        assertNotNull(segnalazioneRepository.notificaSalvata);
+        assertEquals(1, segnalazioneRepository.numeroSalvataggi);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{}",
+            "{\"descrizione\":null}",
+            "{\"descrizione\":\"   \"}",
+            "{",
+            "null",
+            ""
+    })
+    void correggeDescrizionePrimaDelRiepilogo(String richiesta) throws Exception {
+        mockMvc.perform(post(
+                        "/api/segnalazioni/hackathons/1/partecipazioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(richiesta))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post(
+                        "/api/segnalazioni/hackathons/1/partecipazioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"descrizione\":\"Corretta\"}"))
+                .andExpect(status().isOk());
+
+        assertEquals(0, segnalazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void confermaRicontrollaDescrizioneEPartecipazione() throws Exception {
+        mockMvc.perform(post(
+                        "/api/segnalazioni/hackathons/1/partecipazioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"descrizione\":\"Violazione\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/segnalazioni/hackathons/1/partecipazioni/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"descrizione\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/segnalazioni/hackathons/1/partecipazioni/999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"descrizione\":\"Violazione\"}"))
+                .andExpect(status().isNotFound());
+
+        assertEquals(0, segnalazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void verificaRichiedeSessione() throws Exception {
+        sessione.svuota();
+
+        mockMvc.perform(post(
+                        "/api/segnalazioni/hackathons/1/partecipazioni/1/verifica"
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"descrizione\":\"Violazione\"}"))
+                .andExpect(status().isUnauthorized());
+
+        assertEquals(0, segnalazioneRepository.numeroSalvataggi);
     }
 
     private Hackathon creaHackathonInCorso(
@@ -192,8 +271,7 @@ class SegnalareViolazioneBoundaryTest {
         return risultato;
     }
 
-    private static class HackathonRepositoryFinto
-            implements HackathonRepository {
+    private static class HackathonRepositoryFinto implements HackathonRepository {
 
         private final Hackathon hackathon;
 
@@ -210,8 +288,7 @@ class SegnalareViolazioneBoundaryTest {
         public List<Hackathon> ottieniHackathonSegnalabili(Utente mentore) {
             boolean assegnato = hackathon.getMentori().stream()
                     .anyMatch(utente -> Objects.equals(
-                            utente.getId(),
-                            mentore.getId()
+                            utente.getId(), mentore.getId()
                     ));
 
             return assegnato ? List.of(hackathon) : List.of();
@@ -223,23 +300,17 @@ class SegnalareViolazioneBoundaryTest {
 
         @Override
         public List<Hackathon> ottieniHackathonApertiAlleIscrizioni() {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
         public List<Hackathon> ottieniTuttiHackathon() {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
         public Hackathon recuperaHackathon(Long hackathonId) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
     }
 
@@ -248,16 +319,12 @@ class SegnalareViolazioneBoundaryTest {
 
         private final Partecipazione partecipazione;
 
-        private PartecipazioneRepositoryFinto(
-                Partecipazione partecipazione
-        ) {
+        private PartecipazioneRepositoryFinto(Partecipazione partecipazione) {
             this.partecipazione = partecipazione;
         }
 
         @Override
-        public List<Partecipazione> ottieniPartecipazioni(
-                Hackathon hackathon
-        ) {
+        public List<Partecipazione> ottieniPartecipazioni(Hackathon hackathon) {
             if (partecipazione.getHackathon() == hackathon) {
                 return List.of(partecipazione);
             }
@@ -277,9 +344,7 @@ class SegnalareViolazioneBoundaryTest {
 
         @Override
         public boolean esistePartecipazione(Team team, Hackathon hackathon) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
@@ -287,18 +352,14 @@ class SegnalareViolazioneBoundaryTest {
                 Team team,
                 Hackathon hackathon
         ) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
         public List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
                 Team team
         ) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
     }
 
@@ -307,6 +368,7 @@ class SegnalareViolazioneBoundaryTest {
 
         private Segnalazione segnalazioneSalvata;
         private NotificaSegnalazione notificaSalvata;
+        private int numeroSalvataggi;
 
         @Override
         public List<Segnalazione> ottieniSegnalazioniDaEsaminare(
@@ -317,6 +379,7 @@ class SegnalareViolazioneBoundaryTest {
 
         @Override
         public void salva(Segnalazione segnalazione) {
+            numeroSalvataggi++;
             segnalazioneSalvata = segnalazione;
         }
 
@@ -325,12 +388,14 @@ class SegnalareViolazioneBoundaryTest {
                 Segnalazione segnalazione,
                 NotificaSegnalazione notifica
         ) {
+            numeroSalvataggi++;
             segnalazioneSalvata = segnalazione;
             notificaSalvata = notifica;
         }
 
         @Override
         public void salvaNotifica(NotificaSegnalazione notifica) {
+            numeroSalvataggi++;
             notificaSalvata = notifica;
         }
     }

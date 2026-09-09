@@ -21,21 +21,17 @@ import java.util.Objects;
 @RequestMapping("/api/iscrizioni")
 public class IscrivereTeamHackathonBoundary {
 
-    private final IscrivereTeamHackathonControl
-            iscrivereTeamHackathonControl;
-
+    private final IscrivereTeamHackathonControl iscrivereTeamHackathonControl;
     private final SessioneUtente sessioneUtente;
 
     public IscrivereTeamHackathonBoundary(
             IscrivereTeamHackathonControl iscrivereTeamHackathonControl,
             SessioneUtente sessioneUtente
     ) {
-        this.iscrivereTeamHackathonControl =
-                Objects.requireNonNull(
-                        iscrivereTeamHackathonControl,
-                        "Il control di iscrizione è obbligatorio"
-                );
-
+        this.iscrivereTeamHackathonControl = Objects.requireNonNull(
+                iscrivereTeamHackathonControl,
+                "Il control di iscrizione è obbligatorio"
+        );
         this.sessioneUtente = Objects.requireNonNull(
                 sessioneUtente,
                 "La sessione utente è obbligatoria"
@@ -43,9 +39,7 @@ public class IscrivereTeamHackathonBoundary {
     }
 
     @GetMapping("/hackathons")
-    public List<RiepilogoHackathonAperto>
-    ottieniHackathonAperti() {
-
+    public List<RiepilogoHackathonAperto> ottieniHackathonAperti() {
         sessioneUtente.recupera();
 
         return iscrivereTeamHackathonControl
@@ -53,6 +47,39 @@ public class IscrivereTeamHackathonBoundary {
                 .stream()
                 .map(this::creaRiepilogoHackathon)
                 .toList();
+    }
+
+    @GetMapping("/hackathons/{hackathonId}/riepilogo")
+    public RiepilogoIscrizione preparaIscrizione(
+            @PathVariable Long hackathonId
+    ) {
+        Utente utente = sessioneUtente.recupera();
+        Hackathon hackathon = trovaHackathonAperto(hackathonId);
+
+        try {
+            Team team = iscrivereTeamHackathonControl.verificaIscrizione(
+                    utente, hackathon
+            );
+
+            return new RiepilogoIscrizione(
+                    team.getId(),
+                    team.getNome(),
+                    creaRiepilogoHackathon(hackathon)
+            );
+        } catch (IllegalStateException errore) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    errore.getMessage(),
+                    errore
+            );
+        }
+    }
+
+    public record RiepilogoIscrizione(
+            Long teamId,
+            String nomeTeam,
+            RiepilogoHackathonAperto hackathon
+    ) {
     }
 
     @PostMapping("/hackathons/{hackathonId}")
@@ -66,22 +93,14 @@ public class IscrivereTeamHackathonBoundary {
         );
 
         Utente utente = sessioneUtente.recupera();
-
-        Hackathon hackathon = trovaHackathonAperto(
-                hackathonIdValido
-        );
+        Hackathon hackathon = trovaHackathonAperto(hackathonIdValido);
 
         try {
-            Team team = iscrivereTeamHackathonControl
-                    .verificaIscrizione(
-                            utente,
-                            hackathon
-                    );
-
-            iscrivereTeamHackathonControl.confermaIscrizione(
-                    team,
-                    hackathon
+            Team team = iscrivereTeamHackathonControl.verificaIscrizione(
+                    utente, hackathon
             );
+
+            iscrivereTeamHackathonControl.confermaIscrizione(team, hackathon);
         } catch (IllegalStateException eccezione) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -91,29 +110,21 @@ public class IscrivereTeamHackathonBoundary {
         }
     }
 
-    private Hackathon trovaHackathonAperto(
-            Long hackathonId
-    ) {
+    private Hackathon trovaHackathonAperto(Long hackathonId) {
         return iscrivereTeamHackathonControl
                 .avviaIscrizione()
                 .stream()
-                .filter(hackathon ->
-                        Objects.equals(
-                                hackathon.getId(),
-                                hackathonId
-                        )
-                )
+                .filter(hackathon -> Objects.equals(
+                        hackathon.getId(), hackathonId
+                ))
                 .findFirst()
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Hackathon aperto alle iscrizioni non trovato"
-                        )
-                );
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Hackathon aperto alle iscrizioni non trovato"
+                ));
     }
 
-    private RiepilogoHackathonAperto
-    creaRiepilogoHackathon(
+    private RiepilogoHackathonAperto creaRiepilogoHackathon(
             Hackathon hackathon
     ) {
         return new RiepilogoHackathonAperto(

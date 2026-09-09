@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 
 class IscrivereTeamHackathonBoundaryTest {
 
+    private SessioneUtente sessione;
     private Hackathon hackathon;
     private Team team;
     private PartecipazioneRepositoryFinto partecipazioneRepository;
@@ -31,21 +32,19 @@ class IscrivereTeamHackathonBoundaryTest {
 
     @BeforeEach
     void configuraBoundary() {
-        SessioneUtente sessione = new SessioneUtente();
+        sessione = new SessioneUtente();
         sessione.registra(new Utente(1L));
 
         Utente responsabile = new Utente(1L);
         team = Team.crea("ByteBuilders", responsabile, responsabile);
+        team.assegnaId(10L);
 
         hackathon = creaHackathonAperto();
         hackathon.assegnaId(1L);
 
         HackathonRepositoryFinto hackathonRepository =
                 new HackathonRepositoryFinto(hackathon);
-
-        TeamRepositoryFinto teamRepository =
-                new TeamRepositoryFinto(team);
-
+        TeamRepositoryFinto teamRepository = new TeamRepositoryFinto(team);
         partecipazioneRepository = new PartecipazioneRepositoryFinto();
 
         IscrivereTeamHackathonControl control =
@@ -57,7 +56,7 @@ class IscrivereTeamHackathonBoundaryTest {
 
         mockMvc = standaloneSetup(
                 new IscrivereTeamHackathonBoundary(control, sessione)
-        ).build();
+        ).setControllerAdvice(new ErroriRichiestaHandler()).build();
     }
 
     @Test
@@ -66,10 +65,8 @@ class IscrivereTeamHackathonBoundaryTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id")
                         .value(hackathon.getId().intValue()))
-                .andExpect(jsonPath("$[0].nome")
-                        .value("HackHub 2026"))
-                .andExpect(jsonPath("$[0].dimensioneMassimaTeam")
-                        .value(5));
+                .andExpect(jsonPath("$[0].nome").value("HackHub 2026"))
+                .andExpect(jsonPath("$[0].dimensioneMassimaTeam").value(5));
     }
 
     @Test
@@ -87,10 +84,7 @@ class IscrivereTeamHackathonBoundaryTest {
                 () -> assertNotNull(partecipazione),
                 () -> assertSame(team, partecipazione.getTeam()),
                 () -> assertSame(hackathon, partecipazione.getHackathon()),
-                () -> assertEquals(
-                        1,
-                        partecipazioneRepository.numeroSalvataggi
-                )
+                () -> assertEquals(1, partecipazioneRepository.numeroSalvataggi)
         );
     }
 
@@ -121,10 +115,87 @@ class IscrivereTeamHackathonBoundaryTest {
         assertThrows(
                 NullPointerException.class,
                 () -> new IscrivereTeamHackathonBoundary(
-                        null,
-                        new SessioneUtente()
+                        null, new SessioneUtente()
                 )
         );
+    }
+
+    @Test
+    void preparaIscrizioneSenzaRegistrarlaPoiConsenteConferma() throws Exception {
+        mockMvc.perform(get("/api/iscrizioni/hackathons/1/riepilogo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamId").value(10))
+                .andExpect(jsonPath("$.nomeTeam").value("ByteBuilders"))
+                .andExpect(jsonPath("$.hackathon.id").value(1))
+                .andExpect(jsonPath("$.hackathon.nome").value("HackHub 2026"));
+
+        assertNull(partecipazioneRepository.partecipazioneSalvata);
+        assertEquals(0, partecipazioneRepository.numeroSalvataggi);
+
+        mockMvc.perform(post("/api/iscrizioni/hackathons/1"))
+                .andExpect(status().isCreated());
+
+        assertEquals(1, partecipazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void nonMostraRiepilogoPerHackathonSconosciutoOTeamGiaIscritto()
+            throws Exception {
+        mockMvc.perform(get("/api/iscrizioni/hackathons/999/riepilogo"))
+                .andExpect(status().isNotFound());
+
+        partecipazioneRepository.partecipazioneEsistente = true;
+
+        mockMvc.perform(get("/api/iscrizioni/hackathons/1/riepilogo"))
+                .andExpect(status().isConflict());
+
+        assertEquals(0, partecipazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void nonMostraRiepilogoSeDimensioneNonConsentita() throws Exception {
+        for (long id = 100; id < 105; id++) {
+            team.aggiungiMembro(new Utente(id));
+        }
+
+        mockMvc.perform(get("/api/iscrizioni/hackathons/1/riepilogo"))
+                .andExpect(status().isConflict());
+
+        assertEquals(0, partecipazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void nonMostraRiepilogoSeHackathonNonPiuAperto() throws Exception {
+        hackathon.aggiornaStato(hackathon.getDataInizio());
+
+        mockMvc.perform(get("/api/iscrizioni/hackathons/1/riepilogo"))
+                .andExpect(status().isConflict());
+
+        assertEquals(0, partecipazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void confermaRicontrollaIscrizioneIntervenutaDopoIlRiepilogo()
+            throws Exception {
+        mockMvc.perform(get("/api/iscrizioni/hackathons/1/riepilogo"))
+                .andExpect(status().isOk());
+
+        partecipazioneRepository.partecipazioneEsistente = true;
+
+        mockMvc.perform(post("/api/iscrizioni/hackathons/1"))
+                .andExpect(status().isConflict());
+
+        assertEquals(0, partecipazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void riepilogoRichiedeSessione() throws Exception {
+        sessione.svuota();
+
+        mockMvc.perform(get("/api/iscrizioni/hackathons/1/riepilogo"))
+                .andExpect(status().isUnauthorized());
+
+        assertEquals(0, partecipazioneRepository.numeroSalvataggi);
     }
 
     private Hackathon creaHackathonAperto() {
@@ -150,8 +221,7 @@ class IscrivereTeamHackathonBoundaryTest {
         );
     }
 
-    private static class HackathonRepositoryFinto
-            implements HackathonRepository {
+    private static class HackathonRepositoryFinto implements HackathonRepository {
 
         private final Hackathon hackathon;
 
@@ -180,16 +250,12 @@ class IscrivereTeamHackathonBoundaryTest {
 
         @Override
         public List<Hackathon> ottieniTuttiHackathon() {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
         public Hackathon recuperaHackathon(Long hackathonId) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
     }
 
@@ -224,9 +290,7 @@ class IscrivereTeamHackathonBoundaryTest {
         private int numeroSalvataggi;
 
         @Override
-        public List<Partecipazione> ottieniPartecipazioni(
-                Hackathon hackathon
-        ) {
+        public List<Partecipazione> ottieniPartecipazioni(Hackathon hackathon) {
             return List.of();
         }
 
@@ -253,18 +317,14 @@ class IscrivereTeamHackathonBoundaryTest {
                 Team team,
                 Hackathon hackathon
         ) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
 
         @Override
         public List<Partecipazione> recuperaPartecipazioniInHackathonNonConclusi(
                 Team team
         ) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
     }
 }

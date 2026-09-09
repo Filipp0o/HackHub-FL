@@ -24,22 +24,17 @@ import java.util.Objects;
 @RequestMapping("/api/valutazioni")
 public class ValutareSottomissioneBoundary {
 
-    private final ValutareSottomissioneControl
-            valutareSottomissioneControl;
-
+    private final ValutareSottomissioneControl valutareSottomissioneControl;
     private final SessioneUtente sessioneUtente;
 
     public ValutareSottomissioneBoundary(
-            ValutareSottomissioneControl
-                    valutareSottomissioneControl,
+            ValutareSottomissioneControl valutareSottomissioneControl,
             SessioneUtente sessioneUtente
     ) {
-        this.valutareSottomissioneControl =
-                Objects.requireNonNull(
-                        valutareSottomissioneControl,
-                        "Il control di valutazione è obbligatorio"
-                );
-
+        this.valutareSottomissioneControl = Objects.requireNonNull(
+                valutareSottomissioneControl,
+                "Il control di valutazione è obbligatorio"
+        );
         this.sessioneUtente = Objects.requireNonNull(
                 sessioneUtente,
                 "La sessione utente è obbligatoria"
@@ -60,31 +55,22 @@ public class ValutareSottomissioneBoundary {
                 .toList();
     }
 
-    @GetMapping(
-            "/hackathons/{hackathonId}/sottomissioni"
-    )
-    public List<RiepilogoSottomissione>
-    ottieniSottomissioniDaValutare(
+    @GetMapping("/hackathons/{hackathonId}/sottomissioni")
+    public List<RiepilogoSottomissione> ottieniSottomissioniDaValutare(
             @PathVariable Long hackathonId
     ) {
         Utente giudice = sessioneUtente.recupera();
-
-        Hackathon hackathon = trovaHackathonValutabile(
-                hackathonId,
-                giudice
-        );
+        Hackathon hackathon = trovaHackathonValutabile(hackathonId, giudice);
 
         try {
             return valutareSottomissioneControl
                     .selezionaHackathon(hackathon)
                     .stream()
-                    .map(sottomissione ->
-                            new RiepilogoSottomissione(
-                                    sottomissione.getId(),
-                                    sottomissione.getContenuto(),
-                                    hackathon.getCriteriValutazione()
-                            )
-                    )
+                    .map(sottomissione -> new RiepilogoSottomissione(
+                            sottomissione.getId(),
+                            sottomissione.getContenuto(),
+                            hackathon.getCriteriValutazione()
+                    ))
                     .toList();
         } catch (IllegalStateException errore) {
             throw new ResponseStatusException(
@@ -96,6 +82,41 @@ public class ValutareSottomissioneBoundary {
     }
 
     @PostMapping(
+            "/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}/verifica"
+    )
+    public RiepilogoValutazione verificaValutazione(
+            @PathVariable Long hackathonId,
+            @PathVariable Long sottomissioneId,
+            @RequestBody RichiestaValutazione richiesta
+    ) {
+        sessioneUtente.recupera();
+        Objects.requireNonNull(
+                richiesta,
+                "La richiesta di valutazione è obbligatoria"
+        );
+
+        DatiValutazione dati = new DatiValutazione(
+                richiesta.giudizio(), richiesta.punteggio()
+        );
+        valutareSottomissioneControl.verificaDatiValutazione(dati);
+
+        return new RiepilogoValutazione(
+                hackathonId,
+                sottomissioneId,
+                dati.giudizio(),
+                dati.punteggio()
+        );
+    }
+
+    public record RiepilogoValutazione(
+            Long hackathonId,
+            Long sottomissioneId,
+            String giudizio,
+            BigDecimal punteggio
+    ) {
+    }
+
+    @PostMapping(
             "/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}"
     )
     @ResponseStatus(HttpStatus.CREATED)
@@ -104,43 +125,29 @@ public class ValutareSottomissioneBoundary {
             @PathVariable Long sottomissioneId,
             @RequestBody RichiestaValutazione richiesta
     ) {
-        RichiestaValutazione richiestaValida =
-                Objects.requireNonNull(
-                        richiesta,
-                        "La richiesta di valutazione è obbligatoria"
-                );
-
-        Utente giudice = sessioneUtente.recupera();
-
-        Hackathon hackathon = trovaHackathonValutabile(
-                hackathonId,
-                giudice
+        RichiestaValutazione richiestaValida = Objects.requireNonNull(
+                richiesta,
+                "La richiesta di valutazione è obbligatoria"
         );
 
+        Utente giudice = sessioneUtente.recupera();
+        Hackathon hackathon = trovaHackathonValutabile(hackathonId, giudice);
+
         try {
-            Sottomissione sottomissione =
-                    trovaSottomissioneDaValutare(
-                            hackathon,
-                            sottomissioneId
-                    );
+            Sottomissione sottomissione = trovaSottomissioneDaValutare(
+                    hackathon, sottomissioneId
+            );
 
             DatiValutazione dati = new DatiValutazione(
                     richiestaValida.giudizio(),
                     richiestaValida.punteggio()
             );
 
-            valutareSottomissioneControl
-                    .selezionaSottomissione(sottomissione);
-
-            valutareSottomissioneControl
-                    .verificaDatiValutazione(dati);
-
-            valutareSottomissioneControl
-                    .confermaValutazione(
-                            sottomissione,
-                            giudice,
-                            dati
-                    );
+            valutareSottomissioneControl.selezionaSottomissione(sottomissione);
+            valutareSottomissioneControl.verificaDatiValutazione(dati);
+            valutareSottomissioneControl.confermaValutazione(
+                    sottomissione, giudice, dati
+            );
         } catch (RegistrazioneValutazioneFallitaException errore) {
             throw errore;
         } catch (IllegalStateException errore) {
@@ -160,8 +167,7 @@ public class ValutareSottomissioneBoundary {
                 .avviaValutazioneSottomissione(giudice)
                 .stream()
                 .filter(hackathon -> Objects.equals(
-                        hackathon.getId(),
-                        hackathonId
+                        hackathon.getId(), hackathonId
                 ))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(
@@ -178,8 +184,7 @@ public class ValutareSottomissioneBoundary {
                 .selezionaHackathon(hackathon)
                 .stream()
                 .filter(sottomissione -> Objects.equals(
-                        sottomissione.getId(),
-                        sottomissioneId
+                        sottomissione.getId(), sottomissioneId
                 ))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(

@@ -12,7 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
@@ -111,8 +111,7 @@ class CreareTeamBoundaryTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nome\":\"ByteBuilders\"}"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.messaggio")
-                        .value("Accesso richiesto"));
+                .andExpect(jsonPath("$.messaggio").value("Accesso richiesto"));
 
         assertNull(teamRepository.teamSalvato);
         assertEquals(0, teamRepository.tentativiSalvataggio);
@@ -124,6 +123,103 @@ class CreareTeamBoundaryTest {
                 NullPointerException.class,
                 () -> new CreareTeamBoundary(null, new SessioneUtente())
         );
+    }
+
+    @Test
+    void avviaCreazioneERestituisceRiepilogoSenzaSalvare() throws Exception {
+        mockMvc.perform(get("/api/teams/creazione"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.responsabileId").value(1))
+                .andExpect(jsonPath("$.messaggio").value(
+                        "Inserire il nome del team: ne diventerai automaticamente membro e responsabile"
+                ));
+
+        mockMvc.perform(post("/api/teams/verifica")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"ByteBuilders\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("ByteBuilders"))
+                .andExpect(jsonPath("$.responsabileId").value(1));
+
+        assertNull(teamRepository.teamSalvato);
+        assertEquals(0, teamRepository.tentativiSalvataggio);
+
+        mockMvc.perform(post("/api/teams")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"ByteBuilders\"}"))
+                .andExpect(status().isCreated());
+
+        assertEquals(1, teamRepository.tentativiSalvataggio);
+    }
+
+    @Test
+    void avvioRifiutatoSeUtenteGiaInTeam() throws Exception {
+        teamRepository.appartieneGiaAUnTeam = true;
+
+        mockMvc.perform(get("/api/teams/creazione"))
+                .andExpect(status().isConflict());
+
+        assertEquals(0, teamRepository.tentativiSalvataggio);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{}",
+            "{\"nome\":\"   \"}",
+            "{",
+            "null",
+            ""
+    })
+    void correggeNomePrimaDelRiepilogo(String richiesta) throws Exception {
+        mockMvc.perform(post("/api/teams/verifica")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(richiesta))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/teams/verifica")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"Corretto\"}"))
+                .andExpect(status().isOk());
+
+        assertEquals(0, teamRepository.tentativiSalvataggio);
+    }
+
+    @Test
+    void ricontrollaAppartenenzaENomeDopoRiepilogo() throws Exception {
+        mockMvc.perform(post("/api/teams/verifica")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"ByteBuilders\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/teams")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+
+        teamRepository.appartieneGiaAUnTeam = true;
+
+        mockMvc.perform(post("/api/teams")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"ByteBuilders\"}"))
+                .andExpect(status().isConflict());
+
+        assertNull(teamRepository.teamSalvato);
+        assertEquals(0, teamRepository.tentativiSalvataggio);
+    }
+
+    @Test
+    void avvioEVerificaRichiedonoSessione() throws Exception {
+        sessione.svuota();
+
+        mockMvc.perform(get("/api/teams/creazione"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/teams/verifica")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"ByteBuilders\"}"))
+                .andExpect(status().isUnauthorized());
+
+        assertEquals(0, teamRepository.tentativiSalvataggio);
     }
 
     private static class TeamRepositoryFinto implements TeamRepository {
@@ -153,9 +249,7 @@ class CreareTeamBoundaryTest {
 
         @Override
         public Team recuperaTeam(Utente utente) {
-            throw new UnsupportedOperationException(
-                    "Non utilizzato in questo test"
-            );
+            throw new UnsupportedOperationException("Non utilizzato in questo test");
         }
     }
 }

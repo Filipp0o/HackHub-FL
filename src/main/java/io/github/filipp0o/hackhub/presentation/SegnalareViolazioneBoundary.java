@@ -22,7 +22,6 @@ import java.util.Objects;
 public class SegnalareViolazioneBoundary {
 
     private final SegnalareViolazioneControl segnalareViolazioneControl;
-
     private final SessioneUtente sessioneUtente;
 
     public SegnalareViolazioneBoundary(
@@ -33,7 +32,6 @@ public class SegnalareViolazioneBoundary {
                 segnalareViolazioneControl,
                 "Il control di segnalazione è obbligatorio"
         );
-
         this.sessioneUtente = Objects.requireNonNull(
                 sessioneUtente,
                 "La sessione utente è obbligatoria"
@@ -59,17 +57,43 @@ public class SegnalareViolazioneBoundary {
             @PathVariable Long hackathonId
     ) {
         Utente mentore = sessioneUtente.recupera();
-
-        Hackathon hackathon = trovaHackathonSegnalabile(
-                hackathonId,
-                mentore
-        );
+        Hackathon hackathon = trovaHackathonSegnalabile(hackathonId, mentore);
 
         return segnalareViolazioneControl
                 .selezionaHackathon(hackathon)
                 .stream()
                 .map(this::creaRiepilogoPartecipazione)
                 .toList();
+    }
+
+    @PostMapping(
+            "/hackathons/{hackathonId}/partecipazioni/{partecipazioneId}/verifica"
+    )
+    public RiepilogoSegnalazione verificaSegnalazione(
+            @PathVariable Long hackathonId,
+            @PathVariable Long partecipazioneId,
+            @RequestBody RichiestaSegnalazione richiesta
+    ) {
+        sessioneUtente.recupera();
+        Objects.requireNonNull(
+                richiesta,
+                "La richiesta di segnalazione è obbligatoria"
+        );
+
+        segnalareViolazioneControl.verificaDescrizione(richiesta.descrizione());
+
+        return new RiepilogoSegnalazione(
+                hackathonId,
+                partecipazioneId,
+                richiesta.descrizione()
+        );
+    }
+
+    public record RiepilogoSegnalazione(
+            Long hackathonId,
+            Long partecipazioneId,
+            String descrizione
+    ) {
     }
 
     @PostMapping(
@@ -81,38 +105,26 @@ public class SegnalareViolazioneBoundary {
             @PathVariable Long partecipazioneId,
             @RequestBody RichiestaSegnalazione richiesta
     ) {
-        RichiestaSegnalazione richiestaValida =
-                Objects.requireNonNull(
-                        richiesta,
-                        "La richiesta di segnalazione è obbligatoria"
-                );
+        RichiestaSegnalazione richiestaValida = Objects.requireNonNull(
+                richiesta,
+                "La richiesta di segnalazione è obbligatoria"
+        );
 
         Utente mentore = sessioneUtente.recupera();
-
-        Hackathon hackathon = trovaHackathonSegnalabile(
-                hackathonId,
-                mentore
-        );
-
+        Hackathon hackathon = trovaHackathonSegnalabile(hackathonId, mentore);
         Partecipazione partecipazione = trovaPartecipazione(
-                hackathon,
-                partecipazioneId
+                hackathon, partecipazioneId
         );
 
-        segnalareViolazioneControl.selezionaTeam(
-                partecipazione
-        );
-
+        segnalareViolazioneControl.selezionaTeam(partecipazione);
         segnalareViolazioneControl.verificaDescrizione(
                 richiestaValida.descrizione()
         );
-
-        segnalareViolazioneControl
-                .registraSegnalazioneConNotifica(
-                        mentore,
-                        partecipazione,
-                        richiestaValida.descrizione()
-                );
+        segnalareViolazioneControl.registraSegnalazioneConNotifica(
+                mentore,
+                partecipazione,
+                richiestaValida.descrizione()
+        );
     }
 
     private Hackathon trovaHackathonSegnalabile(
@@ -123,8 +135,7 @@ public class SegnalareViolazioneBoundary {
                 .avviaSegnalazioneViolazione(mentore)
                 .stream()
                 .filter(hackathon -> Objects.equals(
-                        hackathon.getId(),
-                        hackathonId
+                        hackathon.getId(), hackathonId
                 ))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(
@@ -141,8 +152,7 @@ public class SegnalareViolazioneBoundary {
                 .selezionaHackathon(hackathon)
                 .stream()
                 .filter(partecipazione -> Objects.equals(
-                        partecipazione.getId(),
-                        partecipazioneId
+                        partecipazione.getId(), partecipazioneId
                 ))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(
@@ -157,12 +167,8 @@ public class SegnalareViolazioneBoundary {
         return new RiepilogoPartecipazione(
                 partecipazione.getId(),
                 partecipazione.getTeam().getNome(),
-                partecipazione
-                        .getTeam()
-                        .getResponsabile()
-                        .getId(),
-                segnalareViolazioneControl
-                        .selezionaTeam(partecipazione)
+                partecipazione.getTeam().getResponsabile().getId(),
+                segnalareViolazioneControl.selezionaTeam(partecipazione)
         );
     }
 
