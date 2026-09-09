@@ -7,6 +7,8 @@ import io.github.filipp0o.hackhub.application.ValutazioneRepository;
 import io.github.filipp0o.hackhub.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,10 +28,11 @@ class ValutareSottomissioneBoundaryTest {
     private Sottomissione sottomissione;
     private ValutazioneRepositoryFinto valutazioneRepository;
     private MockMvc mockMvc;
+    private SessioneUtente sessione;
 
     @BeforeEach
     void configuraBoundary() {
-        SessioneUtente sessione = new SessioneUtente();
+        sessione = new SessioneUtente();
         sessione.registra(new Utente(2L));
 
         Utente giudice = new Utente(2L);
@@ -59,7 +62,7 @@ class ValutareSottomissioneBoundaryTest {
 
         mockMvc = standaloneSetup(
                 new ValutareSottomissioneBoundary(control, sessione)
-        ).build();
+        ).setControllerAdvice(new ErroriRichiestaHandler()).build();
     }
 
     @Test
@@ -145,6 +148,167 @@ class ValutareSottomissioneBoundaryTest {
                         new SessioneUtente()
                 )
         );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{\"giudizio\":\"Buon lavoro\"}",
+            "{\"giudizio\":\"Buon lavoro\",\"punteggio\":null}",
+            "{\"giudizio\":\"Buon lavoro\",\"punteggio\":-0.1}",
+            "{\"giudizio\":\"Buon lavoro\",\"punteggio\":10.1}",
+            "{\"giudizio\":\" \",\"punteggio\":8}",
+            "{\"giudizio\":\"Buon lavoro\",\"punteggio\":\"abc\"}",
+            ""
+    })
+    void restituisceBadRequestPerDatiNonValidi(String richiesta) throws Exception {
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
+                        hackathon.getId(), sottomissione.getId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(richiesta))
+                .andExpect(status().isBadRequest());
+
+        assertAll(
+                () -> assertNull(sottomissione.getValutazione()),
+                () -> assertNull(valutazioneRepository.valutazioneSalvata),
+                () -> assertEquals(0, valutazioneRepository.numeroSalvataggi)
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"generico", "argomento", "stato"})
+    void restituisceInternalServerErrorEConsenteNuovoTentativo(String tipo)
+            throws Exception {
+        valutazioneRepository.erroreSalvataggio = switch (tipo) {
+            case "argomento" -> new IllegalArgumentException("Errore interno");
+            case "stato" -> new IllegalStateException("Errore interno");
+            default -> new RuntimeException("Errore interno");
+        };
+
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
+                        hackathon.getId(), sottomissione.getId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"giudizio":"Buon lavoro","punteggio":8.5}
+                                """))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.messaggio")
+                        .value("La valutazione non è stata registrata"));
+
+        assertAll(
+                () -> assertNull(sottomissione.getValutazione()),
+                () -> assertNull(valutazioneRepository.valutazioneSalvata),
+                () -> assertEquals(0, valutazioneRepository.numeroSalvataggi)
+        );
+
+        valutazioneRepository.erroreSalvataggio = null;
+
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
+                        hackathon.getId(), sottomissione.getId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"giudizio":"Buon lavoro","punteggio":8.5}
+                                """))
+                .andExpect(status().isCreated());
+
+        assertNotNull(sottomissione.getValutazione());
+        assertSame(sottomissione.getValutazione(), valutazioneRepository.valutazioneSalvata);
+        assertEquals(new BigDecimal("8.5"), sottomissione.getValutazione().getPunteggio());
+        assertEquals(1, valutazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void restituisceConflictSeHackathonNonPiuValutabile() throws Exception {
+        hackathon.registraPartecipazioneVincitrice(sottomissione.getPartecipazione());
+        hackathon.concludi();
+
+        // Il repository finto conserva il candidato per verificare il ricontrollo.
+        mockMvc.perform(get(
+                        "/api/valutazioni/hackathons/{hackathonId}/sottomissioni",
+                        hackathon.getId()
+                ))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
+                        hackathon.getId(), sottomissione.getId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"giudizio":"Buon lavoro","punteggio":8}
+                                """))
+                .andExpect(status().isConflict());
+
+        assertNull(sottomissione.getValutazione());
+        assertEquals(0, valutazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void restituisceConflictSeSottomissioneValutataPrimaDellaConferma()
+            throws Exception {
+        ValutareSottomissioneControl control = new ValutareSottomissioneControl(
+                new HackathonRepositoryFinto(hackathon),
+                new PartecipazioneRepositoryFinto(sottomissione.getPartecipazione()),
+                valutazioneRepository
+        ) {
+            @Override
+            public void verificaDatiValutazione(DatiValutazione dati) {
+                super.verificaDatiValutazione(dati);
+                // Simula una valutazione intervenuta dopo la selezione.
+                Valutazione.crea(sottomissione, hackathon.getGiudice(), dati);
+            }
+        };
+
+        MockMvc mvc = standaloneSetup(
+                new ValutareSottomissioneBoundary(control, sessione)
+        ).setControllerAdvice(new ErroriRichiestaHandler()).build();
+
+        mvc.perform(post(
+                        "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
+                        hackathon.getId(), sottomissione.getId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"giudizio":"Buon lavoro","punteggio":8}
+                                """))
+                .andExpect(status().isConflict());
+
+        assertNotNull(sottomissione.getValutazione());
+        assertNull(valutazioneRepository.valutazioneSalvata);
+        assertEquals(0, valutazioneRepository.numeroSalvataggi);
+    }
+
+    @Test
+    void mantieneUnauthorizedSenzaSessione() throws Exception {
+        sessione.svuota();
+
+        mockMvc.perform(get("/api/valutazioni/hackathons"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get(
+                        "/api/valutazioni/hackathons/{hackathonId}/sottomissioni",
+                        hackathon.getId()
+                ))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post(
+                        "/api/valutazioni/hackathons/{hackathonId}/sottomissioni/{sottomissioneId}",
+                        hackathon.getId(), sottomissione.getId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"giudizio":"Buon lavoro","punteggio":8}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.messaggio").value("Accesso richiesto"));
+
+        assertNull(sottomissione.getValutazione());
+        assertEquals(0, valutazioneRepository.numeroSalvataggi);
     }
 
     private Hackathon creaHackathonInValutazione(Utente giudice) {
@@ -286,11 +450,18 @@ class ValutareSottomissioneBoundaryTest {
     private static class ValutazioneRepositoryFinto
             implements ValutazioneRepository {
 
+        private RuntimeException erroreSalvataggio;
         private Valutazione valutazioneSalvata;
+        private int numeroSalvataggi;
 
         @Override
         public void salva(Valutazione valutazione) {
+            if (erroreSalvataggio != null) {
+                throw erroreSalvataggio;
+            }
+
             valutazioneSalvata = valutazione;
+            numeroSalvataggi++;
         }
     }
 }

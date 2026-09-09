@@ -154,7 +154,14 @@ public class ValutareSottomissioneControl {
                 dati
         );
 
-        valutazioneRepository.salva(valutazione);
+        try {
+            valutazioneRepository.salva(valutazione);
+        } catch (RuntimeException errore) {
+            sottomissioneValida.annullaValutazioneNonRegistrata(
+                    valutazione
+            );
+            throw new RegistrazioneValutazioneFallitaException(errore);
+        }
     }
 
     private void validaCompletezzaEFormato(
@@ -173,16 +180,27 @@ public class ValutareSottomissioneControl {
             );
         }
 
-        BigDecimal punteggio = Objects.requireNonNull(
-                datiValidi.punteggio(),
-                "Il punteggio è obbligatorio"
-        );
+        BigDecimal punteggio = datiValidi.punteggio();
+
+        if (punteggio == null) {
+            throw new IllegalArgumentException(
+                    "Il punteggio è obbligatorio"
+            );
+        }
 
         if (punteggio.compareTo(BigDecimal.ZERO) < 0
                 || punteggio.compareTo(BigDecimal.TEN) > 0) {
             throw new IllegalArgumentException(
                     "Il punteggio deve essere compreso tra 0 e 10"
             );
+        }
+    }
+
+    public static class RegistrazioneValutazioneFallitaException
+            extends IllegalStateException {
+
+        public RegistrazioneValutazioneFallitaException(Throwable causa) {
+            super("La valutazione non è stata registrata", causa);
         }
     }
 }

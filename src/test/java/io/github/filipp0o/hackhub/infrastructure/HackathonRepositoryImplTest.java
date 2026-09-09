@@ -468,6 +468,79 @@ class HackathonRepositoryImplTest {
     }
 
     @Test
+    void includeHackathonValutabileConStatoAncoraInCorso() {
+        LocalDate oggi = LocalDate.now();
+        Utente giudice = new Utente(2L);
+        InMemoryPartecipazioneRepository partecipazioni =
+                new InMemoryPartecipazioneRepository();
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(partecipazioni);
+
+        Hackathon hackathon = creaHackathon(
+                "Hackathon da valutare",
+                giudice,
+                List.of(new Utente(3L)),
+                oggi.minusDays(5),
+                oggi.minusDays(1)
+        );
+        hackathon.aggiornaStato(oggi.minusDays(3));
+        salvaPartecipazione(partecipazioni, hackathon, 10L, true);
+        repository.salva(hackathon);
+
+        assertEquals(
+                TipoStatoHackathon.IN_CORSO,
+                hackathon.getStato()
+        );
+
+        List<Hackathon> valutabili =
+                repository.ottieniHackathonValutabili(giudice);
+
+        assertAll(
+                () -> assertEquals(List.of(hackathon), valutabili),
+                () -> assertEquals(
+                        TipoStatoHackathon.IN_VALUTAZIONE,
+                        hackathon.getStato()
+                )
+        );
+    }
+
+    @Test
+    void includeHackathonValutabileConStatoAncoraInIscrizione() {
+        LocalDate oggi = LocalDate.now();
+        Utente giudice = new Utente(2L);
+        InMemoryPartecipazioneRepository partecipazioni =
+                new InMemoryPartecipazioneRepository();
+        InMemoryHackathonRepository repository =
+                new InMemoryHackathonRepository(partecipazioni);
+
+        Hackathon hackathon = creaHackathon(
+                "Hackathon con stato non aggiornato",
+                giudice,
+                List.of(new Utente(3L)),
+                oggi.minusDays(5),
+                oggi.minusDays(1)
+        );
+        salvaPartecipazione(partecipazioni, hackathon, 10L, true);
+        repository.salva(hackathon);
+
+        assertEquals(
+                TipoStatoHackathon.IN_ISCRIZIONE,
+                hackathon.getStato()
+        );
+
+        List<Hackathon> valutabili =
+                repository.ottieniHackathonValutabili(giudice);
+
+        assertAll(
+                () -> assertEquals(List.of(hackathon), valutabili),
+                () -> assertEquals(
+                        TipoStatoHackathon.IN_VALUTAZIONE,
+                        hackathon.getStato()
+                )
+        );
+    }
+
+    @Test
     void restituisceListeNonModificabili() {
         InMemoryPartecipazioneRepository partecipazioneRepository =
                 new InMemoryPartecipazioneRepository();

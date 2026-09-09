@@ -41,8 +41,13 @@ public class InMemoryHackathonRepository
                 "Il giudice è obbligatorio"
         );
 
+        LocalDate dataCorrente = LocalDate.now();
+
         return hackathonSalvati.stream()
-                .filter(Hackathon::consenteValutazioni)
+                .filter(hackathon -> {
+                    hackathon.aggiornaStato(dataCorrente);
+                    return hackathon.consenteValutazioni();
+                })
                 .filter(hackathon ->
                         Objects.equals(
                                 hackathon.getGiudice().getId(),

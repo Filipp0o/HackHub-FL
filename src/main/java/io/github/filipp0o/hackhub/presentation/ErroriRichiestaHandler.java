@@ -1,6 +1,7 @@
 package io.github.filipp0o.hackhub.presentation;
 
 import io.github.filipp0o.hackhub.application.CreareTeamControl;
+import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -53,6 +54,18 @@ public class ErroriRichiestaHandler {
     )
     public ResponseEntity<ErroreRichiesta> creazioneTeamFallita(
             CreareTeamControl.CreazioneTeamFallitaException errore
+    ) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErroreRichiesta(
+                        errore.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(
+            ValutareSottomissioneControl.RegistrazioneValutazioneFallitaException.class
+    )
+    public ResponseEntity<ErroreRichiesta> registrazioneValutazioneFallita(
+            ValutareSottomissioneControl.RegistrazioneValutazioneFallitaException errore
     ) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErroreRichiesta(

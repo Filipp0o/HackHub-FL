@@ -9,6 +9,7 @@ import io.github.filipp0o.hackhub.domain.TipoStatoHackathon;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
 import io.github.filipp0o.hackhub.domain.Valutazione;
+import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl.RegistrazioneValutazioneFallitaException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -264,6 +265,80 @@ class ValutareSottomissioneControlTest {
     }
 
     @Test
+    void rifiutaPunteggioMancante() {
+        ValutareSottomissioneControl control =
+                new ValutareSottomissioneControl(
+                        new HackathonRepositoryFinto(),
+                        new PartecipazioneRepositoryFinto(),
+                        new ValutazioneRepositoryFinto()
+                );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> control.verificaDatiValutazione(
+                        new DatiValutazione(
+                                "Buon lavoro",
+                                null
+                        )
+                )
+        );
+    }
+
+    @Test
+    void nonConfermaValutazioneConPunteggioMancante() {
+        Utente giudice = new Utente(2L);
+
+        Hackathon hackathon =
+                creaHackathonInValutazione(giudice);
+
+        hackathon.aggiornaStato(LocalDate.now());
+
+        Partecipazione partecipazione =
+                creaPartecipazione(hackathon, 10L);
+
+        Sottomissione sottomissione =
+                new Sottomissione(
+                        partecipazione,
+                        "Sottomissione finale"
+                );
+
+        ValutazioneRepositoryFinto valutazioneRepository =
+                new ValutazioneRepositoryFinto();
+
+        ValutareSottomissioneControl control =
+                new ValutareSottomissioneControl(
+                        new HackathonRepositoryFinto(),
+                        new PartecipazioneRepositoryFinto(),
+                        valutazioneRepository
+                );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> control.confermaValutazione(
+                        sottomissione,
+                        giudice,
+                        new DatiValutazione(
+                                "Buon lavoro",
+                                null
+                        )
+                )
+        );
+
+        assertAll(
+                () -> assertNull(
+                        sottomissione.getValutazione()
+                ),
+                () -> assertNull(
+                        valutazioneRepository.valutazioneSalvata
+                ),
+                () -> assertEquals(
+                        0,
+                        valutazioneRepository.numeroSalvataggi
+                )
+        );
+    }
+
+    @Test
     void confermaValutazioneESalvaValutazione() {
         Utente giudiceAssegnato = new Utente(2L);
         Hackathon hackathon =
@@ -394,6 +469,88 @@ class ValutareSottomissioneControlTest {
                         0,
                         partecipazioneRepository.numeroSalvataggi
                 )
+        );
+    }
+
+    @Test
+    void ripristinaSottomissioneDopoErroreEConsenteNuovoTentativo() {
+        for (RuntimeException causa : List.of(
+                new RuntimeException("Salvataggio fallito"),
+                new IllegalArgumentException("Errore del repository"),
+                new IllegalStateException("Repository non disponibile")
+        )) {
+            Utente giudice = new Utente(2L);
+            Hackathon hackathon = creaHackathonInValutazione(giudice);
+            Partecipazione partecipazione = creaPartecipazione(hackathon, 10L);
+            Sottomissione sottomissione = new Sottomissione(
+                    partecipazione, "Sottomissione finale"
+            );
+
+            ValutazioneRepositoryFinto repository = new ValutazioneRepositoryFinto();
+            repository.erroreSalvataggio = causa;
+
+            ValutareSottomissioneControl control = new ValutareSottomissioneControl(
+                    new HackathonRepositoryFinto(),
+                    new PartecipazioneRepositoryFinto(),
+                    repository
+            );
+            DatiValutazione dati = creaDatiValutazioneValidi();
+
+            RegistrazioneValutazioneFallitaException errore = assertThrows(
+                    RegistrazioneValutazioneFallitaException.class,
+                    () -> control.confermaValutazione(sottomissione, giudice, dati)
+            );
+
+            assertAll(
+                    () -> assertSame(causa, errore.getCause()),
+                    () -> assertNull(sottomissione.getValutazione()),
+                    () -> assertNull(repository.valutazioneSalvata),
+                    () -> assertEquals(0, repository.numeroSalvataggi),
+                    () -> assertEquals("Sottomissione finale", sottomissione.getContenuto()),
+                    () -> assertSame(sottomissione, partecipazione.getSottomissione())
+            );
+
+            repository.erroreSalvataggio = null;
+
+            assertDoesNotThrow(
+                    () -> control.confermaValutazione(sottomissione, giudice, dati)
+            );
+
+            assertAll(
+                    () -> assertNotNull(sottomissione.getValutazione()),
+                    () -> assertSame(sottomissione.getValutazione(), repository.valutazioneSalvata),
+                    () -> assertEquals(1, repository.numeroSalvataggi)
+            );
+        }
+    }
+
+    @Test
+    void conservaValutazionePreesistenteSeLaConfermaVieneRifiutata() {
+        Utente giudice = new Utente(2L);
+        Hackathon hackathon = creaHackathonInValutazione(giudice);
+        Sottomissione sottomissione = new Sottomissione(
+                creaPartecipazione(hackathon, 10L),
+                "Sottomissione finale"
+        );
+        DatiValutazione dati = creaDatiValutazioneValidi();
+        Valutazione precedente = Valutazione.crea(sottomissione, giudice, dati);
+        ValutazioneRepositoryFinto repository = new ValutazioneRepositoryFinto();
+
+        ValutareSottomissioneControl control = new ValutareSottomissioneControl(
+                new HackathonRepositoryFinto(),
+                new PartecipazioneRepositoryFinto(),
+                repository
+        );
+
+        IllegalStateException errore = assertThrows(
+                IllegalStateException.class,
+                () -> control.confermaValutazione(sottomissione, giudice, dati)
+        );
+
+        assertAll(
+                () -> assertEquals(IllegalStateException.class, errore.getClass()),
+                () -> assertSame(precedente, sottomissione.getValutazione()),
+                () -> assertEquals(0, repository.numeroSalvataggi)
         );
     }
 
@@ -589,6 +746,7 @@ class ValutareSottomissioneControlTest {
     private static class ValutazioneRepositoryFinto
             implements ValutazioneRepository {
 
+        private RuntimeException erroreSalvataggio;
         private Valutazione valutazioneSalvata;
         private int numeroSalvataggi;
 
@@ -596,6 +754,10 @@ class ValutareSottomissioneControlTest {
         public void salva(
                 Valutazione valutazione
         ) {
+            if (erroreSalvataggio != null) {
+                throw erroreSalvataggio;
+            }
+
             valutazioneSalvata = valutazione;
             numeroSalvataggi++;
         }

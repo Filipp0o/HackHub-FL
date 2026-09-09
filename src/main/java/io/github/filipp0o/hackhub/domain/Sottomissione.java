@@ -94,6 +94,19 @@ public class Sottomissione {
         this.valutazione = valutazioneValida;
     }
 
+    public void annullaValutazioneNonRegistrata(
+            Valutazione valutazione
+    ) {
+        Objects.requireNonNull(
+                valutazione,
+                "La valutazione è obbligatoria"
+        );
+
+        if (this.valutazione == valutazione) {
+            this.valutazione = null;
+        }
+    }
+
     public Long getId() {
         return id;
     }

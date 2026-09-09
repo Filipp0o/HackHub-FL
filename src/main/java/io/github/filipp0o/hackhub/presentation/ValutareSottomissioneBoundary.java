@@ -1,6 +1,7 @@
 package io.github.filipp0o.hackhub.presentation;
 
 import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl;
+import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl.RegistrazioneValutazioneFallitaException;
 import io.github.filipp0o.hackhub.domain.DatiValutazione;
 import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.Sottomissione;
@@ -73,17 +74,25 @@ public class ValutareSottomissioneBoundary {
                 giudice
         );
 
-        return valutareSottomissioneControl
-                .selezionaHackathon(hackathon)
-                .stream()
-                .map(sottomissione ->
-                        new RiepilogoSottomissione(
-                                sottomissione.getId(),
-                                sottomissione.getContenuto(),
-                                hackathon.getCriteriValutazione()
-                        )
-                )
-                .toList();
+        try {
+            return valutareSottomissioneControl
+                    .selezionaHackathon(hackathon)
+                    .stream()
+                    .map(sottomissione ->
+                            new RiepilogoSottomissione(
+                                    sottomissione.getId(),
+                                    sottomissione.getContenuto(),
+                                    hackathon.getCriteriValutazione()
+                            )
+                    )
+                    .toList();
+        } catch (IllegalStateException errore) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    errore.getMessage(),
+                    errore
+            );
+        }
     }
 
     @PostMapping(
@@ -108,29 +117,39 @@ public class ValutareSottomissioneBoundary {
                 giudice
         );
 
-        Sottomissione sottomissione =
-                trovaSottomissioneDaValutare(
-                        hackathon,
-                        sottomissioneId
-                );
+        try {
+            Sottomissione sottomissione =
+                    trovaSottomissioneDaValutare(
+                            hackathon,
+                            sottomissioneId
+                    );
 
-        DatiValutazione dati = new DatiValutazione(
-                richiestaValida.giudizio(),
-                richiestaValida.punteggio()
-        );
+            DatiValutazione dati = new DatiValutazione(
+                    richiestaValida.giudizio(),
+                    richiestaValida.punteggio()
+            );
 
-        valutareSottomissioneControl
-                .selezionaSottomissione(sottomissione);
+            valutareSottomissioneControl
+                    .selezionaSottomissione(sottomissione);
 
-        valutareSottomissioneControl
-                .verificaDatiValutazione(dati);
+            valutareSottomissioneControl
+                    .verificaDatiValutazione(dati);
 
-        valutareSottomissioneControl
-                .confermaValutazione(
-                        sottomissione,
-                        giudice,
-                        dati
-                );
+            valutareSottomissioneControl
+                    .confermaValutazione(
+                            sottomissione,
+                            giudice,
+                            dati
+                    );
+        } catch (RegistrazioneValutazioneFallitaException errore) {
+            throw errore;
+        } catch (IllegalStateException errore) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    errore.getMessage(),
+                    errore
+            );
+        }
     }
 
     private Hackathon trovaHackathonValutabile(

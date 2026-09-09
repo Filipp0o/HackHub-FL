@@ -206,6 +206,36 @@ class SottomissioneTest {
         );
     }
 
+    @Test
+    void annullaSoloLaValutazioneDelTentativoFallito() {
+        Sottomissione sottomissione = Sottomissione.crea(
+                creaPartecipazioneValida(),
+                "Contenuto originale"
+        );
+        Utente giudice = new Utente(2L);
+        DatiValutazione dati = new DatiValutazione(
+                "Buon lavoro", BigDecimal.valueOf(8)
+        );
+        Valutazione tentativoFallito = Valutazione.crea(
+                sottomissione, giudice, dati
+        );
+
+        sottomissione.annullaValutazioneNonRegistrata(tentativoFallito);
+
+        assertNull(sottomissione.getValutazione());
+
+        Valutazione nuovaValutazione = Valutazione.crea(
+                sottomissione, giudice, dati
+        );
+
+        sottomissione.annullaValutazioneNonRegistrata(tentativoFallito);
+
+        assertAll(
+                () -> assertSame(nuovaValutazione, sottomissione.getValutazione()),
+                () -> assertEquals("Contenuto originale", sottomissione.getContenuto())
+        );
+    }
+
     private Partecipazione creaPartecipazioneValida() {
         Hackathon hackathon =
                 creaHackathonValido();
