@@ -38,17 +38,19 @@ public class EsaminareSegnalazioneControl {
             PartecipazioneRepository partecipazioneRepository,
             TransactionOperations transazioni
     ) {
+        this.transazioni = Objects.requireNonNull(
+                transazioni,
+                "La gestione delle transazioni è obbligatoria"
+        );
+
         this.segnalazioneRepository = Objects.requireNonNull(
                 segnalazioneRepository,
                 "Il repository delle segnalazioni è obbligatorio"
         );
+
         this.partecipazioneRepository = Objects.requireNonNull(
                 partecipazioneRepository,
                 "Il repository delle partecipazioni è obbligatorio"
-        );
-        this.transazioni = Objects.requireNonNull(
-                transazioni,
-                "La gestione delle transazioni è obbligatoria"
         );
     }
 
@@ -126,7 +128,10 @@ public class EsaminareSegnalazioneControl {
         }
 
         Segnalazione segnalazione = notificaValida.getSegnalazione();
-        Hackathon hackathon = segnalazione.getPartecipazione().getHackathon();
+
+        Hackathon hackathon = segnalazione
+                .getPartecipazione()
+                .getHackathon();
 
         if (!Objects.equals(
                 hackathon.getOrganizzatore().getId(),
@@ -143,13 +148,53 @@ public class EsaminareSegnalazioneControl {
             );
         }
 
-        notificaValida.segnaComeLetta();
-        segnalazioneRepository.salvaNotifica(notificaValida);
+        Boolean lettaPrima = notificaValida.getLetta();
+
+        try {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                boolean giaRegistrato =
+                        TransactionSynchronizationManager.getSynchronizations()
+                                .stream()
+                                .anyMatch(s -> s instanceof RipristinoLettura r
+                                        && r.notifica() == notificaValida);
+
+                if (!giaRegistrato) {
+                    TransactionSynchronizationManager.registerSynchronization(
+                            new RipristinoLettura(notificaValida, lettaPrima)
+                    );
+                }
+            }
+
+            notificaValida.segnaComeLetta();
+            segnalazioneRepository.salvaNotifica(notificaValida);
+        } catch (RuntimeException errore) {
+            notificaValida.ripristinaLettura(lettaPrima);
+
+            throw new IllegalStateException(
+                    "La lettura della notifica non è stata registrata",
+                    errore
+            );
+        }
 
         return segnalazione;
     }
 
-    public void verificaDecisione(DatiDecisioneSegnalazione dati) {
+    private record RipristinoLettura(
+            NotificaSegnalazione notifica,
+            Boolean lettaPrima
+    ) implements TransactionSynchronization {
+
+        @Override
+        public void afterCompletion(int stato) {
+            if (stato == STATUS_ROLLED_BACK) {
+                notifica.ripristinaLettura(lettaPrima);
+            }
+        }
+    }
+
+    public void verificaDecisione(
+            DatiDecisioneSegnalazione dati
+    ) {
         validaCompletezzaDecisione(dati);
     }
 
@@ -170,7 +215,9 @@ public class EsaminareSegnalazioneControl {
 
         validaCompletezzaDecisione(dati);
 
-        Partecipazione partecipazione = segnalazioneValida.getPartecipazione();
+        Partecipazione partecipazione =
+                segnalazioneValida.getPartecipazione();
+
         Hackathon hackathon = partecipazione.getHackathon();
 
         if (!Objects.equals(
@@ -230,6 +277,14 @@ public class EsaminareSegnalazioneControl {
         }
     }
 
+    public static class RegistrazioneDecisioneFallitaException
+            extends IllegalStateException {
+
+        public RegistrazioneDecisioneFallitaException(Throwable causa) {
+            super("La decisione non è stata registrata", causa);
+        }
+    }
+
     private void validaCompletezzaDecisione(
             DatiDecisioneSegnalazione dati
     ) {
@@ -248,14 +303,6 @@ public class EsaminareSegnalazioneControl {
             throw new IllegalArgumentException(
                     "La motivazione della decisione è obbligatoria"
             );
-        }
-    }
-
-    public static class RegistrazioneDecisioneFallitaException
-            extends IllegalStateException {
-
-        public RegistrazioneDecisioneFallitaException(Throwable causa) {
-            super("La decisione non è stata registrata", causa);
         }
     }
 }

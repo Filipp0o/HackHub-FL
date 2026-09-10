@@ -88,6 +88,13 @@ public class NotificaSegnalazione {
         this.letta = true;
     }
 
+    public void ripristinaLettura(Boolean letta) {
+        this.letta = Objects.requireNonNull(
+                letta,
+                "Lo stato di lettura è obbligatorio"
+        );
+    }
+
     public Long getId() {
         return id;
     }
