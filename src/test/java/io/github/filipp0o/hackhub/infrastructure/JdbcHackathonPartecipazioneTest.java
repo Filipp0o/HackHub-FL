@@ -442,14 +442,24 @@ class JdbcHackathonPartecipazioneTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"0.001", "1.234", "100000000000000000.00"})
-    void impedisceArrotondamentiOPerditaDiPrecisioneDelPremio(String premio) {
+    @ValueSource(strings = {"0.01", "10.000", "99999999999999999.99"})
+    void conservaEsattamenteIlPremioDopoSalvataggioERilettura(String premio) {
         Hackathon h = Hackathon.crea(
-                dati(false, premio), organizzatore, giudice, List.of(mentore)
+                dati(false, premio),
+                organizzatore,
+                giudice,
+                List.of(mentore)
         );
-        assertThrows(IllegalArgumentException.class, () -> hackathons.salva(h));
-        assertNull(h.getId());
-        assertEquals(0, conta("hackathon"));
+        hackathons.salva(h);
+
+        Hackathon letto = hackathons.recuperaHackathon(h.getId());
+
+        assertEquals(
+                0,
+                new BigDecimal(premio).compareTo(letto.getImportoPremio())
+        );
+        assertEquals(h.getId(), letto.getId());
+        assertEquals(1, conta("hackathon"));
     }
 
     @Test

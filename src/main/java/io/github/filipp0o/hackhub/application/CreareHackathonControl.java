@@ -22,6 +22,7 @@ public class CreareHackathonControl {
                 utenteRepository,
                 "Il repository degli utenti è obbligatorio"
         );
+
         this.hackathonRepository = Objects.requireNonNull(
                 hackathonRepository,
                 "Il repository degli hackathon è obbligatorio"
@@ -71,13 +72,16 @@ public class CreareHackathonControl {
             errori.add("Il nome è obbligatorio");
         }
 
-        if (dati.regolamento() == null || dati.regolamento().isBlank()) {
+        if (dati.regolamento() == null
+                || dati.regolamento().isBlank()) {
             errori.add("Il regolamento è obbligatorio");
         }
 
         if (dati.criteriValutazione() == null
                 || dati.criteriValutazione().isBlank()) {
-            errori.add("I criteri di valutazione sono obbligatori");
+            errori.add(
+                    "I criteri di valutazione sono obbligatori"
+            );
         }
 
         if (dati.luogo() == null || dati.luogo().isBlank()) {
@@ -85,7 +89,9 @@ public class CreareHackathonControl {
         }
 
         if (dati.scadenzaIscrizioni() == null) {
-            errori.add("La scadenza delle iscrizioni è obbligatoria");
+            errori.add(
+                    "La scadenza delle iscrizioni è obbligatoria"
+            );
         }
 
         if (dati.dataInizio() == null) {
@@ -98,7 +104,8 @@ public class CreareHackathonControl {
 
         if (dati.scadenzaIscrizioni() != null
                 && dati.dataInizio() != null
-                && !dati.scadenzaIscrizioni().isBefore(dati.dataInizio())) {
+                && !dati.scadenzaIscrizioni()
+                .isBefore(dati.dataInizio())) {
             errori.add(
                     "La scadenza delle iscrizioni deve precedere la data di inizio"
             );
@@ -114,12 +121,25 @@ public class CreareHackathonControl {
 
         if (dati.importoPremio() == null) {
             errori.add("L'importo del premio è obbligatorio");
-        } else if (dati.importoPremio().compareTo(BigDecimal.ZERO) <= 0) {
-            errori.add("L'importo del premio deve essere maggiore di zero");
+        } else if (dati.importoPremio()
+                .compareTo(BigDecimal.ZERO) <= 0) {
+            errori.add(
+                    "L'importo del premio deve essere maggiore di zero"
+            );
+        } else if (dati.importoPremio().stripTrailingZeros().scale() > 2
+                || dati.importoPremio().compareTo(
+                new BigDecimal("99999999999999999.99")
+        ) > 0) {
+            errori.add(
+                    "L'importo del premio deve essere esprimibile in centesimi "
+                            + "e non superare 99999999999999999.99 EUR"
+            );
         }
 
         if (dati.dimensioneMassimaTeam() == null) {
-            errori.add("La dimensione massima del team è obbligatoria");
+            errori.add(
+                    "La dimensione massima del team è obbligatoria"
+            );
         } else if (dati.dimensioneMassimaTeam() <= 0) {
             errori.add(
                     "La dimensione massima del team deve essere maggiore di zero"
@@ -146,7 +166,10 @@ public class CreareHackathonControl {
             List<Utente> mentori
     ) {
         Hackathon hackathon = Hackathon.crea(
-                dati, organizzatore, giudice, mentori
+                dati,
+                organizzatore,
+                giudice,
+                mentori
         );
 
         try {

@@ -101,6 +101,16 @@ public class Hackathon {
             );
         }
 
+        if (importoPremio.stripTrailingZeros().scale() > 2
+                || importoPremio.compareTo(
+                new BigDecimal("99999999999999999.99")
+        ) > 0) {
+            throw new IllegalArgumentException(
+                    "L'importo del premio deve essere esprimibile in centesimi "
+                            + "e non superare 99999999999999999.99 EUR"
+            );
+        }
+
         if (dimensioneMassimaTeam <= 0) {
             throw new IllegalArgumentException(
                     "La dimensione massima del team deve essere maggiore di zero"
