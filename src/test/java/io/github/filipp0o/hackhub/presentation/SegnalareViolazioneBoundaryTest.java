@@ -371,6 +371,14 @@ class SegnalareViolazioneBoundaryTest {
         private int numeroSalvataggi;
 
         @Override
+        public java.util.List<io.github.filipp0o.hackhub.domain.NotificaSegnalazione>
+        ottieniNotificheRicevute(Utente destinatario) {
+            throw new UnsupportedOperationException(
+                    "Lettura notifiche non prevista da questo test"
+            );
+        }
+
+        @Override
         public List<Segnalazione> ottieniSegnalazioniDaEsaminare(
                 Utente organizzatore
         ) {

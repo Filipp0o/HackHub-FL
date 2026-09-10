@@ -1,99 +1,129 @@
 package io.github.filipp0o.hackhub.infrastructure;
 
 import io.github.filipp0o.hackhub.application.SegnalazioneRepository;
-import io.github.filipp0o.hackhub.domain.NotificaSegnalazione;
-import io.github.filipp0o.hackhub.domain.Segnalazione;
-import io.github.filipp0o.hackhub.domain.StatoSegnalazione;
-import io.github.filipp0o.hackhub.domain.Utente;
+import io.github.filipp0o.hackhub.domain.*;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
-public class SegnalazioneRepositoryImpl
-        implements SegnalazioneRepository {
+public class SegnalazioneRepositoryImpl implements SegnalazioneRepository {
 
-    private final List<Segnalazione> segnalazioniSalvate =
-            new ArrayList<>();
+    private final Map<Long, Segnalazione> segnalazioni = new LinkedHashMap<>();
+    private final Map<Long, NotificaSegnalazione> notifiche = new LinkedHashMap<>();
 
-    private final List<NotificaSegnalazione> notificheSalvate =
-            new ArrayList<>();
+    private long prossimoIdSegnalazione = 1;
+    private long prossimoIdNotifica = 1;
 
     @Override
-    public List<Segnalazione> ottieniSegnalazioniDaEsaminare(
+    public synchronized List<Segnalazione> ottieniSegnalazioniDaEsaminare(
             Utente organizzatore
     ) {
-        Utente organizzatoreValido =
-                Objects.requireNonNull(
-                        organizzatore,
-                        "L'organizzatore è obbligatorio"
-                );
+        Objects.requireNonNull(organizzatore, "L'organizzatore è obbligatorio");
 
-        return segnalazioniSalvate.stream()
-                .filter(segnalazione ->
-                        segnalazione.getStato()
-                                == StatoSegnalazione.DA_ESAMINARE
-                )
-                .filter(segnalazione ->
-                        Objects.equals(
-                                segnalazione
-                                        .getPartecipazione()
-                                        .getHackathon()
-                                        .getOrganizzatore()
-                                        .getId(),
-                                organizzatoreValido.getId()
-                        )
-                )
+        return segnalazioni.values().stream()
+                .filter(s -> s.getStato() == StatoSegnalazione.DA_ESAMINARE)
+                .filter(s -> Objects.equals(
+                        s.getPartecipazione().getHackathon().getOrganizzatore().getId(),
+                        organizzatore.getId()
+                ))
                 .toList();
     }
 
     @Override
-    public void salva(Segnalazione segnalazione) {
-        segnalazioniSalvate.add(
-                Objects.requireNonNull(
-                        segnalazione,
-                        "La segnalazione è obbligatoria"
-                )
-        );
+    public synchronized List<NotificaSegnalazione> ottieniNotificheRicevute(
+            Utente destinatario
+    ) {
+        Objects.requireNonNull(destinatario, "Il destinatario è obbligatorio");
+
+        return notifiche.values().stream()
+                .filter(n -> Objects.equals(
+                        n.getDestinatario().getId(),
+                        destinatario.getId()
+                ))
+                .toList();
     }
 
     @Override
-    public void salvaConNotifica(
+    public synchronized void salva(Segnalazione segnalazione) {
+        Objects.requireNonNull(segnalazione, "La segnalazione è obbligatoria");
+        verificaSegnalazione(segnalazione);
+        registraSegnalazione(segnalazione);
+    }
+
+    @Override
+    public synchronized void salvaConNotifica(
             Segnalazione segnalazione,
             NotificaSegnalazione notifica
     ) {
-        Segnalazione segnalazioneValida =
-                Objects.requireNonNull(
-                        segnalazione,
-                        "La segnalazione è obbligatoria"
-                );
+        Objects.requireNonNull(segnalazione, "La segnalazione è obbligatoria");
+        Objects.requireNonNull(notifica, "La notifica è obbligatoria");
 
-        NotificaSegnalazione notificaValida =
-                Objects.requireNonNull(
-                        notifica,
-                        "La notifica è obbligatoria"
-                );
-
-        if (notificaValida.getSegnalazione()
-                != segnalazioneValida) {
+        if (notifica.getSegnalazione() != segnalazione) {
             throw new IllegalArgumentException(
                     "La notifica deve riferirsi alla segnalazione salvata"
             );
         }
 
-        segnalazioniSalvate.add(segnalazioneValida);
-        notificheSalvate.add(notificaValida);
+        verificaSegnalazione(segnalazione);
+        verificaNotifica(notifica);
+
+        registraSegnalazione(segnalazione);
+        registraNotifica(notifica);
     }
 
     @Override
-    public void salvaNotifica(
-            NotificaSegnalazione notifica
-    ) {
-        notificheSalvate.add(
-                Objects.requireNonNull(
-                        notifica,
-                        "La notifica è obbligatoria"
-                )
-        );
+    public synchronized void salvaNotifica(NotificaSegnalazione notifica) {
+        Objects.requireNonNull(notifica, "La notifica è obbligatoria");
+
+        if (notifica.getSegnalazione().getId() == null
+                || !segnalazioni.containsKey(notifica.getSegnalazione().getId())) {
+            throw new IllegalStateException(
+                    "La segnalazione deve essere già salvata"
+            );
+        }
+
+        verificaNotifica(notifica);
+        registraNotifica(notifica);
+    }
+
+    private void verificaSegnalazione(Segnalazione s) {
+        if (s.getId() != null && segnalazioni.get(s.getId()) != s) {
+            throw new IllegalStateException(
+                    "Segnalazione non appartenente al repository"
+            );
+        }
+    }
+
+    private void verificaNotifica(NotificaSegnalazione n) {
+        if (n.getId() != null && notifiche.get(n.getId()) != n) {
+            throw new IllegalStateException(
+                    "Notifica non appartenente al repository"
+            );
+        }
+
+        if (notifiche.values().stream().anyMatch(
+                esistente -> esistente != n
+                        && esistente.getSegnalazione() == n.getSegnalazione()
+        )) {
+            throw new IllegalStateException(
+                    "La segnalazione possiede già una notifica salvata"
+            );
+        }
+    }
+
+    private void registraSegnalazione(Segnalazione s) {
+        if (s.getId() == null) {
+            s.assegnaId(prossimoIdSegnalazione++);
+        }
+        segnalazioni.put(s.getId(), s);
+    }
+
+    private void registraNotifica(NotificaSegnalazione n) {
+        if (n.getId() == null) {
+            n.assegnaId(prossimoIdNotifica++);
+        }
+        notifiche.put(n.getId(), n);
     }
 }

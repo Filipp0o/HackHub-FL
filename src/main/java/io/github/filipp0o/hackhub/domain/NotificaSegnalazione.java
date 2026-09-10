@@ -16,18 +16,32 @@ public class NotificaSegnalazione {
             Segnalazione segnalazione,
             Utente destinatario
     ) {
+        this(null, segnalazione, destinatario, LocalDateTime.now(), false);
+    }
+
+    private NotificaSegnalazione(
+            Long id,
+            Segnalazione segnalazione,
+            Utente destinatario,
+            LocalDateTime dataOraCreazione,
+            Boolean letta
+    ) {
         this.segnalazione = Objects.requireNonNull(
-                segnalazione,
-                "La segnalazione è obbligatoria"
+                segnalazione, "La segnalazione è obbligatoria"
         );
-
         this.destinatario = Objects.requireNonNull(
-                destinatario,
-                "Il destinatario è obbligatorio"
+                destinatario, "Il destinatario è obbligatorio"
+        );
+        this.dataOraCreazione = Objects.requireNonNull(
+                dataOraCreazione, "La data di creazione è obbligatoria"
+        );
+        this.letta = Objects.requireNonNull(
+                letta, "Lo stato di lettura è obbligatorio"
         );
 
-        this.dataOraCreazione = LocalDateTime.now();
-        this.letta = false;
+        if (id != null) {
+            assegnaId(id);
+        }
 
         this.segnalazione.registraNotificaSegnalazione(this);
     }
@@ -36,10 +50,38 @@ public class NotificaSegnalazione {
             Segnalazione segnalazione,
             Utente destinatario
     ) {
+        return new NotificaSegnalazione(segnalazione, destinatario);
+    }
+
+    public static NotificaSegnalazione ricostruisci(
+            Long id,
+            Segnalazione segnalazione,
+            Utente destinatario,
+            LocalDateTime dataOraCreazione,
+            Boolean letta
+    ) {
+        Objects.requireNonNull(id, "L'id della notifica è obbligatorio");
         return new NotificaSegnalazione(
-                segnalazione,
-                destinatario
+                id, segnalazione, destinatario, dataOraCreazione, letta
         );
+    }
+
+    public void assegnaId(Long id) {
+        Objects.requireNonNull(id, "L'id della notifica è obbligatorio");
+
+        if (id <= 0) {
+            throw new IllegalArgumentException(
+                    "L'id della notifica deve essere maggiore di zero"
+            );
+        }
+
+        if (this.id != null) {
+            throw new IllegalStateException(
+                    "L'id della notifica è già stato assegnato"
+            );
+        }
+
+        this.id = id;
     }
 
     public void segnaComeLetta() {

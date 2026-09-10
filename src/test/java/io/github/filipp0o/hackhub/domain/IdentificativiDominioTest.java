@@ -44,22 +44,12 @@ class IdentificativiDominioTest {
     }
 
     @Test
-    void assegnaIdentificativiDistintiAlleSegnalazioni() {
-        Segnalazione primaSegnalazione =
-                creaSegnalazione("Prima segnalazione");
-
-        Segnalazione secondaSegnalazione =
-                creaSegnalazione("Seconda segnalazione");
-
-        assertAll(
-                () -> assertNotNull(primaSegnalazione.getId()),
-                () -> assertNotNull(secondaSegnalazione.getId()),
-                () -> assertTrue(primaSegnalazione.getId() > 0),
-                () -> assertTrue(secondaSegnalazione.getId() > 0),
-                () -> assertNotEquals(
-                        primaSegnalazione.getId(),
-                        secondaSegnalazione.getId()
-                )
+    void nuoveSegnalazioniAttendonoIdDalRepository() {
+        org.junit.jupiter.api.Assertions.assertNull(
+                creaSegnalazione("Prima segnalazione").getId()
+        );
+        org.junit.jupiter.api.Assertions.assertNull(
+                creaSegnalazione("Seconda segnalazione").getId()
         );
     }
 

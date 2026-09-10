@@ -2,14 +2,10 @@ package io.github.filipp0o.hackhub.domain;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Segnalazione {
 
-    private static final AtomicLong SEQUENZA_ID =
-            new AtomicLong(1);
-
-    private final Long id;
+    private Long id;
     private final String descrizione;
     private final LocalDateTime dataOraCreazione;
 
@@ -17,8 +13,10 @@ public class Segnalazione {
     private EsitoSegnalazione esito;
     private String motivazione;
     private LocalDateTime dataOraEsame;
+
     private final Utente mentoreSegnalante;
     private final Partecipazione partecipazione;
+
     private Utente esaminatore;
     private NotificaSegnalazione notificaSegnalazione;
 
@@ -67,10 +65,70 @@ public class Segnalazione {
             );
         }
 
-        this.id = SEQUENZA_ID.getAndIncrement();
         this.descrizione = descrizione;
         this.dataOraCreazione = LocalDateTime.now();
         this.stato = StatoSegnalazione.DA_ESAMINARE;
+    }
+
+    private Segnalazione(DatiRipristinoSegnalazione dati) {
+        Objects.requireNonNull(
+                dati,
+                "I dati di ripristino sono obbligatori"
+        );
+
+        mentoreSegnalante = Objects.requireNonNull(
+                dati.mentoreSegnalante(),
+                "Il mentore segnalante è obbligatorio"
+        );
+
+        partecipazione = Objects.requireNonNull(
+                dati.partecipazione(),
+                "La partecipazione è obbligatoria"
+        );
+
+        if (dati.descrizione() == null || dati.descrizione().isBlank()) {
+            throw new IllegalArgumentException(
+                    "La descrizione della violazione è obbligatoria"
+            );
+        }
+
+        descrizione = dati.descrizione();
+
+        dataOraCreazione = Objects.requireNonNull(
+                dati.dataOraCreazione(),
+                "La data di creazione è obbligatoria"
+        );
+
+        stato = Objects.requireNonNull(
+                dati.stato(),
+                "Lo stato è obbligatorio"
+        );
+
+        if (stato == StatoSegnalazione.DA_ESAMINARE) {
+            if (dati.esito() != null
+                    || dati.motivazione() != null
+                    || dati.dataOraEsame() != null
+                    || dati.esaminatore() != null) {
+                throw new IllegalArgumentException(
+                        "Una segnalazione da esaminare non ha una decisione"
+                );
+            }
+        } else if (dati.esito() == null
+                || dati.motivazione() == null
+                || dati.motivazione().isBlank()
+                || dati.dataOraEsame() == null
+                || dati.esaminatore() == null) {
+            throw new IllegalArgumentException(
+                    "La decisione della segnalazione esaminata è incompleta"
+            );
+        }
+
+        esito = dati.esito();
+        motivazione = dati.motivazione();
+        dataOraEsame = dati.dataOraEsame();
+        esaminatore = dati.esaminatore();
+
+        assegnaId(dati.id());
     }
 
     public static Segnalazione crea(
@@ -83,6 +141,33 @@ public class Segnalazione {
                 partecipazione,
                 descrizione
         );
+    }
+
+    public static Segnalazione ricostruisci(
+            DatiRipristinoSegnalazione dati
+    ) {
+        return new Segnalazione(dati);
+    }
+
+    public void assegnaId(Long id) {
+        Objects.requireNonNull(
+                id,
+                "L'id della segnalazione è obbligatorio"
+        );
+
+        if (id <= 0) {
+            throw new IllegalArgumentException(
+                    "L'id della segnalazione deve essere maggiore di zero"
+            );
+        }
+
+        if (this.id != null) {
+            throw new IllegalStateException(
+                    "L'id della segnalazione è già stato assegnato"
+            );
+        }
+
+        this.id = id;
     }
 
     void registraNotificaSegnalazione(

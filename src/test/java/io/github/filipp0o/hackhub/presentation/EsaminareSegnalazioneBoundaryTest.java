@@ -232,7 +232,16 @@ class EsaminareSegnalazioneBoundaryTest {
         private Segnalazione segnalazioneSalvata;
 
         private SegnalazioneRepositoryFinto(Segnalazione segnalazione) {
+            segnalazione.assegnaId(1L);
             this.segnalazione = segnalazione;
+        }
+
+        @Override
+        public java.util.List<io.github.filipp0o.hackhub.domain.NotificaSegnalazione>
+        ottieniNotificheRicevute(Utente destinatario) {
+            throw new UnsupportedOperationException(
+                    "Lettura notifiche non prevista da questo test"
+            );
         }
 
         @Override

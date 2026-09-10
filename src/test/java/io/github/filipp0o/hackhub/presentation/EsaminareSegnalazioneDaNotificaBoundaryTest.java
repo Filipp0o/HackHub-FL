@@ -41,9 +41,12 @@ class EsaminareSegnalazioneDaNotificaBoundaryTest {
                 organizzatore
         );
 
+        var repository = new SegnalazioneRepositoryImpl();
+        repository.salvaConNotifica(segnalazione, notifica);
+
         EsaminareSegnalazioneControl control =
                 new EsaminareSegnalazioneControl(
-                        new SegnalazioneRepositoryImpl(),
+                        repository,
                         new InMemoryPartecipazioneRepository()
                 );
 

@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface SegnalazioneRepository {
 
-    List<Segnalazione> ottieniSegnalazioniDaEsaminare(
-            Utente organizzatore
-    );
+    List<Segnalazione> ottieniSegnalazioniDaEsaminare(Utente organizzatore);
+
+    List<NotificaSegnalazione> ottieniNotificheRicevute(Utente destinatario);
 
     void salva(Segnalazione segnalazione);
 

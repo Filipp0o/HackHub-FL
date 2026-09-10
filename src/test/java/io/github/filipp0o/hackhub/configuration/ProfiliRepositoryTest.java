@@ -60,7 +60,8 @@ class ProfiliRepositoryTest {
                     HackathonRepository.class, InMemoryHackathonRepository.class,
                     PartecipazioneRepository.class, InMemoryPartecipazioneRepository.class,
                     SottomissioneRepository.class, SottomissioneRepositoryImpl.class,
-                    ValutazioneRepository.class, ValutazioneRepositoryImpl.class
+                    ValutazioneRepository.class, ValutazioneRepositoryImpl.class,
+                    SegnalazioneRepository.class, SegnalazioneRepositoryImpl.class
             ));
             assertTrue(context.getBeansOfType(DataSource.class).isEmpty());
             Scenario scenario = preparaScenario(context);
@@ -198,7 +199,8 @@ class ProfiliRepositoryTest {
                 HackathonRepository.class, JdbcHackathonRepository.class,
                 PartecipazioneRepository.class, JdbcPartecipazioneRepository.class,
                 SottomissioneRepository.class, JdbcSottomissioneRepository.class,
-                ValutazioneRepository.class, JdbcValutazioneRepository.class
+                ValutazioneRepository.class, JdbcValutazioneRepository.class,
+                SegnalazioneRepository.class, JdbcSegnalazioneRepository.class
         ));
     }
 

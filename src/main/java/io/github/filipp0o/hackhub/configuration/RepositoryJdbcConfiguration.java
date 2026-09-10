@@ -63,4 +63,18 @@ public class RepositoryJdbcConfiguration {
     public ValutazioneRepository jdbcValutazioneRepository(DataSource dataSource) {
         return new JdbcValutazioneRepository(dataSource);
     }
+
+
+    @Bean
+    public SegnalazioneRepository jdbcSegnalazioneRepository(
+            DataSource dataSource,
+            HackathonRepository hackathonRepository,
+            PartecipazioneRepository partecipazioneRepository
+    ) {
+        return new JdbcSegnalazioneRepository(
+                dataSource,
+                hackathonRepository,
+                partecipazioneRepository
+        );
+    }
 }

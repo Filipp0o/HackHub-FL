@@ -73,6 +73,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
+    @Profile("!persistent")
     public SegnalazioneRepository segnalazioneRepository() {
         return new SegnalazioneRepositoryImpl();
     }
