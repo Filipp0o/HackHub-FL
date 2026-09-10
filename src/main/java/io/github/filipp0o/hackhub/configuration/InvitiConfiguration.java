@@ -9,11 +9,13 @@ import io.github.filipp0o.hackhub.application.UtenteRepository;
 import io.github.filipp0o.hackhub.infrastructure.InMemoryInvitoRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
 public class InvitiConfiguration {
 
     @Bean
+    @Profile("!persistent")
     public InvitoRepository invitoRepository() {
         return new InMemoryInvitoRepository();
     }

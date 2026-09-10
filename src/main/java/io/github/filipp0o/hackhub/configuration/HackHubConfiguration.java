@@ -30,10 +30,12 @@ import io.github.filipp0o.hackhub.infrastructure.InMemoryUtenteRepository;
 import io.github.filipp0o.hackhub.infrastructure.ValutazioneRepositoryImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.util.List;
 import io.github.filipp0o.hackhub.application.AggiornareSottomissioneControl;
 import io.github.filipp0o.hackhub.application.ConsultareHackathonControl;
+
 @Configuration
 public class HackHubConfiguration {
 
@@ -43,21 +45,25 @@ public class HackHubConfiguration {
     }
 
     @Bean
+    @Profile("!persistent")
     public UtenteRepository utenteRepository() {
         return new InMemoryUtenteRepository(List.of());
     }
 
     @Bean
+    @Profile("!persistent")
     public TeamRepository teamRepository() {
         return new InMemoryTeamRepository();
     }
 
     @Bean
+    @Profile("!persistent")
     public PartecipazioneRepository partecipazioneRepository() {
         return new InMemoryPartecipazioneRepository();
     }
 
     @Bean
+    @Profile("!persistent")
     public HackathonRepository hackathonRepository(
             PartecipazioneRepository partecipazioneRepository
     ) {
@@ -72,11 +78,13 @@ public class HackHubConfiguration {
     }
 
     @Bean
+    @Profile("!persistent")
     public ValutazioneRepository valutazioneRepository() {
         return new ValutazioneRepositoryImpl();
     }
 
     @Bean
+    @Profile("!persistent")
     public SottomissioneRepository sottomissioneRepository() {
         return new SottomissioneRepositoryImpl();
     }
@@ -107,8 +115,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public ConsultareHackathonControl
-    consultareHackathonControl(
+    public ConsultareHackathonControl consultareHackathonControl(
             HackathonRepository hackathonRepository
     ) {
         return new ConsultareHackathonControl(
@@ -117,8 +124,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public ValutareSottomissioneControl
-    valutareSottomissioneControl(
+    public ValutareSottomissioneControl valutareSottomissioneControl(
             HackathonRepository hackathonRepository,
             PartecipazioneRepository partecipazioneRepository,
             ValutazioneRepository valutazioneRepository
@@ -131,8 +137,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public SegnalareViolazioneControl
-    segnalareViolazioneControl(
+    public SegnalareViolazioneControl segnalareViolazioneControl(
             HackathonRepository hackathonRepository,
             PartecipazioneRepository partecipazioneRepository,
             SegnalazioneRepository segnalazioneRepository
@@ -145,8 +150,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public EsaminareSegnalazioneControl
-    esaminareSegnalazioneControl(
+    public EsaminareSegnalazioneControl esaminareSegnalazioneControl(
             SegnalazioneRepository segnalazioneRepository,
             PartecipazioneRepository partecipazioneRepository
     ) {
@@ -157,8 +161,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public ProclamareTeamVincitoreControl
-    proclamareTeamVincitoreControl(
+    public ProclamareTeamVincitoreControl proclamareTeamVincitoreControl(
             PartecipazioneRepository partecipazioneRepository,
             HackathonRepository hackathonRepository,
             SegnalazioneRepository segnalazioneRepository
@@ -171,8 +174,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public ConfigurareRiscossionePremioControl
-    configurareRiscossionePremioControl(
+    public ConfigurareRiscossionePremioControl configurareRiscossionePremioControl(
             SistemaPagamentoGateway sistemaPagamentoGateway,
             HackathonRepository hackathonRepository
     ) {
@@ -194,8 +196,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public IscrivereTeamHackathonControl
-    iscrivereTeamHackathonControl(
+    public IscrivereTeamHackathonControl iscrivereTeamHackathonControl(
             HackathonRepository hackathonRepository,
             TeamRepository teamRepository,
             PartecipazioneRepository partecipazioneRepository
@@ -208,8 +209,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public InviareSottomissioneControl
-    inviareSottomissioneControl(
+    public InviareSottomissioneControl inviareSottomissioneControl(
             TeamRepository teamRepository,
             PartecipazioneRepository partecipazioneRepository,
             SottomissioneRepository sottomissioneRepository
@@ -222,8 +222,7 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public AggiornareSottomissioneControl
-    aggiornareSottomissioneControl(
+    public AggiornareSottomissioneControl aggiornareSottomissioneControl(
             TeamRepository teamRepository,
             PartecipazioneRepository partecipazioneRepository,
             SottomissioneRepository sottomissioneRepository
