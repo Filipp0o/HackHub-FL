@@ -107,6 +107,13 @@ public class Partecipazione {
         return sottomissione;
     }
 
+    public void ripristinaStato(StatoPartecipazione stato) {
+        this.stato = Objects.requireNonNull(
+                stato,
+                "Lo stato della partecipazione è obbligatorio"
+        );
+    }
+
     public void escludi() {
         this.stato = StatoPartecipazione.ESCLUSA;
     }

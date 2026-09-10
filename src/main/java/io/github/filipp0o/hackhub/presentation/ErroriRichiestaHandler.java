@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
 
 @RestControllerAdvice(assignableTypes = {
         CreareTeamBoundary.class,
@@ -63,6 +64,17 @@ public class ErroriRichiestaHandler {
     )
     public ResponseEntity<ErroreRichiesta> creazioneHackathonFallita(
             CreareHackathonControl.CreazioneHackathonFallitaException errore
+    ) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErroreRichiesta(errore.getMessage()));
+    }
+
+
+    @ExceptionHandler(
+            EsaminareSegnalazioneControl.RegistrazioneDecisioneFallitaException.class
+    )
+    public ResponseEntity<ErroreRichiesta> registrazioneDecisioneFallita(
+            EsaminareSegnalazioneControl.RegistrazioneDecisioneFallitaException errore
     ) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErroreRichiesta(errore.getMessage()));

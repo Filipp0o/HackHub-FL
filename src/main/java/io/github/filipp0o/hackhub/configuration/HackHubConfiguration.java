@@ -28,6 +28,11 @@ import io.github.filipp0o.hackhub.infrastructure.SottomissioneRepositoryImpl;
 import io.github.filipp0o.hackhub.infrastructure.InMemoryTeamRepository;
 import io.github.filipp0o.hackhub.infrastructure.InMemoryUtenteRepository;
 import io.github.filipp0o.hackhub.infrastructure.ValutazioneRepositoryImpl;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionOperations;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -153,11 +158,26 @@ public class HackHubConfiguration {
     @Bean
     public EsaminareSegnalazioneControl esaminareSegnalazioneControl(
             SegnalazioneRepository segnalazioneRepository,
-            PartecipazioneRepository partecipazioneRepository
+            PartecipazioneRepository partecipazioneRepository,
+            ObjectProvider<PlatformTransactionManager> gestori
     ) {
+        PlatformTransactionManager gestore = gestori.getIfAvailable();
+
+        TransactionOperations transazioni =
+                TransactionOperations.withoutTransaction();
+
+        if (gestore != null) {
+            var template = new TransactionTemplate(gestore);
+            template.setIsolationLevel(
+                    TransactionDefinition.ISOLATION_REPEATABLE_READ
+            );
+            transazioni = template;
+        }
+
         return new EsaminareSegnalazioneControl(
                 segnalazioneRepository,
-                partecipazioneRepository
+                partecipazioneRepository,
+                transazioni
         );
     }
 

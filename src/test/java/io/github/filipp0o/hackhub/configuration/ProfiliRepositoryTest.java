@@ -168,6 +168,83 @@ class ProfiliRepositoryTest {
         }
     }
 
+    @Test
+    void persistentUc22AnnullaAncheIlSalvataggioDellaPartecipazione() {
+        String url = "jdbc:h2:mem:uc22-"
+                + UUID.randomUUID()
+                + ";DB_CLOSE_DELAY=-1";
+
+        try (var context = avvia("persistent", url)) {
+            Scenario scenario = preparaScenario(context);
+            Partecipazione p = scenario.partecipazione();
+            Hackathon h = p.getHackathon();
+
+            h.aggiornaStato(LocalDate.now());
+
+            Utente organizzatore = h.getOrganizzatore();
+
+            Segnalazione s = Segnalazione.crea(
+                    h.getMentori().getFirst(),
+                    p,
+                    "Violazione"
+            );
+
+            var repository = context.getBean(SegnalazioneRepository.class);
+            repository.salva(s);
+
+            JdbcClient jdbc = JdbcClient.create(
+                    context.getBean(DataSource.class)
+            );
+
+            jdbc.sql("""
+                    ALTER TABLE segnalazione
+                    ADD CONSTRAINT errore_uc22
+                    CHECK (stato = 'DA_ESAMINARE')
+                    """).update();
+
+            var control = context.getBean(EsaminareSegnalazioneControl.class);
+
+            var dati = new DatiDecisioneSegnalazione(
+                    EsitoSegnalazione.VIOLAZIONE_CON_ESCLUSIONE,
+                    "Violazione confermata"
+            );
+
+            assertThrows(
+                    EsaminareSegnalazioneControl.RegistrazioneDecisioneFallitaException.class,
+                    () -> control.registraDecisione(s, organizzatore, dati)
+            );
+
+            assertEquals(StatoSegnalazione.DA_ESAMINARE, s.getStato());
+            assertNull(s.getEsito());
+            assertEquals(StatoPartecipazione.ATTIVA, p.getStato());
+
+            assertEquals(
+                    StatoPartecipazione.ATTIVA,
+                    context.getBean(PartecipazioneRepository.class)
+                            .recuperaPartecipazione(p.getTeam(), h)
+                            .getStato()
+            );
+
+            assertEquals(
+                    1,
+                    repository.ottieniSegnalazioniDaEsaminare(organizzatore)
+                            .size()
+            );
+
+            jdbc.sql("""
+                    ALTER TABLE segnalazione
+                    DROP CONSTRAINT errore_uc22
+                    """).update();
+
+            control.registraDecisione(s, organizzatore, dati);
+
+            assertTrue(
+                    repository.ottieniSegnalazioniDaEsaminare(organizzatore)
+                            .isEmpty()
+            );
+        }
+    }
+
     private Scenario preparaScenario(ConfigurableApplicationContext context) {
         var utenti = context.getBean(UtenteRepository.class);
         Utente organizzatore = Utente.crea("organizzatore@example.com", "hash-organizzatore");

@@ -6,8 +6,12 @@ import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.NotificaSegnalazione;
 import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.Segnalazione;
+import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
 import io.github.filipp0o.hackhub.domain.StatoSegnalazione;
 import io.github.filipp0o.hackhub.domain.Utente;
+import org.springframework.transaction.support.TransactionOperations;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.Objects;
@@ -16,19 +20,35 @@ public class EsaminareSegnalazioneControl {
 
     private final SegnalazioneRepository segnalazioneRepository;
     private final PartecipazioneRepository partecipazioneRepository;
+    private final TransactionOperations transazioni;
 
     public EsaminareSegnalazioneControl(
             SegnalazioneRepository segnalazioneRepository,
             PartecipazioneRepository partecipazioneRepository
     ) {
+        this(
+                segnalazioneRepository,
+                partecipazioneRepository,
+                TransactionOperations.withoutTransaction()
+        );
+    }
+
+    public EsaminareSegnalazioneControl(
+            SegnalazioneRepository segnalazioneRepository,
+            PartecipazioneRepository partecipazioneRepository,
+            TransactionOperations transazioni
+    ) {
         this.segnalazioneRepository = Objects.requireNonNull(
                 segnalazioneRepository,
                 "Il repository delle segnalazioni è obbligatorio"
         );
-
         this.partecipazioneRepository = Objects.requireNonNull(
                 partecipazioneRepository,
                 "Il repository delle partecipazioni è obbligatorio"
+        );
+        this.transazioni = Objects.requireNonNull(
+                transazioni,
+                "La gestione delle transazioni è obbligatoria"
         );
     }
 
@@ -40,27 +60,24 @@ public class EsaminareSegnalazioneControl {
                 "L'organizzatore è obbligatorio"
         );
 
-        return segnalazioneRepository
-                .ottieniSegnalazioniDaEsaminare(
-                        organizzatoreValido
-                );
+        return segnalazioneRepository.ottieniSegnalazioniDaEsaminare(
+                organizzatoreValido
+        );
     }
 
     public Segnalazione selezionaSegnalazione(
             Segnalazione segnalazione,
             Utente organizzatore
     ) {
-        Segnalazione segnalazioneValida =
-                Objects.requireNonNull(
-                        segnalazione,
-                        "La segnalazione è obbligatoria"
-                );
+        Segnalazione segnalazioneValida = Objects.requireNonNull(
+                segnalazione,
+                "La segnalazione è obbligatoria"
+        );
 
-        Utente organizzatoreValido =
-                Objects.requireNonNull(
-                        organizzatore,
-                        "L'organizzatore è obbligatorio"
-                );
+        Utente organizzatoreValido = Objects.requireNonNull(
+                organizzatore,
+                "L'organizzatore è obbligatorio"
+        );
 
         Hackathon hackathon = segnalazioneValida
                 .getPartecipazione()
@@ -89,17 +106,15 @@ public class EsaminareSegnalazioneControl {
             NotificaSegnalazione notificaSegnalazione,
             Utente organizzatore
     ) {
-        NotificaSegnalazione notificaValida =
-                Objects.requireNonNull(
-                        notificaSegnalazione,
-                        "La notifica della segnalazione è obbligatoria"
-                );
+        NotificaSegnalazione notificaValida = Objects.requireNonNull(
+                notificaSegnalazione,
+                "La notifica della segnalazione è obbligatoria"
+        );
 
-        Utente organizzatoreValido =
-                Objects.requireNonNull(
-                        organizzatore,
-                        "L'organizzatore è obbligatorio"
-                );
+        Utente organizzatoreValido = Objects.requireNonNull(
+                organizzatore,
+                "L'organizzatore è obbligatorio"
+        );
 
         if (!Objects.equals(
                 notificaValida.getDestinatario().getId(),
@@ -110,12 +125,8 @@ public class EsaminareSegnalazioneControl {
             );
         }
 
-        Segnalazione segnalazione =
-                notificaValida.getSegnalazione();
-
-        Hackathon hackathon = segnalazione
-                .getPartecipazione()
-                .getHackathon();
+        Segnalazione segnalazione = notificaValida.getSegnalazione();
+        Hackathon hackathon = segnalazione.getPartecipazione().getHackathon();
 
         if (!Objects.equals(
                 hackathon.getOrganizzatore().getId(),
@@ -126,25 +137,19 @@ public class EsaminareSegnalazioneControl {
             );
         }
 
-        if (segnalazione.getStato()
-                != StatoSegnalazione.DA_ESAMINARE) {
+        if (segnalazione.getStato() != StatoSegnalazione.DA_ESAMINARE) {
             throw new IllegalStateException(
                     "La segnalazione è già stata esaminata"
             );
         }
 
         notificaValida.segnaComeLetta();
-
-        segnalazioneRepository.salvaNotifica(
-                notificaValida
-        );
+        segnalazioneRepository.salvaNotifica(notificaValida);
 
         return segnalazione;
     }
 
-    public void verificaDecisione(
-            DatiDecisioneSegnalazione dati
-    ) {
+    public void verificaDecisione(DatiDecisioneSegnalazione dati) {
         validaCompletezzaDecisione(dati);
     }
 
@@ -153,25 +158,20 @@ public class EsaminareSegnalazioneControl {
             Utente organizzatore,
             DatiDecisioneSegnalazione dati
     ) {
-        Segnalazione segnalazioneValida =
-                Objects.requireNonNull(
-                        segnalazione,
-                        "La segnalazione è obbligatoria"
-                );
+        Segnalazione segnalazioneValida = Objects.requireNonNull(
+                segnalazione,
+                "La segnalazione è obbligatoria"
+        );
 
-        Utente organizzatoreValido =
-                Objects.requireNonNull(
-                        organizzatore,
-                        "L'organizzatore è obbligatorio"
-                );
+        Utente organizzatoreValido = Objects.requireNonNull(
+                organizzatore,
+                "L'organizzatore è obbligatorio"
+        );
 
         validaCompletezzaDecisione(dati);
 
-        Partecipazione partecipazione =
-                segnalazioneValida.getPartecipazione();
-
-        Hackathon hackathon =
-                partecipazione.getHackathon();
+        Partecipazione partecipazione = segnalazioneValida.getPartecipazione();
+        Hackathon hackathon = partecipazione.getHackathon();
 
         if (!Objects.equals(
                 hackathon.getOrganizzatore().getId(),
@@ -189,33 +189,54 @@ public class EsaminareSegnalazioneControl {
             );
         }
 
-        segnalazioneValida.registraEsame(
-                dati,
-                organizzatoreValido
-        );
+        StatoPartecipazione statoPrecedente = partecipazione.getStato();
 
-        if (dati.esito()
-                == EsitoSegnalazione.VIOLAZIONE_CON_ESCLUSIONE) {
-            partecipazione.escludi();
+        Runnable ripristino = () -> {
+            segnalazioneValida.annullaEsameNonRegistrato();
+            partecipazione.ripristinaStato(statoPrecedente);
+        };
 
-            partecipazioneRepository.salva(
-                    partecipazione
-            );
+        try {
+            transazioni.executeWithoutResult(stato -> {
+                if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                    TransactionSynchronizationManager.registerSynchronization(
+                            new TransactionSynchronization() {
+                                @Override
+                                public void afterCompletion(int esitoTransazione) {
+                                    if (esitoTransazione == STATUS_ROLLED_BACK) {
+                                        ripristino.run();
+                                    }
+                                }
+                            }
+                    );
+                }
+
+                segnalazioneValida.registraEsame(
+                        dati,
+                        organizzatoreValido
+                );
+
+                if (dati.esito()
+                        == EsitoSegnalazione.VIOLAZIONE_CON_ESCLUSIONE) {
+                    partecipazione.escludi();
+                    partecipazioneRepository.salva(partecipazione);
+                }
+
+                segnalazioneRepository.salva(segnalazioneValida);
+            });
+        } catch (RuntimeException errore) {
+            ripristino.run();
+            throw new RegistrazioneDecisioneFallitaException(errore);
         }
-
-        segnalazioneRepository.salva(
-                segnalazioneValida
-        );
     }
 
     private void validaCompletezzaDecisione(
             DatiDecisioneSegnalazione dati
     ) {
-        DatiDecisioneSegnalazione datiValidi =
-                Objects.requireNonNull(
-                        dati,
-                        "I dati della decisione sono obbligatori"
-                );
+        DatiDecisioneSegnalazione datiValidi = Objects.requireNonNull(
+                dati,
+                "I dati della decisione sono obbligatori"
+        );
 
         Objects.requireNonNull(
                 datiValidi.esito(),
@@ -227,6 +248,14 @@ public class EsaminareSegnalazioneControl {
             throw new IllegalArgumentException(
                     "La motivazione della decisione è obbligatoria"
             );
+        }
+    }
+
+    public static class RegistrazioneDecisioneFallitaException
+            extends IllegalStateException {
+
+        public RegistrazioneDecisioneFallitaException(Throwable causa) {
+            super("La decisione non è stata registrata", causa);
         }
     }
 }

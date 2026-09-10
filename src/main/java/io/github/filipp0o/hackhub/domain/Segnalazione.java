@@ -233,6 +233,14 @@ public class Segnalazione {
         this.stato = StatoSegnalazione.ESAMINATA;
     }
 
+    public void annullaEsameNonRegistrato() {
+        stato = StatoSegnalazione.DA_ESAMINARE;
+        esito = null;
+        motivazione = null;
+        esaminatore = null;
+        dataOraEsame = null;
+    }
+
     public Long getId() {
         return id;
     }
