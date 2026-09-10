@@ -6,6 +6,8 @@ import io.github.filipp0o.hackhub.domain.Sottomissione;
 import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Objects;
 
@@ -40,20 +42,16 @@ public class AggiornareSottomissioneControl {
             Utente utente,
             Hackathon hackathon
     ) {
-        Sottomissione sottomissione =
-                recuperaSottomissione(
-                        utente,
-                        hackathon
-                );
+        Sottomissione sottomissione = recuperaSottomissione(
+                utente,
+                hackathon
+        );
 
         return sottomissione.ottieniContenuto();
     }
 
-    public void verificaContenuto(
-            String nuovoContenuto
-    ) {
-        if (nuovoContenuto == null
-                || nuovoContenuto.isBlank()) {
+    public void verificaContenuto(String nuovoContenuto) {
+        if (nuovoContenuto == null || nuovoContenuto.isBlank()) {
             throw new IllegalArgumentException(
                     "Il contenuto della sottomissione è obbligatorio"
             );
@@ -69,19 +67,16 @@ public class AggiornareSottomissioneControl {
          * Il contenuto viene ricontrollato nel momento
          * effettivo dell'aggiornamento.
          */
-        verificaContenuto(
-                nuovoContenuto
-        );
+        verificaContenuto(nuovoContenuto);
 
         /*
          * Recuperiamo nuovamente il contesto per evitare
          * di mantenere stato applicativo tra le richieste.
          */
-        Sottomissione sottomissione =
-                recuperaSottomissione(
-                        utente,
-                        hackathon
-                );
+        Sottomissione sottomissione = recuperaSottomissione(
+                utente,
+                hackathon
+        );
 
         if (!hackathon.scadenzaSottomissioneNonTrascorsa()) {
             throw new IllegalStateException(
@@ -89,13 +84,53 @@ public class AggiornareSottomissioneControl {
             );
         }
 
-        sottomissione.aggiornaContenuto(
-                nuovoContenuto
-        );
+        String contenutoPrecedente = sottomissione.ottieniContenuto();
 
-        sottomissioneRepository.salva(
-                sottomissione
-        );
+        try {
+            registraRipristino(sottomissione, contenutoPrecedente);
+            sottomissione.aggiornaContenuto(nuovoContenuto);
+            sottomissioneRepository.salva(sottomissione);
+        } catch (RuntimeException errore) {
+            sottomissione.aggiornaContenuto(contenutoPrecedente);
+            throw new AggiornamentoSottomissioneFallitoException(errore);
+        }
+    }
+
+    private void registraRipristino(
+            Sottomissione sottomissione,
+            String contenutoPrecedente
+    ) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+
+        boolean giaRegistrato =
+                TransactionSynchronizationManager.getSynchronizations()
+                        .stream()
+                        .anyMatch(s -> s instanceof RipristinoContenuto r
+                                && r.sottomissione() == sottomissione);
+
+        if (!giaRegistrato) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new RipristinoContenuto(
+                            sottomissione,
+                            contenutoPrecedente
+                    )
+            );
+        }
+    }
+
+    private record RipristinoContenuto(
+            Sottomissione sottomissione,
+            String contenutoPrecedente
+    ) implements TransactionSynchronization {
+
+        @Override
+        public void afterCompletion(int stato) {
+            if (stato == STATUS_ROLLED_BACK) {
+                sottomissione.aggiornaContenuto(contenutoPrecedente);
+            }
+        }
     }
 
     private Sottomissione recuperaSottomissione(
@@ -113,35 +148,35 @@ public class AggiornareSottomissioneControl {
         );
 
         Team team = Objects.requireNonNull(
-                teamRepository.recuperaTeam(
-                        utenteValido
-                ),
+                teamRepository.recuperaTeam(utenteValido),
                 "Il team dell'utente è obbligatorio"
         );
 
-        Partecipazione partecipazione =
-                Objects.requireNonNull(
-                        partecipazioneRepository
-                                .recuperaPartecipazione(
-                                        team,
-                                        hackathonValido
-                                ),
-                        "La partecipazione è obbligatoria"
-                );
+        Partecipazione partecipazione = Objects.requireNonNull(
+                partecipazioneRepository.recuperaPartecipazione(
+                        team,
+                        hackathonValido
+                ),
+                "La partecipazione è obbligatoria"
+        );
 
-        if (partecipazione.getStato()
-                != StatoPartecipazione.ATTIVA) {
+        if (partecipazione.getStato() != StatoPartecipazione.ATTIVA) {
             throw new IllegalStateException(
                     "La partecipazione non è attiva"
             );
         }
 
         return Objects.requireNonNull(
-                sottomissioneRepository
-                        .recuperaSottomissione(
-                                partecipazione
-                        ),
+                sottomissioneRepository.recuperaSottomissione(partecipazione),
                 "La sottomissione è obbligatoria"
         );
+    }
+
+    public static class AggiornamentoSottomissioneFallitoException
+            extends IllegalStateException {
+
+        public AggiornamentoSottomissioneFallitoException(Throwable causa) {
+            super("La sottomissione non è stata aggiornata", causa);
+        }
     }
 }

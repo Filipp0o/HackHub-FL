@@ -22,13 +22,16 @@ public class Partecipazione {
             StatoPartecipazione stato
     ) {
         this.hackathon = Objects.requireNonNull(
-                hackathon, "L'hackathon è obbligatorio"
+                hackathon,
+                "L'hackathon è obbligatorio"
         );
         this.team = Objects.requireNonNull(
-                team, "Il team è obbligatorio"
+                team,
+                "Il team è obbligatorio"
         );
         this.stato = Objects.requireNonNull(
-                stato, "Lo stato della partecipazione è obbligatorio"
+                stato,
+                "Lo stato della partecipazione è obbligatorio"
         );
     }
 
@@ -43,7 +46,9 @@ public class Partecipazione {
             StatoPartecipazione stato
     ) {
         Partecipazione partecipazione = new Partecipazione(
-                hackathon, team, stato
+                hackathon,
+                team,
+                stato
         );
         partecipazione.assegnaId(id);
         return partecipazione;
@@ -51,7 +56,8 @@ public class Partecipazione {
 
     void registraSottomissione(Sottomissione sottomissione) {
         Sottomissione sottomissioneValida = Objects.requireNonNull(
-                sottomissione, "La sottomissione è obbligatoria"
+                sottomissione,
+                "La sottomissione è obbligatoria"
         );
 
         if (this.sottomissione != null) {
@@ -63,13 +69,27 @@ public class Partecipazione {
         this.sottomissione = sottomissioneValida;
     }
 
+    public void annullaSottomissioneNonRegistrata(
+            Sottomissione sottomissione
+    ) {
+        Objects.requireNonNull(
+                sottomissione,
+                "La sottomissione è obbligatoria"
+        );
+
+        if (this.sottomissione == sottomissione) {
+            this.sottomissione = null;
+        }
+    }
+
     public Hackathon ottieniHackathon() {
         return hackathon;
     }
 
     public void assegnaId(Long id) {
         Long idValido = Objects.requireNonNull(
-                id, "L'id della partecipazione è obbligatorio"
+                id,
+                "L'id della partecipazione è obbligatorio"
         );
 
         if (idValido <= 0) {

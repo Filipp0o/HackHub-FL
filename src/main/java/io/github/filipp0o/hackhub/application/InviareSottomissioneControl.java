@@ -6,6 +6,8 @@ import io.github.filipp0o.hackhub.domain.Sottomissione;
 import io.github.filipp0o.hackhub.domain.StatoPartecipazione;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Objects;
 
@@ -68,9 +70,7 @@ public class InviareSottomissioneControl {
         return partecipazione;
     }
 
-    public void verificaContenuto(
-            String contenuto
-    ) {
+    public void verificaContenuto(String contenuto) {
         if (contenuto == null || contenuto.isBlank()) {
             throw new IllegalArgumentException(
                     "Il contenuto della sottomissione è obbligatorio"
@@ -82,11 +82,10 @@ public class InviareSottomissioneControl {
             Partecipazione partecipazione,
             String contenuto
     ) {
-        Partecipazione partecipazioneValida =
-                Objects.requireNonNull(
-                        partecipazione,
-                        "La partecipazione è obbligatoria"
-                );
+        Partecipazione partecipazioneValida = Objects.requireNonNull(
+                partecipazione,
+                "La partecipazione è obbligatoria"
+        );
 
         verificaContenuto(contenuto);
 
@@ -94,12 +93,9 @@ public class InviareSottomissioneControl {
          * Ricontrolliamo le condizioni nel momento
          * effettivo della modifica.
          */
-        verificaPartecipazione(
-                partecipazioneValida
-        );
+        verificaPartecipazione(partecipazioneValida);
 
-        Hackathon hackathon =
-                partecipazioneValida.ottieniHackathon();
+        Hackathon hackathon = partecipazioneValida.ottieniHackathon();
 
         if (!hackathon.scadenzaSottomissioneNonTrascorsa()) {
             throw new IllegalStateException(
@@ -107,22 +103,39 @@ public class InviareSottomissioneControl {
             );
         }
 
-        Sottomissione sottomissione =
-                Sottomissione.crea(
-                        partecipazioneValida,
-                        contenuto
-                );
-
-        sottomissioneRepository.salva(
-                sottomissione
+        Sottomissione sottomissione = Sottomissione.crea(
+                partecipazioneValida,
+                contenuto
         );
+
+        try {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCompletion(int stato) {
+                                if (stato == STATUS_ROLLED_BACK) {
+                                    partecipazioneValida
+                                            .annullaSottomissioneNonRegistrata(
+                                                    sottomissione
+                                            );
+                                }
+                            }
+                        }
+                );
+            }
+
+            sottomissioneRepository.salva(sottomissione);
+        } catch (RuntimeException errore) {
+            partecipazioneValida.annullaSottomissioneNonRegistrata(
+                    sottomissione
+            );
+            throw new RegistrazioneSottomissioneFallitaException(errore);
+        }
     }
 
-    private void verificaPartecipazione(
-            Partecipazione partecipazione
-    ) {
-        if (partecipazione.getStato()
-                != StatoPartecipazione.ATTIVA) {
+    private void verificaPartecipazione(Partecipazione partecipazione) {
+        if (partecipazione.getStato() != StatoPartecipazione.ATTIVA) {
             throw new IllegalStateException(
                     "La partecipazione non è attiva"
             );
@@ -132,6 +145,14 @@ public class InviareSottomissioneControl {
             throw new IllegalStateException(
                     "È già presente una sottomissione per questa partecipazione"
             );
+        }
+    }
+
+    public static class RegistrazioneSottomissioneFallitaException
+            extends IllegalStateException {
+
+        public RegistrazioneSottomissioneFallitaException(Throwable causa) {
+            super("La sottomissione non è stata registrata", causa);
         }
     }
 }
