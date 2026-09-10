@@ -1,5 +1,6 @@
 package io.github.filipp0o.hackhub.application;
 
+import io.github.filipp0o.hackhub.application.InvitareUtentiTeamControl.UtenteNonInvitabileException;
 import io.github.filipp0o.hackhub.domain.Invito;
 import io.github.filipp0o.hackhub.domain.Team;
 import io.github.filipp0o.hackhub.domain.Utente;
@@ -56,9 +57,9 @@ class InvitareUtentiTeamControlTest {
 
     @Test
     void destinatarioNonSelezionatoOSenzaIdNonAvviaRecuperi() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(UtenteNonInvitabileException.class,
                 () -> control.richiediInvito(creatore, null));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(UtenteNonInvitabileException.class,
                 () -> control.richiediInvito(creatore, Utente.crea("x@example.com", "hash")));
         verifyNoInteractions(utenti, teams, inviti);
     }
@@ -68,9 +69,9 @@ class InvitareUtentiTeamControlTest {
         when(teams.recuperaTeamCreatoDa(creatore)).thenReturn(team);
         when(utenti.recuperaUtentiInvitabili(creatore)).thenReturn(List.of(destinatario));
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(UtenteNonInvitabileException.class,
                 () -> control.richiediInvito(creatore, new Utente(creatore.getId())));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(UtenteNonInvitabileException.class,
                 () -> control.richiediInvito(creatore, new Utente(99L)));
         verifyNoInteractions(inviti);
         assertEquals(1, team.numeroMembri());
@@ -79,11 +80,26 @@ class InvitareUtentiTeamControlTest {
     @Test
     void richiedenteSenzaTeamCreatoNonPuoSalvareInvito() {
         when(teams.recuperaTeamCreatoDa(creatore))
-                .thenThrow(new IllegalStateException("Nessun team creato"));
+                .thenThrow(new TeamRepository.TeamNonCreatoException());
 
-        assertThrows(IllegalStateException.class,
+        assertThrows(TeamRepository.TeamNonCreatoException.class,
                 () -> control.richiediInvito(creatore, destinatario));
         verifyNoInteractions(utenti, inviti);
+    }
+
+    @Test
+    void ricontrollaIlDestinatarioDopoLaVisualizzazioneDellElenco() {
+        when(teams.recuperaTeamCreatoDa(creatore)).thenReturn(team);
+        when(utenti.recuperaUtentiInvitabili(creatore))
+                .thenReturn(List.of(destinatario), List.of());
+
+        assertEquals(List.of(destinatario),
+                control.richiediUtentiInvitabili(creatore));
+        assertThrows(UtenteNonInvitabileException.class,
+                () -> control.richiediInvito(creatore, destinatario));
+
+        verifyNoInteractions(inviti);
+        assertEquals(1, team.numeroMembri());
     }
 
     @Test

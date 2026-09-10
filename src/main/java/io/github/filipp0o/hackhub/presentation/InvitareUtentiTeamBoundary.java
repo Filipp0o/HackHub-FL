@@ -1,9 +1,11 @@
 package io.github.filipp0o.hackhub.presentation;
 
 import io.github.filipp0o.hackhub.application.InvitareUtentiTeamControl;
+import io.github.filipp0o.hackhub.application.InvitareUtentiTeamControl.UtenteNonInvitabileException;
 import io.github.filipp0o.hackhub.application.TeamRepository;
 import io.github.filipp0o.hackhub.domain.Utente;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,7 +52,7 @@ public class InvitareUtentiTeamBoundary {
             return esito(401, "Accesso richiesto");
         } catch (TeamRepository.TeamNonCreatoException errore) {
             return esito(409, "È necessario aver creato un team");
-        } catch (IllegalArgumentException errore) {
+        } catch (UtenteNonInvitabileException errore) {
             return esito(400, "L'utente selezionato non è invitabile");
         } catch (RuntimeException errore) {
             return esito(500, "Invito non registrato");
@@ -75,6 +77,7 @@ public class InvitareUtentiTeamBoundary {
         return esito(200, "Nessun utente disponibile");
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<EsitoInvito> mostraSelezioneUtenteObbligatoria() {
         return esito(400, "È necessario selezionare un utente");
     }

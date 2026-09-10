@@ -37,16 +37,24 @@ public class InvitareUtentiTeamControl {
     public void richiediInvito(Utente utente, Utente utenteInvitato) {
         Objects.requireNonNull(utente, "L'utente è obbligatorio");
         if (utenteInvitato == null || utenteInvitato.getId() == null) {
-            throw new IllegalArgumentException("È necessario selezionare un utente registrato");
+            throw new UtenteNonInvitabileException();
         }
 
         Team team = teamRepository.recuperaTeamCreatoDa(utente);
         Utente destinatario = utenteRepository.recuperaUtentiInvitabili(utente).stream()
                 .filter(candidato -> utenteInvitato.getId().equals(candidato.getId()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("L'utente selezionato non è invitabile"));
+                .orElseThrow(UtenteNonInvitabileException::new);
 
         Invito invito = Invito.crea(team, destinatario);
         invitoRepository.salva(invito);
+    }
+
+    public static class UtenteNonInvitabileException
+            extends IllegalArgumentException {
+
+        public UtenteNonInvitabileException() {
+            super("L'utente selezionato non è invitabile");
+        }
     }
 }
