@@ -7,13 +7,7 @@ import io.github.filipp0o.hackhub.domain.NotificaSegnalazione;
 import io.github.filipp0o.hackhub.domain.Segnalazione;
 import io.github.filipp0o.hackhub.domain.Utente;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -23,22 +17,17 @@ import java.util.Objects;
 @RequestMapping("/api/segnalazioni")
 public class EsaminareSegnalazioneBoundary {
 
-    private final EsaminareSegnalazioneControl
-            esaminareSegnalazioneControl;
-
+    private final EsaminareSegnalazioneControl esaminareSegnalazioneControl;
     private final SessioneUtente sessioneUtente;
 
     public EsaminareSegnalazioneBoundary(
-            EsaminareSegnalazioneControl
-                    esaminareSegnalazioneControl,
+            EsaminareSegnalazioneControl esaminareSegnalazioneControl,
             SessioneUtente sessioneUtente
     ) {
-        this.esaminareSegnalazioneControl =
-                Objects.requireNonNull(
-                        esaminareSegnalazioneControl,
-                        "Il control di esame è obbligatorio"
-                );
-
+        this.esaminareSegnalazioneControl = Objects.requireNonNull(
+                esaminareSegnalazioneControl,
+                "Il control di esame è obbligatorio"
+        );
         this.sessioneUtente = Objects.requireNonNull(
                 sessioneUtente,
                 "La sessione utente è obbligatoria"
@@ -46,9 +35,7 @@ public class EsaminareSegnalazioneBoundary {
     }
 
     @GetMapping("/da-esaminare")
-    public List<RiepilogoSegnalazione>
-    ottieniSegnalazioniDaEsaminare() {
-
+    public List<RiepilogoSegnalazione> ottieniSegnalazioniDaEsaminare() {
         Utente organizzatore = sessioneUtente.recupera();
 
         return esaminareSegnalazioneControl
@@ -70,11 +57,10 @@ public class EsaminareSegnalazioneBoundary {
         );
 
         return creaRiepilogo(
-                esaminareSegnalazioneControl
-                        .selezionaSegnalazione(
-                                segnalazione,
-                                organizzatore
-                        )
+                esaminareSegnalazioneControl.selezionaSegnalazione(
+                        segnalazione,
+                        organizzatore
+                )
         );
     }
 
@@ -82,11 +68,90 @@ public class EsaminareSegnalazioneBoundary {
             NotificaSegnalazione notificaSegnalazione
     ) {
         return creaRiepilogo(
-                esaminareSegnalazioneControl
-                        .apriSegnalazioneDaNotifica(
-                                notificaSegnalazione,
-                                sessioneUtente.recupera()
+                esaminareSegnalazioneControl.apriSegnalazioneDaNotifica(
+                        notificaSegnalazione,
+                        sessioneUtente.recupera()
+                )
+        );
+    }
+
+    @GetMapping("/notifiche")
+    public List<RiepilogoNotifica> ottieniNotificheRicevute() {
+        Utente organizzatore = sessioneUtente.recupera();
+
+        return SupportoRest.leggi(() ->
+                        esaminareSegnalazioneControl
+                                .ottieniNotificheRicevute(organizzatore)
+                )
+                .stream()
+                .map(n -> new RiepilogoNotifica(
+                        n.getId(),
+                        n.getSegnalazione().getId(),
+                        n.getLetta()
+                ))
+                .toList();
+    }
+
+    @PostMapping("/notifiche/{notificaId}/apertura")
+    public RiepilogoSegnalazione apriNotificaSegnalazione(
+            @PathVariable Long notificaId
+    ) {
+        Utente organizzatore = sessioneUtente.recupera();
+        SupportoRest.id(notificaId);
+
+        NotificaSegnalazione notifica = SupportoRest.leggi(() ->
+                        esaminareSegnalazioneControl
+                                .ottieniNotificheRicevute(organizzatore)
+                )
+                .stream()
+                .filter(n -> Objects.equals(n.getId(), notificaId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Notifica non trovata"
+                ));
+
+        return creaRiepilogo(
+                SupportoRest.esegui(() ->
+                        esaminareSegnalazioneControl.apriSegnalazioneDaNotifica(
+                                notifica,
+                                organizzatore
                         )
+                )
+        );
+    }
+
+    @PostMapping("/{segnalazioneId}/decisione/verifica")
+    public RiepilogoDecisione verificaDecisione(
+            @PathVariable Long segnalazioneId,
+            @RequestBody RichiestaDecisione richiesta
+    ) {
+        Utente organizzatore = sessioneUtente.recupera();
+        RichiestaDecisione valida = validaRichiesta(richiesta);
+
+        Segnalazione segnalazione = trovaSegnalazione(
+                segnalazioneId,
+                organizzatore
+        );
+
+        SupportoRest.esegui(() ->
+                esaminareSegnalazioneControl.selezionaSegnalazione(
+                        segnalazione,
+                        organizzatore
+                )
+        );
+
+        esaminareSegnalazioneControl.verificaDecisione(
+                new DatiDecisioneSegnalazione(
+                        valida.esito(),
+                        valida.motivazione()
+                )
+        );
+
+        return new RiepilogoDecisione(
+                segnalazioneId,
+                valida.esito(),
+                valida.motivazione()
         );
     }
 
@@ -96,40 +161,49 @@ public class EsaminareSegnalazioneBoundary {
             @PathVariable Long segnalazioneId,
             @RequestBody RichiestaDecisione richiesta
     ) {
-        RichiestaDecisione richiestaValida =
-                Objects.requireNonNull(
-                        richiesta,
-                        "La decisione è obbligatoria"
-                );
-
         Utente organizzatore = sessioneUtente.recupera();
+        RichiestaDecisione valida = validaRichiesta(richiesta);
 
         Segnalazione segnalazione = trovaSegnalazione(
                 segnalazioneId,
                 organizzatore
         );
 
-        esaminareSegnalazioneControl
-                .selezionaSegnalazione(
-                        segnalazione,
-                        organizzatore
-                );
+        esaminareSegnalazioneControl.selezionaSegnalazione(
+                segnalazione,
+                organizzatore
+        );
 
-        DatiDecisioneSegnalazione dati =
-                new DatiDecisioneSegnalazione(
-                        richiestaValida.esito(),
-                        richiestaValida.motivazione()
-                );
+        DatiDecisioneSegnalazione dati = new DatiDecisioneSegnalazione(
+                valida.esito(),
+                valida.motivazione()
+        );
 
-        esaminareSegnalazioneControl
-                .verificaDecisione(dati);
+        esaminareSegnalazioneControl.verificaDecisione(dati);
 
-        esaminareSegnalazioneControl
-                .registraDecisione(
-                        segnalazione,
-                        organizzatore,
-                        dati
-                );
+        SupportoRest.esegui(() -> {
+            esaminareSegnalazioneControl.registraDecisione(
+                    segnalazione,
+                    organizzatore,
+                    dati
+            );
+
+            return null;
+        });
+    }
+
+    private RichiestaDecisione validaRichiesta(
+            RichiestaDecisione richiesta
+    ) {
+        SupportoRest.richiesta(richiesta);
+
+        if (richiesta.esito() == null) {
+            throw new IllegalArgumentException(
+                    "L'esito della segnalazione è obbligatorio"
+            );
+        }
+
+        return richiesta;
     }
 
     private Segnalazione trovaSegnalazione(
@@ -139,10 +213,7 @@ public class EsaminareSegnalazioneBoundary {
         return esaminareSegnalazioneControl
                 .avviaEsameSegnalazioni(organizzatore)
                 .stream()
-                .filter(segnalazione -> Objects.equals(
-                        segnalazione.getId(),
-                        segnalazioneId
-                ))
+                .filter(s -> Objects.equals(s.getId(), segnalazioneId))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -156,14 +227,8 @@ public class EsaminareSegnalazioneBoundary {
         return new RiepilogoSegnalazione(
                 segnalazione.getId(),
                 segnalazione.getDescrizione(),
-                segnalazione
-                        .getPartecipazione()
-                        .getTeam()
-                        .getNome(),
-                segnalazione
-                        .getPartecipazione()
-                        .getHackathon()
-                        .getRegolamento(),
+                segnalazione.getPartecipazione().getTeam().getNome(),
+                segnalazione.getPartecipazione().getHackathon().getRegolamento(),
                 List.of(EsitoSegnalazione.values())
         );
     }
@@ -178,6 +243,20 @@ public class EsaminareSegnalazioneBoundary {
     }
 
     public record RichiestaDecisione(
+            EsitoSegnalazione esito,
+            String motivazione
+    ) {
+    }
+
+    public record RiepilogoNotifica(
+            Long id,
+            Long segnalazioneId,
+            Boolean letta
+    ) {
+    }
+
+    public record RiepilogoDecisione(
+            Long segnalazioneId,
             EsitoSegnalazione esito,
             String motivazione
     ) {

@@ -403,7 +403,7 @@ class ConfigurareRiscossionePremioControlTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                ConfigurareRiscossionePremioControl.ConfigurazioneFallitaException.class,
                 () -> control.avviaConfigurazioneRiscossionePremio(
                         hackathon,
                         responsabile
@@ -519,7 +519,7 @@ class ConfigurareRiscossionePremioControlTest {
         @Override
         public String richiediErogazionePremio(
                 BigDecimal importoPremio,
-                String beneficiaryRef
+                String beneficiaryRef, String chiaveErogazione
         ) {
             return "payment-123";
         }

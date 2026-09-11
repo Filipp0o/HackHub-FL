@@ -446,12 +446,14 @@ class ErogarePremioControlTest {
                 5
         );
 
-        return Hackathon.crea(
+        Hackathon risultato = Hackathon.crea(
                 dati,
                 new Utente(1L),
                 new Utente(2L),
                 List.of(new Utente(3L))
         );
+        risultato.assegnaId(10L);
+        return risultato;
     }
 
     private void portaInValutazione(
@@ -480,7 +482,7 @@ class ErogarePremioControlTest {
         @Override
         public String richiediErogazionePremio(
                 BigDecimal importoPremio,
-                String beneficiaryRef
+                String beneficiaryRef, String chiaveErogazione
         ) {
             numeroRichiesteErogazione++;
             importoRicevuto = importoPremio;

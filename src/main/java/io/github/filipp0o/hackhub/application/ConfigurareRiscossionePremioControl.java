@@ -5,6 +5,8 @@ import io.github.filipp0o.hackhub.domain.Partecipazione;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
 import io.github.filipp0o.hackhub.domain.StatoRiscossionePremio;
 import io.github.filipp0o.hackhub.domain.Utente;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Objects;
 
@@ -21,7 +23,6 @@ public class ConfigurareRiscossionePremioControl {
                 sistemaPagamentoGateway,
                 "Il gateway del sistema di pagamento è obbligatorio"
         );
-
         this.hackathonRepository = Objects.requireNonNull(
                 hackathonRepository,
                 "Il repository degli hackathon è obbligatorio"
@@ -36,7 +37,6 @@ public class ConfigurareRiscossionePremioControl {
                 hackathon,
                 "L'hackathon è obbligatorio"
         );
-
         Utente responsabileValido = Objects.requireNonNull(
                 responsabileTeam,
                 "Il responsabile del team è obbligatorio"
@@ -48,38 +48,73 @@ public class ConfigurareRiscossionePremioControl {
         );
 
         RiscossionePremio riscossione =
-                ottieniRiscossioneDaConfigurare(
-                        hackathonValido
+                ottieniRiscossioneDaConfigurare(hackathonValido);
+
+        String beneficiaryRef;
+
+        try {
+            beneficiaryRef =
+                    sistemaPagamentoGateway.avviaConfigurazioneBeneficiario(
+                            responsabileValido
+                    );
+
+            if (beneficiaryRef == null || beneficiaryRef.isBlank()) {
+                throw new IllegalStateException(
+                        "La configurazione non ha restituito un riferimento valido"
                 );
+            }
+        } catch (SistemaPagamentoGateway.ConfigurazioneAnnullataException errore) {
+            throw errore;
+        } catch (RuntimeException errore) {
+            throw new ConfigurazioneFallitaException(
+                    "Configurazione del beneficiario non completata",
+                    errore
+            );
+        }
 
-        String beneficiaryRef =
-                sistemaPagamentoGateway
-                        .avviaConfigurazioneBeneficiario(
-                                responsabileValido
-                        );
+        Runnable ripristino = () ->
+                riscossione.annullaConfigurazioneNonRegistrata(beneficiaryRef);
 
-        riscossione.configura(beneficiaryRef);
+        try {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCompletion(int stato) {
+                                if (stato == STATUS_ROLLED_BACK) {
+                                    ripristino.run();
+                                }
+                            }
+                        }
+                );
+            }
 
-        hackathonRepository.salva(hackathonValido);
+            riscossione.configura(beneficiaryRef);
+            hackathonRepository.salva(hackathonValido);
+        } catch (RuntimeException errore) {
+            ripristino.run();
+
+            throw new ConfigurazioneFallitaException(
+                    "Configurazione non registrata. È possibile riprovare",
+                    errore
+            );
+        }
     }
 
     private void verificaResponsabileTeamVincitore(
             Hackathon hackathon,
             Utente responsabileTeam
     ) {
-        Partecipazione partecipazioneVincitrice =
-                hackathon.getVincitrice();
+        Partecipazione vincitrice = hackathon.getVincitrice();
 
-        if (partecipazioneVincitrice == null) {
+        if (vincitrice == null) {
             throw new IllegalStateException(
                     "L'hackathon non possiede un team vincitore"
             );
         }
 
         Utente responsabileVincitore =
-                partecipazioneVincitrice
-                        .getTeam()
-                        .getResponsabile();
+                vincitrice.getTeam().getResponsabile();
 
         if (!Objects.equals(
                 responsabileVincitore.getId(),
@@ -94,8 +129,7 @@ public class ConfigurareRiscossionePremioControl {
     private RiscossionePremio ottieniRiscossioneDaConfigurare(
             Hackathon hackathon
     ) {
-        RiscossionePremio riscossione =
-                hackathon.getRiscossionePremio();
+        RiscossionePremio riscossione = hackathon.getRiscossionePremio();
 
         if (riscossione == null) {
             throw new IllegalStateException(
@@ -111,5 +145,16 @@ public class ConfigurareRiscossionePremioControl {
         }
 
         return riscossione;
+    }
+
+    public static class ConfigurazioneFallitaException
+            extends IllegalStateException {
+
+        public ConfigurazioneFallitaException(
+                String messaggio,
+                Throwable causa
+        ) {
+            super(messaggio, causa);
+        }
     }
 }

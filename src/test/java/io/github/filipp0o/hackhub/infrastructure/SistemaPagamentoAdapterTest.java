@@ -63,7 +63,7 @@ class SistemaPagamentoAdapterTest {
 
         String secondoRiferimento =
                 adapter.avviaConfigurazioneBeneficiario(
-                        new Utente(1L)
+                        new Utente(2L)
                 );
 
         assertNotEquals(
@@ -81,8 +81,8 @@ class SistemaPagamentoAdapterTest {
                 NullPointerException.class,
                 () -> adapter.richiediErogazionePremio(
                         null,
-                        "beneficiary-ref"
-                )
+                        "beneficiary-ref", "premio-1"
+                        )
         );
     }
 
@@ -96,14 +96,14 @@ class SistemaPagamentoAdapterTest {
                         IllegalArgumentException.class,
                         () -> adapter.richiediErogazionePremio(
                                 BigDecimal.ZERO,
-                                "beneficiary-ref"
+                                "beneficiary-ref", "premio-2"
                         )
                 ),
                 () -> assertThrows(
                         IllegalArgumentException.class,
                         () -> adapter.richiediErogazionePremio(
                                 BigDecimal.valueOf(-1),
-                                "beneficiary-ref"
+                                "beneficiary-ref", "premio-3"
                         )
                 )
         );
@@ -119,14 +119,14 @@ class SistemaPagamentoAdapterTest {
                         IllegalArgumentException.class,
                         () -> adapter.richiediErogazionePremio(
                                 BigDecimal.valueOf(1_000),
-                                null
+                                null, "premio-4"
                         )
                 ),
                 () -> assertThrows(
                         IllegalArgumentException.class,
                         () -> adapter.richiediErogazionePremio(
                                 BigDecimal.valueOf(1_000),
-                                "   "
+                                "   ", "premio-5"
                         )
                 )
         );
@@ -140,8 +140,8 @@ class SistemaPagamentoAdapterTest {
         String paymentRef =
                 adapter.richiediErogazionePremio(
                         BigDecimal.valueOf(1_000),
-                        "beneficiary-ref"
-                );
+                        "beneficiary-ref", "premio-6"
+                        );
 
         assertAll(
                 () -> assertNotNull(paymentRef),
@@ -167,14 +167,14 @@ class SistemaPagamentoAdapterTest {
         String primoRiferimento =
                 adapter.richiediErogazionePremio(
                         BigDecimal.valueOf(1_000),
-                        "beneficiary-ref"
-                );
+                        "beneficiary-ref", "premio-7"
+                        );
 
         String secondoRiferimento =
                 adapter.richiediErogazionePremio(
                         BigDecimal.valueOf(1_000),
-                        "beneficiary-ref"
-                );
+                        "beneficiary-ref", "premio-8"
+                        );
 
         assertNotEquals(
                 primoRiferimento,

@@ -42,12 +42,10 @@ public class EsaminareSegnalazioneControl {
                 transazioni,
                 "La gestione delle transazioni è obbligatoria"
         );
-
         this.segnalazioneRepository = Objects.requireNonNull(
                 segnalazioneRepository,
                 "Il repository delle segnalazioni è obbligatorio"
         );
-
         this.partecipazioneRepository = Objects.requireNonNull(
                 partecipazioneRepository,
                 "Il repository delle partecipazioni è obbligatorio"
@@ -57,13 +55,22 @@ public class EsaminareSegnalazioneControl {
     public List<Segnalazione> avviaEsameSegnalazioni(
             Utente organizzatore
     ) {
-        Utente organizzatoreValido = Objects.requireNonNull(
-                organizzatore,
-                "L'organizzatore è obbligatorio"
-        );
-
         return segnalazioneRepository.ottieniSegnalazioniDaEsaminare(
-                organizzatoreValido
+                Objects.requireNonNull(
+                        organizzatore,
+                        "L'organizzatore è obbligatorio"
+                )
+        );
+    }
+
+    public List<NotificaSegnalazione> ottieniNotificheRicevute(
+            Utente organizzatore
+    ) {
+        return segnalazioneRepository.ottieniNotificheRicevute(
+                Objects.requireNonNull(
+                        organizzatore,
+                        "L'organizzatore è obbligatorio"
+                )
         );
     }
 
@@ -75,15 +82,13 @@ public class EsaminareSegnalazioneControl {
                 segnalazione,
                 "La segnalazione è obbligatoria"
         );
-
         Utente organizzatoreValido = Objects.requireNonNull(
                 organizzatore,
                 "L'organizzatore è obbligatorio"
         );
 
-        Hackathon hackathon = segnalazioneValida
-                .getPartecipazione()
-                .getHackathon();
+        Hackathon hackathon =
+                segnalazioneValida.getPartecipazione().getHackathon();
 
         if (!Objects.equals(
                 hackathon.getOrganizzatore().getId(),
@@ -112,7 +117,6 @@ public class EsaminareSegnalazioneControl {
                 notificaSegnalazione,
                 "La notifica della segnalazione è obbligatoria"
         );
-
         Utente organizzatoreValido = Objects.requireNonNull(
                 organizzatore,
                 "L'organizzatore è obbligatorio"
@@ -128,10 +132,8 @@ public class EsaminareSegnalazioneControl {
         }
 
         Segnalazione segnalazione = notificaValida.getSegnalazione();
-
-        Hackathon hackathon = segnalazione
-                .getPartecipazione()
-                .getHackathon();
+        Hackathon hackathon =
+                segnalazione.getPartecipazione().getHackathon();
 
         if (!Objects.equals(
                 hackathon.getOrganizzatore().getId(),
@@ -155,8 +157,10 @@ public class EsaminareSegnalazioneControl {
                 boolean giaRegistrato =
                         TransactionSynchronizationManager.getSynchronizations()
                                 .stream()
-                                .anyMatch(s -> s instanceof RipristinoLettura r
-                                        && r.notifica() == notificaValida);
+                                .anyMatch(s ->
+                                        s instanceof RipristinoLettura r
+                                                && r.notifica() == notificaValida
+                                );
 
                 if (!giaRegistrato) {
                     TransactionSynchronizationManager.registerSynchronization(
@@ -169,32 +173,13 @@ public class EsaminareSegnalazioneControl {
             segnalazioneRepository.salvaNotifica(notificaValida);
         } catch (RuntimeException errore) {
             notificaValida.ripristinaLettura(lettaPrima);
-
-            throw new IllegalStateException(
-                    "La lettura della notifica non è stata registrata",
-                    errore
-            );
+            throw new RegistrazioneLetturaFallitaException(errore);
         }
 
         return segnalazione;
     }
 
-    private record RipristinoLettura(
-            NotificaSegnalazione notifica,
-            Boolean lettaPrima
-    ) implements TransactionSynchronization {
-
-        @Override
-        public void afterCompletion(int stato) {
-            if (stato == STATUS_ROLLED_BACK) {
-                notifica.ripristinaLettura(lettaPrima);
-            }
-        }
-    }
-
-    public void verificaDecisione(
-            DatiDecisioneSegnalazione dati
-    ) {
+    public void verificaDecisione(DatiDecisioneSegnalazione dati) {
         validaCompletezzaDecisione(dati);
     }
 
@@ -207,7 +192,6 @@ public class EsaminareSegnalazioneControl {
                 segnalazione,
                 "La segnalazione è obbligatoria"
         );
-
         Utente organizzatoreValido = Objects.requireNonNull(
                 organizzatore,
                 "L'organizzatore è obbligatorio"
@@ -258,10 +242,7 @@ public class EsaminareSegnalazioneControl {
                     );
                 }
 
-                segnalazioneValida.registraEsame(
-                        dati,
-                        organizzatoreValido
-                );
+                segnalazioneValida.registraEsame(dati, organizzatoreValido);
 
                 if (dati.esito()
                         == EsitoSegnalazione.VIOLAZIONE_CON_ESCLUSIONE) {
@@ -274,14 +255,6 @@ public class EsaminareSegnalazioneControl {
         } catch (RuntimeException errore) {
             ripristino.run();
             throw new RegistrazioneDecisioneFallitaException(errore);
-        }
-    }
-
-    public static class RegistrazioneDecisioneFallitaException
-            extends IllegalStateException {
-
-        public RegistrazioneDecisioneFallitaException(Throwable causa) {
-            super("La decisione non è stata registrata", causa);
         }
     }
 
@@ -303,6 +276,35 @@ public class EsaminareSegnalazioneControl {
             throw new IllegalArgumentException(
                     "La motivazione della decisione è obbligatoria"
             );
+        }
+    }
+
+    private record RipristinoLettura(
+            NotificaSegnalazione notifica,
+            Boolean lettaPrima
+    ) implements TransactionSynchronization {
+
+        @Override
+        public void afterCompletion(int stato) {
+            if (stato == STATUS_ROLLED_BACK) {
+                notifica.ripristinaLettura(lettaPrima);
+            }
+        }
+    }
+
+    public static class RegistrazioneLetturaFallitaException
+            extends IllegalStateException {
+
+        public RegistrazioneLetturaFallitaException(Throwable causa) {
+            super("La lettura della notifica non è stata registrata", causa);
+        }
+    }
+
+    public static class RegistrazioneDecisioneFallitaException
+            extends IllegalStateException {
+
+        public RegistrazioneDecisioneFallitaException(Throwable causa) {
+            super("La decisione non è stata registrata", causa);
         }
     }
 }

@@ -172,6 +172,7 @@ class ErogarePremioBoundaryTest {
                 List.of(new Utente(3L))
         );
 
+        risultato.assegnaId(10L);
         risultato.aggiornaStato(oggi);
 
         Utente responsabile = new Utente(4L);
@@ -220,7 +221,7 @@ class ErogarePremioBoundaryTest {
         @Override
         public String richiediErogazionePremio(
                 BigDecimal importoPremio,
-                String beneficiaryRef
+                String beneficiaryRef, String chiaveErogazione
         ) {
             numeroRichiesteErogazione++;
             importoRicevuto = importoPremio;

@@ -2,12 +2,17 @@ package io.github.filipp0o.hackhub.presentation;
 
 import io.github.filipp0o.hackhub.application.CreareHackathonControl;
 import io.github.filipp0o.hackhub.application.CreareTeamControl;
+import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
 import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice(assignableTypes = {
         CreareTeamBoundary.class,
@@ -15,7 +20,12 @@ import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
         IscrivereTeamHackathonBoundary.class,
         SegnalareViolazioneBoundary.class,
         ValutareSottomissioneBoundary.class,
-        EsaminareSegnalazioneBoundary.class
+        EsaminareSegnalazioneBoundary.class,
+        InviareSottomissioneBoundary.class,
+        AggiornareSottomissioneBoundary.class,
+        ProclamareTeamVincitoreBoundary.class,
+        ErogarePremioBoundary.class,
+        ConfigurareRiscossionePremioBoundary.class
 })
 public class ErroriRichiestaHandler {
 
@@ -69,7 +79,6 @@ public class ErroriRichiestaHandler {
                 .body(new ErroreRichiesta(errore.getMessage()));
     }
 
-
     @ExceptionHandler(
             EsaminareSegnalazioneControl.RegistrazioneDecisioneFallitaException.class
     )
@@ -80,8 +89,38 @@ public class ErroriRichiestaHandler {
                 .body(new ErroreRichiesta(errore.getMessage()));
     }
 
-    public record ErroreRichiesta(
-            String messaggio
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErroreRichiesta> erroreHttp(
+            ResponseStatusException errore
     ) {
+        return ResponseEntity.status(errore.getStatusCode())
+                .body(new ErroreRichiesta(errore.getReason()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErroreRichiesta> erroreImprevisto(
+            Exception errore
+    ) {
+        if (errore instanceof HttpMessageNotReadableException
+                || errore instanceof ServletRequestBindingException
+                || errore instanceof MethodArgumentTypeMismatchException) {
+            return ResponseEntity.badRequest()
+                    .body(new ErroreRichiesta(
+                            "Richiesta mancante o non leggibile"
+                    ));
+        }
+
+        if (errore instanceof ErrorResponse risposta) {
+            return ResponseEntity.status(risposta.getStatusCode())
+                    .body(new ErroreRichiesta(
+                            "Richiesta non supportata"
+                    ));
+        }
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErroreRichiesta("Operazione non completata"));
+    }
+
+    public record ErroreRichiesta(String messaggio) {
     }
 }

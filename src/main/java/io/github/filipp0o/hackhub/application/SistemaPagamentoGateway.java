@@ -6,12 +6,18 @@ import java.math.BigDecimal;
 
 public interface SistemaPagamentoGateway {
 
-    String avviaConfigurazioneBeneficiario(
-            Utente responsabileTeam
-    );
+    String avviaConfigurazioneBeneficiario(Utente responsabileTeam);
 
     String richiediErogazionePremio(
             BigDecimal importoPremio,
-            String beneficiaryRef
+            String beneficiaryRef,
+            String chiaveErogazione
     );
+
+    class ConfigurazioneAnnullataException extends RuntimeException {
+
+        public ConfigurazioneAnnullataException() {
+            super("Configurazione annullata");
+        }
+    }
 }

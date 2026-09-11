@@ -1060,7 +1060,7 @@ class ProclamareTeamVincitoreControlTest {
         );
 
         assertAll(
-                () -> assertSame(errore, ricevuto),
+                () -> assertSame(errore, ricevuto.getCause()),
                 () -> assertEquals(
                         TipoStatoHackathon.IN_VALUTAZIONE, hackathon.getStato()
                 ),

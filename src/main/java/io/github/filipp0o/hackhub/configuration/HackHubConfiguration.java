@@ -1,45 +1,20 @@
 package io.github.filipp0o.hackhub.configuration;
 
-import io.github.filipp0o.hackhub.application.CodificatorePassword;
-import io.github.filipp0o.hackhub.application.ConfigurareRiscossionePremioControl;
-import io.github.filipp0o.hackhub.application.CreareHackathonControl;
-import io.github.filipp0o.hackhub.application.CreareTeamControl;
-import io.github.filipp0o.hackhub.application.ErogarePremioControl;
-import io.github.filipp0o.hackhub.application.EsaminareSegnalazioneControl;
-import io.github.filipp0o.hackhub.application.HackathonRepository;
-import io.github.filipp0o.hackhub.application.InviareSottomissioneControl;
-import io.github.filipp0o.hackhub.application.IscrivereTeamHackathonControl;
-import io.github.filipp0o.hackhub.application.PartecipazioneRepository;
-import io.github.filipp0o.hackhub.application.ProclamareTeamVincitoreControl;
-import io.github.filipp0o.hackhub.application.SegnalareViolazioneControl;
-import io.github.filipp0o.hackhub.application.SegnalazioneRepository;
-import io.github.filipp0o.hackhub.application.SistemaPagamentoGateway;
-import io.github.filipp0o.hackhub.application.SottomissioneRepository;
-import io.github.filipp0o.hackhub.application.TeamRepository;
-import io.github.filipp0o.hackhub.application.UtenteRepository;
-import io.github.filipp0o.hackhub.application.ValutareSottomissioneControl;
-import io.github.filipp0o.hackhub.application.ValutazioneRepository;
-import io.github.filipp0o.hackhub.infrastructure.BCryptPasswordEncoderAdapter;
-import io.github.filipp0o.hackhub.infrastructure.InMemoryHackathonRepository;
-import io.github.filipp0o.hackhub.infrastructure.InMemoryPartecipazioneRepository;
-import io.github.filipp0o.hackhub.infrastructure.SegnalazioneRepositoryImpl;
-import io.github.filipp0o.hackhub.infrastructure.SistemaPagamentoAdapter;
-import io.github.filipp0o.hackhub.infrastructure.SottomissioneRepositoryImpl;
-import io.github.filipp0o.hackhub.infrastructure.InMemoryTeamRepository;
-import io.github.filipp0o.hackhub.infrastructure.InMemoryUtenteRepository;
-import io.github.filipp0o.hackhub.infrastructure.ValutazioneRepositoryImpl;
+import io.github.filipp0o.hackhub.application.*;
+import io.github.filipp0o.hackhub.infrastructure.*;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionOperations;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
+import java.nio.file.Path;
 import java.util.List;
-import io.github.filipp0o.hackhub.application.AggiornareSottomissioneControl;
-import io.github.filipp0o.hackhub.application.ConsultareHackathonControl;
 
 @Configuration
 public class HackHubConfiguration {
@@ -72,9 +47,7 @@ public class HackHubConfiguration {
     public HackathonRepository hackathonRepository(
             PartecipazioneRepository partecipazioneRepository
     ) {
-        return new InMemoryHackathonRepository(
-                partecipazioneRepository
-        );
+        return new InMemoryHackathonRepository(partecipazioneRepository);
     }
 
     @Bean
@@ -96,7 +69,20 @@ public class HackHubConfiguration {
     }
 
     @Bean
-    public SistemaPagamentoGateway sistemaPagamentoGateway() {
+    public SistemaPagamentoGateway sistemaPagamentoGateway(
+            Environment ambiente
+    ) {
+        if (ambiente.acceptsProfiles(Profiles.of("persistent"))) {
+            Path archivio = Path.of(
+                    ambiente.getProperty(
+                            "hackhub.pagamenti.archivio",
+                            "./data/pagamenti-simulati.properties"
+                    )
+            );
+
+            return new SistemaPagamentoAdapter(archivio);
+        }
+
         return new SistemaPagamentoAdapter();
     }
 
@@ -104,9 +90,7 @@ public class HackHubConfiguration {
     public CreareTeamControl creareTeamControl(
             TeamRepository teamRepository
     ) {
-        return new CreareTeamControl(
-                teamRepository
-        );
+        return new CreareTeamControl(teamRepository);
     }
 
     @Bean
@@ -124,9 +108,7 @@ public class HackHubConfiguration {
     public ConsultareHackathonControl consultareHackathonControl(
             HackathonRepository hackathonRepository
     ) {
-        return new ConsultareHackathonControl(
-                hackathonRepository
-        );
+        return new ConsultareHackathonControl(hackathonRepository);
     }
 
     @Bean
@@ -167,10 +149,12 @@ public class HackHubConfiguration {
                 TransactionOperations.withoutTransaction();
 
         if (gestore != null) {
-            var template = new TransactionTemplate(gestore);
+            TransactionTemplate template = new TransactionTemplate(gestore);
+
             template.setIsolationLevel(
                     TransactionDefinition.ISOLATION_REPEATABLE_READ
             );
+
             transazioni = template;
         }
 

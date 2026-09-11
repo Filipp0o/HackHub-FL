@@ -4,6 +4,8 @@ import io.github.filipp0o.hackhub.domain.Hackathon;
 import io.github.filipp0o.hackhub.domain.RiscossionePremio;
 import io.github.filipp0o.hackhub.domain.StatoRiscossionePremio;
 import io.github.filipp0o.hackhub.domain.Utente;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Objects;
 
@@ -39,11 +41,7 @@ public class ErogarePremioControl {
                 "L'hackathon è obbligatorio"
         );
 
-        verificaOrganizzatore(
-                organizzatoreValido,
-                hackathonValido
-        );
-
+        verificaOrganizzatore(organizzatoreValido, hackathonValido);
         ottieniRiscossionePronta(hackathonValido);
     }
 
@@ -60,22 +58,70 @@ public class ErogarePremioControl {
                 "L'hackathon è obbligatorio"
         );
 
-        verificaOrganizzatore(
-                organizzatoreValido,
-                hackathonValido
-        );
+        verificaOrganizzatore(organizzatoreValido, hackathonValido);
 
         RiscossionePremio riscossione =
                 ottieniRiscossionePronta(hackathonValido);
 
-        String paymentRef =
-                sistemaPagamentoGateway.richiediErogazionePremio(
-                        hackathonValido.getImportoPremio(),
-                        riscossione.getBeneficiaryRef()
-                );
+        if (hackathonValido.getId() == null
+                || hackathonValido.getId() <= 0) {
+            throw new IllegalStateException(
+                    "L'hackathon deve essere salvato prima dell'erogazione"
+            );
+        }
 
-        riscossione.registraErogazione(paymentRef);
-        hackathonRepository.salva(hackathonValido);
+        String chiaveErogazione =
+                "premio-hackathon-" + hackathonValido.getId();
+
+        String paymentRef;
+
+        try {
+            paymentRef = sistemaPagamentoGateway.richiediErogazionePremio(
+                    hackathonValido.getImportoPremio(),
+                    riscossione.getBeneficiaryRef(),
+                    chiaveErogazione
+            );
+
+            if (paymentRef == null || paymentRef.isBlank()) {
+                throw new IllegalStateException(
+                        "Il pagamento non ha restituito un riferimento valido"
+                );
+            }
+        } catch (RuntimeException errore) {
+            throw new ErogazioneFallitaException(
+                    "Erogazione non completata",
+                    errore
+            );
+        }
+
+        Runnable ripristino = () ->
+                riscossione.annullaErogazioneNonRegistrata(paymentRef);
+
+        try {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCompletion(int stato) {
+                                if (stato == STATUS_ROLLED_BACK) {
+                                    ripristino.run();
+                                }
+                            }
+                        }
+                );
+            }
+
+            riscossione.registraErogazione(paymentRef);
+            hackathonRepository.salva(hackathonValido);
+        } catch (RuntimeException errore) {
+            ripristino.run();
+
+            throw new ErogazioneFallitaException(
+                    "Pagamento eseguito, ma registrazione non completata. "
+                            + "È possibile riprovare senza duplicare il pagamento",
+                    errore
+            );
+        }
     }
 
     private void verificaOrganizzatore(
@@ -95,8 +141,7 @@ public class ErogarePremioControl {
     private RiscossionePremio ottieniRiscossionePronta(
             Hackathon hackathon
     ) {
-        RiscossionePremio riscossione =
-                hackathon.getRiscossionePremio();
+        RiscossionePremio riscossione = hackathon.getRiscossionePremio();
 
         if (riscossione == null) {
             throw new IllegalStateException(
@@ -104,13 +149,23 @@ public class ErogarePremioControl {
             );
         }
 
-        if (riscossione.getStato()
-                != StatoRiscossionePremio.PRONTA) {
+        if (riscossione.getStato() != StatoRiscossionePremio.PRONTA) {
             throw new IllegalStateException(
                     "La riscossione non è pronta per l'erogazione"
             );
         }
 
         return riscossione;
+    }
+
+    public static class ErogazioneFallitaException
+            extends IllegalStateException {
+
+        public ErogazioneFallitaException(
+                String messaggio,
+                Throwable causa
+        ) {
+            super(messaggio, causa);
+        }
     }
 }

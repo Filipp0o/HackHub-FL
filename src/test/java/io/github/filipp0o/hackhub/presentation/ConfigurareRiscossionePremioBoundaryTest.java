@@ -201,7 +201,7 @@ class ConfigurareRiscossionePremioBoundaryTest {
         @Override
         public String richiediErogazionePremio(
                 BigDecimal importoPremio,
-                String beneficiaryRef
+                String beneficiaryRef, String chiaveErogazione
         ) {
             return "payment-123";
         }

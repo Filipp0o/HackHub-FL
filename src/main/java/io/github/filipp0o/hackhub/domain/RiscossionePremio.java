@@ -19,10 +19,12 @@ public class RiscossionePremio {
             String paymentRef
     ) {
         this.hackathon = Objects.requireNonNull(
-                hackathon, "L'hackathon è obbligatorio"
+                hackathon,
+                "L'hackathon è obbligatorio"
         );
         this.stato = Objects.requireNonNull(
-                stato, "Lo stato della riscossione è obbligatorio"
+                stato,
+                "Lo stato della riscossione è obbligatorio"
         );
 
         boolean coerente = switch (stato) {
@@ -67,18 +69,21 @@ public class RiscossionePremio {
             String beneficiaryRef,
             String paymentRef
     ) {
-        Objects.requireNonNull(
-                id, "L'id della riscossione è obbligatorio"
-        );
+        Objects.requireNonNull(id, "L'id della riscossione è obbligatorio");
 
         return new RiscossionePremio(
-                id, hackathon, stato, beneficiaryRef, paymentRef
+                id,
+                hackathon,
+                stato,
+                beneficiaryRef,
+                paymentRef
         );
     }
 
     public void assegnaId(Long id) {
         Long idValido = Objects.requireNonNull(
-                id, "L'id della riscossione è obbligatorio"
+                id,
+                "L'id della riscossione è obbligatorio"
         );
 
         if (idValido <= 0) {
@@ -107,7 +112,7 @@ public class RiscossionePremio {
             );
         }
 
-        if (beneficiaryRef == null || beneficiaryRef.isBlank()) {
+        if (!testoPresente(beneficiaryRef)) {
             throw new IllegalArgumentException(
                     "Il riferimento del beneficiario è obbligatorio"
             );
@@ -124,7 +129,7 @@ public class RiscossionePremio {
             );
         }
 
-        if (paymentRef == null || paymentRef.isBlank()) {
+        if (!testoPresente(paymentRef)) {
             throw new IllegalArgumentException(
                     "Il riferimento del pagamento è obbligatorio"
             );
@@ -132,6 +137,32 @@ public class RiscossionePremio {
 
         this.paymentRef = paymentRef;
         this.stato = StatoRiscossionePremio.EROGATA;
+    }
+
+    public void annullaErogazioneNonRegistrata(String paymentRef) {
+        Objects.requireNonNull(
+                paymentRef,
+                "Il riferimento del pagamento è obbligatorio"
+        );
+
+        if (stato == StatoRiscossionePremio.EROGATA
+                && Objects.equals(this.paymentRef, paymentRef)) {
+            this.paymentRef = null;
+            this.stato = StatoRiscossionePremio.PRONTA;
+        }
+    }
+
+    public void annullaConfigurazioneNonRegistrata(String beneficiaryRef) {
+        Objects.requireNonNull(
+                beneficiaryRef,
+                "Il riferimento del beneficiario è obbligatorio"
+        );
+
+        if (stato == StatoRiscossionePremio.PRONTA
+                && Objects.equals(this.beneficiaryRef, beneficiaryRef)) {
+            this.beneficiaryRef = null;
+            this.stato = StatoRiscossionePremio.DA_CONFIGURARE;
+        }
     }
 
     public Long getId() {
